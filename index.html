@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>طراحی درب و پنجره</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">▦ طراحی درب و پنجره</div>
+    <button id="newBtn" class="primary">＋ مستطیل جدید</button>
+    <div class="toolbar">
+      <button id="undoBtn">↶ بازگشت</button>
+      <button id="redoBtn">↷ انجام مجدد</button>
+      <button id="deleteBtn">▤ حذف انتخاب</button>
+      <button id="zoomOutBtn">− زوم</button>
+      <button id="zoomInBtn">＋ زوم</button>
+      <button id="resetBtn">◎ بازنشانی</button>
+    </div>
+  </header>
+  <main class="layout">
+    <aside class="panel left-panel">
+      <section class="card">
+        <h2>مشخصات طرح</h2>
+        <label>عرض (سانتی‌متر)<input id="widthInput" type="number" min="30" max="6000" value="200"></label>
+        <label>ارتفاع (سانتی‌متر)<input id="heightInput" type="number" min="30" max="6000" value="150"></label>
+        <label>تعداد<input id="countInput" type="number" min="1" max="20" value="1"></label>
+        <button id="applyBtn" class="primary wide">اعمال ابعاد</button>
+      </section>
+      <section class="card">
+        <h2>محصولات و ابزارها</h2>
+        <button class="tool-button" id="mullion1">▥ مولین عمودی ۱</button>
+        <button class="tool-button" id="mullion2">▥ مولین عمودی ۲</button>
+        <button class="tool-button" id="mullion3">▥ مولین عمودی ۳</button>
+        <button class="tool-button" id="horizontalMullion1">▤ مولین افقی ۱</button>
+        <button class="tool-button" id="horizontalMullion2">▤ مولین افقی ۲</button>
+        <button class="tool-button" id="horizontalMullion3">▤ مولین افقی ۳</button>
+        <p class="hint">ابزار را انتخاب کنید و سپس روی شیشه کلیک کنید.</p>
+      </section>
+      <section class="card">
+        <h2>تنظیمات قسمت انتخاب‌شده</h2>
+        <div id="partSettings">
+          <p class="hint">برای تنظیم فریم یا شیشه، روی آن در نقشه کلیک کنید.</p>
+        </div>
+      </section>
+      <section class="card">
+        <h2>انتخاب و جابه‌جایی</h2>
+        <p class="hint">برای جابه‌جایی مولین یا بازشو، روی آن کلیک کنید و بکشید.</p>
+        <button id="selectBtn" class="wide">حالت انتخاب</button>
+      </section>
+    </aside>
+    <section class="workspace">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="designCanvas" aria-label="بوم طراحی درب و پنجره"></canvas>
+        <div class="canvas-tools">
+          <button id="canvasZoomOut" aria-label="کوچک‌نمایی">−</button>
+          <button id="canvasZoomIn" aria-label="بزرگ‌نمایی">＋</button>
+          <button id="canvasReset" aria-label="بازنشانی">◎</button>
+        </div>
+        <div class="status" id="status">عرض: ۲۰۰ | ارتفاع: ۱۵۰ | تعداد: ۱</div>
+      </div>
+    </section>
+    <aside class="panel right-panel">
+      <section class="card">
+        <h2>پنجره بازشو</h2>
+        <button class="tool-button" id="leftOpenBtn"><span class="window-icon">⇦</span> پنجره چپ‌بازشو</button>
+        <button class="tool-button" id="rightOpenBtn"><span class="window-icon">⇨</span> پنجره راست‌بازشو</button>
+        <button class="tool-button" id="frenchWindowBtn">
+          پنجره فرانسوی دو لنگه
+        </button>
+        <p class="hint">ابتدا نوع بازشو را انتخاب کنید، سپس روی خانه شیشه کلیک کنید.</p>
+      </section>
+      <section class="card">
+        <h2>راهنما</h2>
+        <div class="legend"><i class="frame-swatch"></i> فریم و مولین</div>
+        <div class="legend"><i class="glass-swatch"></i> شیشه</div>
+        <div class="legend"><i class="selected-swatch"></i> قسمت انتخاب‌شده</div>
+      </section>
+    </aside>
+  </main>
+  <dialog id="newDialog">
+    <form method="dialog" id="newForm">
+      <h2>ساخت مستطیل جدید</h2>
+      <label>عرض (سانتی‌متر)<input id="newWidth" type="number" min="30" max="6000" value="200" required></label>
+      <label>ارتفاع (سانتی‌متر)<input id="newHeight" type="number" min="30" max="6000" value="150" required></label>
+      <label>تعداد<input id="newCount" type="number" min="1" max="20" value="1" required></label>
+      <div class="dialog-actions">
+        <button value="cancel">انصراف</button>
+        <button id="createBtn" value="default" class="primary">ساخت</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="app.js"></script>
+</body>
+</html>
