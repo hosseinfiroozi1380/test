@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>طراحی درب و پنجره</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <header class="topbar">
     <div class="brand">▦ طراحی درب و پنجره</div>
-    <button id="newBtn" class="primary">＋ مستطیل جدید</button>
+    <div class="shape-buttons">
+      <button id="newBtn" class="primary">＋ مستطیل جدید</button>
+      <button id="polygonBtn" class="primary">＋ غیرمستطیل</button>
+    </div>
     <div class="toolbar">
       <button id="undoBtn">↶ بازگشت</button>
       <button id="redoBtn">↷ انجام مجدد</button>
@@ -17,14 +22,18 @@
       <button id="zoomOutBtn">− زوم</button>
       <button id="zoomInBtn">＋ زوم</button>
       <button id="resetBtn">◎ بازنشانی</button>
+      <button id="reverseOpeningBtn" type="button">برعکس کردن بازشو</button>
+      <button id="copyBtn" type="button">کپی</button>
+      <button id="sortVerticalMullionsBtn" type="button">مرتب‌سازی مولین‌های عمودی</button>
+<button id="sortHorizontalMullionsBtn" type="button">مرتب‌سازی مولین‌های افقی</button>
     </div>
   </header>
   <main class="layout">
     <aside class="panel left-panel">
       <section class="card">
         <h2>مشخصات طرح</h2>
-        <label>عرض (سانتی‌متر)<input id="widthInput" type="number" min="30" max="6000" value="200"></label>
-        <label>ارتفاع (سانتی‌متر)<input id="heightInput" type="number" min="30" max="6000" value="150"></label>
+        <label>عرض (سانتی‌متر)<input id="widthInput" type="number" min="30" max="6000" value="1000"></label>
+        <label>ارتفاع (سانتی‌متر)<input id="heightInput" type="number" min="30" max="6000" value="1000"></label>
         <label>تعداد<input id="countInput" type="number" min="1" max="20" value="1"></label>
         <button id="applyBtn" class="primary wide">اعمال ابعاد</button>
       </section>
@@ -91,6 +100,42 @@
       </div>
     </form>
   </dialog>
+  <dialog id="polygonDialog">
+    <form id="polygonForm">
+      <h2>ساخت شکل هندسی</h2>
+      <label>نوع شکل
+        <select id="shapeType">
+          <option value="triangle">مثلث</option>
+          <option value="triangle-inverted">مثلث برعکس</option>
+          <option value="circle">دایره</option>
+          <option value="ellipse">بیضی</option>
+          <option value="trapezoid">ذوزنقه</option>
+          <option value="trapezoid-inverted">ذوزنقه برعکس</option>
+          <option value="parallelogram">متوازی‌الاضلاع</option>
+          <option value="parallelogram-inverted">متوازی‌الاضلاع برعکس</option>
+          <option value="rhombus">لوزی</option>
+          <option value="pentagon">پنج‌ضلعی</option>
+          <option value="hexagon">شش‌ضلعی</option>
+          <option value="heptagon">هفت‌ضلعی</option>
+          <option value="octagon">هشت‌ضلعی</option>
+        </select>
+      </label>
+      <label>عرض (سانتی‌متر)
+        <input id="shapeWidth" type="number" min="30" max="6000" value="200" required>
+      </label>
+      <label>ارتفاع (سانتی‌متر)
+        <input id="shapeHeight" type="number" min="30" max="6000" value="150" required>
+      </label>
+      <label>تعداد
+        <input id="shapeCount" type="number" min="1" max="20" value="1" required>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="cancelPolygon">انصراف</button>
+        <button type="submit" class="primary">ساخت شکل</button>
+      </div>
+    </form>
+  </dialog>
   <script src="app.js"></script>
 </body>
+
 </html>

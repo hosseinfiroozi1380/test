@@ -123,3 +123,12 @@ dialog h2{font-size:17px}
  padding: 9px;
  cursor: pointer;
 }
+.shape-buttons {
+ display: flex;
+ gap: 8px;
+ align-items: center;
+}
+
+.shape-buttons button {
+ flex: 1;
+}

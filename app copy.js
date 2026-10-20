@@ -1,0 +1,1784 @@
+(() => {
+  const canvas = document.getElementById('designCanvas');
+  const ctx = canvas.getContext('2d');
+  const $ = id => document.getElementById(id);
+  canvas.style.touchAction = 'none';
+  const state = {
+    width: 1000, height: 1000, count: 1, shape: 'rectangle', zoom: 1, sideFrames: [],
+    mullions: [], horizontalMullions: [], openings: [],
+    selected: null, tool: 'select', nextId: 1,
+    history: [], future: [], drag: null,
+    frame: 60, sashFrame: 70, mullionWidth: 40, glassBorder: 15,
+    frameType: 'فریم معمولی',
+    glassType: '۴ + ۱۲ + ۴ ساده',
+    glassColor: '#8bd9f7',
+    meshType: 'بدون توری',
+    beadType: 'زهوار تک‌حالته',
+    selectedPart: null,
+    dimensionColor: '#000',
+  };
+  const dimensionLabels = [];
+  function openDimensionEditor(type, index = null, value = 0) {
+    let dialog = $('dimensionDialog');
+    if (!dialog) {
+      document.body.insertAdjacentHTML('beforeend', `
+      <dialog id="dimensionDialog" class="dimension-dialog">
+        <form id="dimensionForm">
+          <h3 id="dimensionTitle">ویرایش اندازه</h3>
+          <label for="dimensionValue">مقدار جدید</label>
+          <input id="dimensionValue" type="number" min="1" max="6000" required>
+          <div class="dimension-actions">
+            <button type="submit" class="primary">تغییر</button>
+            <button type="button" id="cancelDimension">لغو</button>
+          </div>
+        </form>
+      </dialog>
+    `);
+      $('cancelDimension').addEventListener('click', () => {
+        $('dimensionDialog').close();
+      });
+      $('dimensionForm').addEventListener('submit', e => {
+        e.preventDefault();
+        const value = Number($('dimensionValue').value);
+        const edit = state.editingDimension;
+        if (!edit || !Number.isFinite(value) || value < 1 || value > 6000) {
+          alert('عدد باید بین ۱ تا ۶۰۰۰ باشد.');
+          return;
+        }
+        saveHistory();
+        if (edit.type === 'width') {
+          state.width = value;
+        } else if (edit.type === 'height') {
+          state.height = value;
+        } else if (edit.type === 'column') {
+          const items = [...state.mullions].sort((a, b) => a.pos - b.pos);
+          const bounds = [0, ...items.map(m => m.pos), 1];
+          const i = edit.index;
+          const minGap = 0.04;
+          const size = value / state.width;
+          if (i < items.length) {
+            const min = bounds[i] + minGap;
+            const max = bounds[i + 2] - minGap;
+            if (min > max) {
+              state.history.pop();
+              alert('فضای کافی برای تغییر این ستون وجود ندارد.');
+              return;
+            }
+            items[i].pos = Math.max(min, Math.min(max, bounds[i] + size));
+          } else {
+            const min = bounds[i - 1] + minGap;
+            const max = 1 - minGap;
+            if (min > max) {
+              state.history.pop();
+              alert('فضای کافی برای تغییر این ستون وجود ندارد.');
+              return;
+            }
+            items[i - 1].pos = Math.max(min, Math.min(max, 1 - size));
+          }
+        } else if (edit.type === 'row') {
+          const items = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+          const bounds = [0, ...items.map(m => m.pos), 1];
+          const i = edit.index;
+          const minGap = 0.04;
+          const size = value / state.height;
+          if (i < items.length) {
+            const min = bounds[i] + minGap;
+            const max = bounds[i + 2] - minGap;
+            if (min > max) {
+              state.history.pop();
+              alert('فضای کافی برای تغییر این ردیف وجود ندارد.');
+              return;
+            }
+            items[i].pos = Math.max(min, Math.min(max, bounds[i] + size));
+          } else {
+            const min = bounds[i - 1] + minGap;
+            const max = 1 - minGap;
+            if (min > max) {
+              state.history.pop();
+              alert('فضای کافی برای تغییر این ردیف وجود ندارد.');
+              return;
+            }
+            items[i - 1].pos = Math.max(min, Math.min(max, 1 - size));
+          }
+        }
+        state.editingDimension = null;
+        $('dimensionDialog').close();
+        syncInputs();
+        draw();
+      });
+    }
+    state.editingDimension = { type, index };
+    $('dimensionTitle').textContent = {
+      width: 'ویرایش عرض کل',
+      height: 'ویرایش ارتفاع کل',
+      column: 'ویرایش عرض ستون',
+      row: 'ویرایش ارتفاع ردیف'
+    }[type];
+    $('dimensionValue').value = Math.round(value);
+    $('dimensionDialog').showModal();
+    $('dimensionValue').focus();
+  }
+  function dimensionText(value, x, y, size, type, index = null) {
+    text(en(value), x, y, size);
+    dimensionLabels.push({
+      x, y, type, index,
+      radius: Math.max(16, size)
+    });
+  }
+  function en(value) {
+    return String(value)
+      .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+      .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  }
+  const frameOptions = [
+    { name: 'فریم معمولی پنجره', size: 60 },
+    { name: 'فریم درب چاق', size: 80 },
+    { name: 'سوپر فریم', size: 70 },
+    { name: 'فریم بازسازی', size: 90 },
+    { name: 'فریم پهن', size: 100 }
+  ];
+  const glassOptions = [
+    { name: '۴ + ۱۲ + ۴ ساده', color: '#8bd9f7' },
+    { name: 'شیشه دودی', color: '#65717e' },
+    { name: 'شیشه برنز', color: '#a87950' },
+    { name: 'شیشه آبی', color: '#429bd2' },
+    { name: 'شیشه سبز', color: '#71b99a' },
+    { name: 'شیشه رفلکس', color: '#b4d8e7' }
+  ];
+  const meshOptions = ['بدون توری', 'توری پلیسه', 'توری ثابت'];
+  const beadOptions = ['زهوار تک‌حالته', 'زهوار دوحالته', 'زهوار سه‌حالته'];
+  const fa = n => String(Math.round(n))
+    .replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  const clone = value => JSON.parse(JSON.stringify(value));
+  function snapshot() {
+    return {
+      width: state.width,
+      height: state.height,
+      count: state.count,
+      shape: state.shape || 'rectangle',
+      mullions: clone(state.mullions),
+      horizontalMullions: clone(state.horizontalMullions),
+      openings: clone(state.openings),
+      selected: clone(state.selected),
+      nextId: state.nextId,
+      frame: state.frame,
+      frameType: state.frameType,
+      glassType: state.glassType,
+      glassColor: state.glassColor,
+      meshType: state.meshType,
+      beadType: state.beadType,
+      selectedPart: state.selectedPart
+    };
+  }
+  function saveHistory() {
+    state.history.push(snapshot());
+    if (state.history.length > 80) state.history.shift();
+    state.future = [];
+  }
+  function restore(s) {
+    Object.assign(state, clone(s));
+    state.drag = null;
+    renderSettings();
+    syncInputs();
+    draw();
+  }
+  function undo() {
+    if (!state.history.length) return;
+    state.future.push(snapshot());
+    restore(state.history.pop());
+  }
+  function redo() {
+    if (!state.future.length) return;
+    state.history.push(snapshot());
+    restore(state.future.pop());
+  }
+  function resizeCanvas() {
+    const r = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(r.width * dpr));
+    canvas.height = Math.max(1, Math.round(r.height * dpr));
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+  function geom() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const padX = Math.min(115, w * .2);
+    const padY = Math.min(90, h * .16);
+    const scale = Math.max(.01, Math.min(
+      (w - padX * 2) / (state.width + 30),
+      (h - padY * 2) / (state.height + 30)
+    ) * state.zoom);
+    const fw = state.width * scale;
+    const fh = state.height * scale;
+    return {
+      w, h, scale,
+      x: (w - fw) / 2,
+      y: (h - fh) / 2,
+      fw, fh,
+      t: Math.max(1, state.frame * scale)
+    };
+  }
+  function line(x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  function arrow(x, y, a) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(-7, -4);
+    ctx.lineTo(0, 0);
+    ctx.lineTo(-7, 4);
+    ctx.stroke();
+    ctx.restore();
+  }
+  function text(s, x, y, size, align = 'center') {
+    ctx.font = `bold ${size}px Tahoma,Arial`;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'middle';
+    ctx.fillText(s, x, y);
+  }
+  function getInner() {
+    const g = geom();
+    return {
+      x: g.x + g.t,
+      y: g.y + g.t,
+      w: Math.max(0, g.fw - 2 * g.t),
+      h: Math.max(0, g.fh - 2 * g.t)
+    };
+  }
+  function getOpeningBounds(o, inner) {
+    const leftM = o.leftId == null ? null :
+      state.mullions.find(m => m.id === o.leftId);
+    const rightM = o.rightId == null ? null :
+      state.mullions.find(m => m.id === o.rightId);
+    const topM = o.topId == null ? null :
+      state.horizontalMullions.find(m => m.id === o.topId);
+    const bottomM = o.bottomId == null ? null :
+      state.horizontalMullions.find(m => m.id === o.bottomId);
+    const g = geom();
+    const { x, y, fw, fh, t } = g;
+    const leftPos = leftM ? leftM.pos : 0;
+    const rightPos = rightM ? rightM.pos : 1;
+    const topPos = topM ? topM.pos : 0;
+    const bottomPos = bottomM ? bottomM.pos : 1;
+    const mw = Math.max(3, state.mullionWidth * geom().scale);
+    const startX = leftM ? inner.x + leftPos * inner.w + mw * 0.3 : x + t * 0.98;
+    const endX = rightM ? inner.x + rightPos * inner.w - mw * 0.3 : x + fw - t * 0.98;
+    const startY = topM ? inner.y + topPos * inner.h + mw * 0.3 : y + t * 0.98;
+    const endY = bottomM ? inner.y + bottomPos * inner.h - mw * 0.3 : y + fh - t * 0.98;
+    return {
+      leftM, rightM, topM, bottomM,
+      x: startX,
+      y: startY,
+      w: Math.max(0, endX - startX),
+      h: Math.max(0, endY - startY)
+    };
+  }
+  function pointInShape(p, x, y, w, h, inset = 0) {
+    const type = state.shape || 'rectangle';
+    if (type === 'rectangle') {
+      return p.x >= x + inset && p.x <= x + w - inset &&
+        p.y >= y + inset && p.y <= y + h - inset;
+    }
+    if (type === 'circle' || type === 'ellipse') {
+      const rx = Math.max(1, w / 2 - inset);
+      const ry = Math.max(1, h / 2 - inset);
+      return ((p.x - (x + w / 2)) / rx) ** 2 +
+        ((p.y - (y + h / 2)) / ry) ** 2 <= 1;
+    }
+    const pts = shapePoints(type, x, y, w, h, inset);
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const a = pts[i], b = pts[j];
+      if (((a.y > p.y) !== (b.y > p.y)) &&
+        p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+    }
+    return inside;
+  }
+  function glassAt(p) {
+    const g = geom();
+    const inner = getInner();
+    if (!inner.w || !inner.h ||
+      !pointInShape(p, g.x, g.y, g.fw, g.fh, g.t)) return null;
+    return {
+      x: (p.x - inner.x) / inner.w,
+      y: (p.y - inner.y) / inner.h
+    };
+  }
+  function getCellAt(gp) {
+    const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
+    const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+    let col = vertical.findIndex(m => gp.x < m.pos);
+    if (col === -1) col = vertical.length;
+    let row = horizontal.findIndex(m => gp.y < m.pos);
+    if (row === -1) row = horizontal.length;
+    return {
+      leftId: col === 0 ? null : vertical[col - 1].id,
+      rightId: col === vertical.length ? null : vertical[col].id,
+      topId: row === 0 ? null : horizontal[row - 1].id,
+      bottomId: row === horizontal.length ? null : horizontal[row].id
+    };
+  }
+  function sameCell(a, b) {
+    return a.leftId === b.leftId &&
+      a.rightId === b.rightId &&
+      a.topId === b.topId &&
+      a.bottomId === b.bottomId;
+  }
+  function drawGlass(x, y, w, h) {
+    ctx.fillStyle = state.glassColor;
+    ctx.fillRect(x, y, w, h);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, y, w, h);
+    ctx.clip();
+    ctx.strokeStyle = '#ffffff50';
+    ctx.lineWidth = Math.max(5, w * .025);
+    ctx.beginPath();
+    ctx.moveTo(x - h * .15, y + h * .8);
+    ctx.lineTo(x + w * .7, y - h * .05);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + w * .25, y + h * 1.1);
+    ctx.lineTo(x + w * 1.05, y + h * .2);
+    ctx.stroke();
+    if (state.meshType !== 'بدون توری') {
+      ctx.fillStyle = '#27334255';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeStyle = '#26344570';
+      ctx.lineWidth = .6;
+      const gap = state.meshType === 'توری پلیسه' ? 5 : 8;
+      for (let xx = x; xx < x + w; xx += gap) {
+        line(xx, y, xx, y + h);
+      }
+      for (let yy = y; yy < y + h; yy += gap) {
+        line(x, yy, x + w, yy);
+      }
+    }
+    ctx.restore();
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(x, y, w, h);
+  }
+  const shapeNames = {
+    triangle: 'مثلث', 'triangle-inverted': 'مثلث وارونه',
+    circle: 'دایره', ellipse: 'بیضی', trapezoid: 'ذوزنقه',
+    'trapezoid-inverted': 'ذوزنقه وارونه', parallelogram: 'متوازی‌الاضلاع',
+    'parallelogram-inverted': 'متوازی‌الاضلاع وارونه', rhombus: 'لوزی',
+    pentagon: 'پنج‌ضلعی', hexagon: 'شش‌ضلعی', heptagon: 'هفت‌ضلعی',
+    octagon: 'هشت‌ضلعی'
+  };
+  function shapePoints(type, x, y, w, h, inset = 0) {
+    const X = x + inset, Y = y + inset, W = Math.max(1, w - inset * 2), H = Math.max(1, h - inset * 2);
+    const points = {
+      triangle: [[.5, 0], [1, 1], [0, 1]],
+      'triangle-inverted': [[0, 0], [1, 0], [.5, 1]],
+      trapezoid: [[.25, 0], [.75, 0], [1, 1], [0, 1]],
+      'trapezoid-inverted': [[0, 0], [1, 0], [.75, 1], [.25, 1]],
+      parallelogram: [[.25, 0], [1, 0], [.75, 1], [0, 1]],
+      'parallelogram-inverted': [[0, 0], [.75, 0], [1, 1], [.25, 1]],
+      rhombus: [[.5, 0], [1, .5], [.5, 1], [0, .5]]
+    };
+    if (points[type]) return points[type].map(([a, b]) => ({ x: X + a * W, y: Y + b * H }));
+    const n = ({ pentagon: 5, hexagon: 6, heptagon: 7, octagon: 8 })[type] || 6;
+    return Array.from({ length: n }, (_, i) => {
+      const a = -Math.PI / 2 + i * Math.PI * 2 / n;
+      return { x: X + W / 2 + Math.cos(a) * W * .48, y: Y + H / 2 + Math.sin(a) * H * .48 };
+    });
+  }
+  function getInsetPoints(points, inset) {
+    if (!inset) return points.map(p => ({ ...p }));
+    const n = points.length;
+    if (n < 3) return points.map(p => ({ ...p }));
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = points[i];
+      const b = points[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const orientation = area >= 0 ? 1 : -1;
+    const edges = [];
+    for (let i = 0; i < n; i++) {
+      const a = points[i];
+      const b = points[(i + 1) % n];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const length = Math.hypot(dx, dy) || 1;
+      const nx = orientation * -dy / length;
+      const ny = orientation * dx / length;
+      edges.push({
+        x: a.x + nx * inset,
+        y: a.y + ny * inset,
+        dx,
+        dy
+      });
+    }
+    const result = [];
+    for (let i = 0; i < n; i++) {
+      const prev = edges[(i + n - 1) % n];
+      const curr = edges[i];
+      const cross = prev.dx * curr.dy - prev.dy * curr.dx;
+      if (Math.abs(cross) < 0.000001) {
+        result.push({
+          x: curr.x,
+          y: curr.y
+        });
+        continue;
+      }
+      const qx = curr.x - prev.x;
+      const qy = curr.y - prev.y;
+      const factor = (qx * curr.dy - qy * curr.dx) / cross;
+      result.push({
+        x: prev.x + factor * prev.dx,
+        y: prev.y + factor * prev.dy
+      });
+    }
+    return result;
+  }
+  function traceShape(type, x, y, w, h, inset = 0) {
+    ctx.beginPath();
+    if (type === 'circle') {
+      ctx.arc(
+        x + w / 2,
+        y + h / 2,
+        Math.max(1, Math.min(w, h) / 2 - inset),
+        0,
+        Math.PI * 2
+      );
+      return;
+    }
+    if (type === 'ellipse') {
+      if (!inset) {
+        ctx.ellipse(
+          x + w / 2,
+          y + h / 2,
+          w / 2,
+          h / 2,
+          0,
+          0,
+          Math.PI * 2
+        );
+        return;
+      }
+      const points = [];
+      const count = 180;
+      for (let i = 0; i < count; i++) {
+        const angle = i * Math.PI * 2 / count;
+        points.push({
+          x: x + w / 2 + w / 2 * Math.cos(angle),
+          y: y + h / 2 + h / 2 * Math.sin(angle)
+        });
+      }
+      const inner = getInsetPoints(points, inset);
+      ctx.moveTo(inner[0].x, inner[0].y);
+      inner.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.closePath();
+      return;
+    }
+    const points = shapePoints(type, x, y, w, h, 0);
+    const inner = getInsetPoints(points, inset);
+    if (!inner.length) return;
+    ctx.moveTo(inner[0].x, inner[0].y);
+    inner.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.closePath();
+  }
+  function drawCustomShape(g) {
+    const { x, y, fw, fh, t } = g;
+    const type = state.shape || 'rectangle';
+    const scale = g.scale || 1;
+    const inner = {
+      x: x + t,
+      y: y + t,
+      w: Math.max(1, fw - 2 * t),
+      h: Math.max(1, fh - 2 * t)
+    };
+    drawWindow(g, inner);
+    const spanAtY = yy => {
+      let first = null;
+      let last = null;
+      for (let k = 0; k <= 500; k++) {
+        const xx = inner.x + inner.w * k / 500;
+        if (pointInShape({ x: xx, y: yy }, x, y, fw, fh, t)) {
+          if (first === null) first = xx;
+          last = xx;
+        }
+      }
+      return first === null ? null : { start: first, end: last };
+    };
+    const spanAtX = xx => {
+      let first = null;
+      let last = null;
+      for (let k = 0; k <= 500; k++) {
+        const yy = inner.y + inner.h * k / 500;
+        if (pointInShape({ x: xx, y: yy }, x, y, fw, fh, t)) {
+          if (first === null) first = yy;
+          last = yy;
+        }
+      }
+      return first === null ? null : { start: first, end: last };
+    };
+    const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
+    const vBounds = [0, ...vertical.map(m => m.pos), 1];
+    const horizontalSpan = spanAtY(inner.y + inner.h / 2);
+    if (horizontalSpan) {
+      const dimY = y + fh + 24;
+      ctx.save();
+      ctx.strokeStyle = state.dimensionColor;
+      ctx.fillStyle = state.dimensionColor;
+      ctx.lineWidth = 1;
+      vBounds.slice(0, -1).forEach((a, i) => {
+        const b = vBounds[i + 1];
+        const sx = Math.max(horizontalSpan.start, inner.x + a * inner.w);
+        const ex = Math.min(horizontalSpan.end, inner.x + b * inner.w);
+        if (ex <= sx) return;
+        line(sx, dimY, ex, dimY);
+        arrow(sx, dimY, 0);
+        arrow(ex, dimY, Math.PI);
+        line(sx, dimY - 5, sx, dimY + 5);
+        line(ex, dimY - 5, ex, dimY + 5);
+        text(
+          fa(state.width * (ex - sx) /
+            Math.max(1, horizontalSpan.end - horizontalSpan.start)),
+          (sx + ex) / 2,
+          dimY + 12,
+          12
+        );
+      });
+      ctx.restore();
+    }
+    const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+    const hBounds = [0, ...horizontal.map(m => m.pos), 1];
+    const verticalSpan = spanAtX(inner.x + inner.w / 2);
+    if (verticalSpan) {
+      const dimX = x - 52;
+      ctx.save();
+      ctx.strokeStyle = state.dimensionColor;
+      ctx.fillStyle = state.dimensionColor;
+      ctx.lineWidth = 1;
+      hBounds.slice(0, -1).forEach((a, i) => {
+        const b = hBounds[i + 1];
+        const sy = Math.max(verticalSpan.start, inner.y + a * inner.h);
+        const ey = Math.min(verticalSpan.end, inner.y + b * inner.h);
+        if (ey <= sy) return;
+        line(dimX, sy, dimX, ey);
+        arrow(dimX, sy, Math.PI / 2);
+        arrow(dimX, ey, -Math.PI / 2);
+        line(dimX - 5, sy, dimX + 5, sy);
+        line(dimX - 5, ey, dimX + 5, ey);
+        ctx.save();
+        ctx.translate(dimX - 12, (sy + ey) / 2);
+        ctx.rotate(-Math.PI / 2);
+        text(
+          fa(state.height * (ey - sy) /
+            Math.max(1, verticalSpan.end - verticalSpan.start)),
+          0,
+          0,
+          12
+        );
+        ctx.restore();
+      });
+      ctx.restore();
+    }
+  }
+  function ensureShapeDialog() {
+    if (!$('polygonDialog')) document.body.insertAdjacentHTML('beforeend', `
+      <dialog id="polygonDialog" class="dimension-dialog">
+        <form id="polygonForm">
+          <h3>ساخت شکل غیرمستطیل</h3>
+          <label for="shapeType">نوع شکل</label>
+          <select id="shapeType">
+            <option value="triangle">مثلث</option><option value="triangle-inverted">مثلث وارونه</option>
+            <option value="circle">دایره</option><option value="ellipse">بیضی</option>
+            <option value="trapezoid">ذوزنقه</option><option value="trapezoid-inverted">ذوزنقه وارونه</option>
+            <option value="parallelogram">متوازی‌الاضلاع</option><option value="parallelogram-inverted">متوازی‌الاضلاع وارونه</option>
+            <option value="rhombus">لوزی</option><option value="pentagon">پنج‌ضلعی</option>
+            <option value="hexagon">شش‌ضلعی</option><option value="heptagon">هفت‌ضلعی</option><option value="octagon">هشت‌ضلعی</option>
+          </select>
+          <label for="shapeWidth">عرض</label><input id="shapeWidth" type="number" min="30" max="6000" value="200" required>
+          <label for="shapeHeight">ارتفاع</label><input id="shapeHeight" type="number" min="30" max="6000" value="150" required>
+          <label for="shapeCount">تعداد</label><input id="shapeCount" type="number" min="1" max="20" value="1" required>
+          <div class="dimension-actions"><button type="submit" class="primary">نمایش در کانواس</button><button type="button" id="cancelPolygon">لغو</button></div>
+        </form>
+      </dialog>`);
+    let btn = $('polygonBtn');
+    if (!btn && $('newBtn')) {
+      $('newBtn').insertAdjacentHTML('afterend', ' <button type="button" id="polygonBtn" class="primary">＋ غیرمستطیل</button>');
+      btn = $('polygonBtn');
+    }
+    if (!btn || btn.dataset.shapeReady) return;
+    btn.dataset.shapeReady = '1';
+    btn.addEventListener('click', () => {
+      $('shapeWidth').value = state.width; $('shapeHeight').value = state.height; $('shapeCount').value = state.count;
+      $('shapeType').value = state.shape === 'rectangle' ? 'triangle' : state.shape;
+      $('polygonDialog').showModal();
+    });
+    $('cancelPolygon').addEventListener('click', () => $('polygonDialog').close());
+    $('polygonForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const w = Number($('shapeWidth').value), h = Number($('shapeHeight').value), c = Number($('shapeCount').value);
+      if (![w, h, c].every(Number.isFinite) || w < 30 || h < 30 || w > 6000 || h > 6000 || c < 1 || c > 20) {
+        alert('عرض و ارتفاع باید بین ۳۰ تا ۶۰۰۰ و تعداد بین ۱ تا ۲۰ باشد.'); return;
+      }
+      saveHistory();
+      state.width = w; state.height = h; state.count = Math.floor(c); state.shape = $('shapeType').value;
+      state.mullions = []; state.horizontalMullions = []; state.openings = []; state.selected = null; state.selectedPart = null;
+      state.zoom = 1; state.tool = 'select'; state.drag = null;
+      syncInputs(); renderSettings(); draw(); $('polygonDialog').close();
+    });
+  }
+  function draw() {
+    if (!canvas.clientWidth) return;
+    const g = geom();
+    const { w, h, x, y, fw, fh, t } = g;
+    dimensionLabels.length = 0;
+    const inner = {
+      x: x + t,
+      y: y + t,
+      w: Math.max(0, fw - 2 * t),
+      h: Math.max(0, fh - 2 * t)
+    };
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.save();
+    ctx.lineJoin = 'miter';
+    drawWindow(g, inner);
+    if (state.drag) {
+      const d = state.drag;
+      ctx.save();
+      if ((state.shape || 'rectangle') !== 'rectangle') {
+        traceShape(state.shape, x, y, fw, fh, t);
+        ctx.clip();
+      }
+      ctx.strokeStyle = state.dimensionColor;
+      ctx.fillStyle = 'rgba(22,114,249,.18)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      if (d.type === 'mullion' && Number.isFinite(d.previewPos)) {
+        const mx = inner.x + d.previewPos * inner.w;
+        const mw = Math.max(3, state.mullionWidth * g.scale);
+        ctx.fillRect(mx - mw / 2, inner.y, mw, inner.h);
+        ctx.strokeRect(mx - mw / 2, inner.y, mw, inner.h);
+      } else if (d.type === 'horizontalMullion' && Number.isFinite(d.previewPos)) {
+        const my = inner.y + d.previewPos * inner.h;
+        const mh = Math.max(3, state.mullionWidth * g.scale);
+        ctx.fillRect(inner.x, my - mh / 2, inner.w, mh);
+        ctx.strokeRect(inner.x, my - mh / 2, inner.w, mh);
+      } else if (d.type === 'opening' && d.current) {
+        const gp = glassAt(d.current);
+        if (gp) {
+          const cell = getCellAt(gp);
+          const b = getOpeningBounds(cell, inner);
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+          ctx.strokeRect(b.x, b.y, b.w, b.h);
+          ctx.beginPath();
+          ctx.moveTo(b.x + b.w * .08, b.y + b.h * .08);
+          ctx.lineTo(b.x + b.w * .92, b.y + b.h * .92);
+          ctx.stroke();
+        }
+      }
+      ctx.setLineDash([]);
+      ctx.restore();
+    }
+    ctx.restore();
+    drawDimensions(g);
+    $('status').textContent =
+      `عرض: ${fa(state.width)} | ارتفاع: ${fa(state.height)} | تعداد: ${fa(state.count)} | مولین عمودی: ${fa(state.mullions.length)} | مولین افقی: ${fa(state.horizontalMullions.length)}`;
+  }
+  function drawMullions(g, inner) {
+    const mw = Math.max(3, state.mullionWidth * g.scale);
+    state.mullions.forEach((m, i) => {
+      const mx = inner.x + m.pos * inner.w;
+      const bx = mx - mw / 2;
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.fillRect(bx, inner.y, mw, inner.h);
+      ctx.strokeRect(bx, inner.y, mw, inner.h);
+  
+      if (state.selected?.type === 'mullion' && state.selected.index === i) {
+        ctx.strokeStyle = state.dimensionColor;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.strokeRect(bx - 3, inner.y + 1, mw + 6, inner.h - 2);
+        ctx.setLineDash([]);
+      }
+    });
+  
+    state.horizontalMullions.forEach((m, i) => {
+      const my = inner.y + m.pos * inner.h;
+      const by = my - mw / 2;
+  
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.fillRect(inner.x, by, inner.w, mw);
+      ctx.strokeRect(inner.x, by, inner.w, mw);
+  
+      if (state.selected?.type === 'horizontalMullion' && state.selected.index === i) {
+        ctx.strokeStyle = state.dimensionColor;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 4]);
+        ctx.strokeRect(inner.x, by - 3, inner.w, mw + 6);
+        ctx.setLineDash([]);
+      }
+    });
+  
+    ctx.restore();
+  }
+  function drawWindow(g, inner) {
+    const { x, y, fw, fh, t } = g;
+    const type = state.shape || 'rectangle';
+    const scale = g.scale || 1;
+    const glassBorder = Math.max(1, state.glassBorder * scale);
+    const mullionWidth = Math.max(3, state.mullionWidth * scale);
+    const isRectangle = type === 'rectangle';
+    ctx.save();
+    ctx.lineJoin = 'miter';
+    ctx.lineCap = 'butt';
+    if (isRectangle) {
+      // فریم اصلی
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.fillRect(x, y, fw, fh);
+      ctx.strokeRect(x, y, fw, fh);
+      // نیم‌سازهای فریم
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + t, y + t);
+      ctx.moveTo(x + fw, y);
+      ctx.lineTo(x + fw - t, y + t);
+      ctx.moveTo(x, y + fh);
+      ctx.lineTo(x + t, y + fh - t);
+      ctx.moveTo(x + fw, y + fh);
+      ctx.lineTo(x + fw - t, y + fh - t);
+      ctx.stroke();
+      // نوار داخلی شیشه
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#111';
+      ctx.fillRect(inner.x, inner.y, inner.w, inner.h);
+      ctx.strokeRect(inner.x, inner.y, inner.w, inner.h);
+      // نیم‌سازهای نوار شیشه
+      ctx.beginPath();
+      ctx.moveTo(inner.x, inner.y);
+      ctx.lineTo(inner.x + glassBorder, inner.y + glassBorder);
+      ctx.moveTo(inner.x + inner.w, inner.y);
+      ctx.lineTo(inner.x + inner.w - glassBorder, inner.y + glassBorder);
+      ctx.moveTo(inner.x, inner.y + inner.h);
+      ctx.lineTo(inner.x + glassBorder, inner.y + inner.h - glassBorder);
+      ctx.moveTo(inner.x + inner.w, inner.y + inner.h);
+      ctx.lineTo(inner.x + inner.w - glassBorder, inner.y + inner.h - glassBorder);
+      ctx.stroke();
+      // شیشه هر قسمت
+      const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
+      const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+      for (let r = 0; r <= horizontal.length; r++) {
+        for (let c = 0; c <= vertical.length; c++) {
+          const left = c === 0
+            ? inner.x
+            : inner.x + vertical[c - 1].pos * inner.w + mullionWidth / 2;
+          const right = c === vertical.length
+            ? inner.x + inner.w
+            : inner.x + vertical[c].pos * inner.w - mullionWidth / 2;
+          const top = r === 0
+            ? inner.y
+            : inner.y + horizontal[r - 1].pos * inner.h + mullionWidth / 2;
+          const bottom = r === horizontal.length
+            ? inner.y + inner.h
+            : inner.y + horizontal[r].pos * inner.h - mullionWidth / 2;
+          if (right - left <= glassBorder * 2 ||
+            bottom - top <= glassBorder * 2) continue;
+          ctx.fillStyle = '#fff';
+          ctx.strokeStyle = '#111';
+          ctx.lineWidth = 0.7;
+          ctx.fillRect(left, top, right - left, bottom - top);
+          ctx.strokeRect(left, top, right - left, bottom - top);
+          ctx.beginPath();
+          ctx.moveTo(left, top);
+          ctx.lineTo(left + glassBorder, top + glassBorder);
+          ctx.moveTo(right, top);
+          ctx.lineTo(right - glassBorder, top + glassBorder);
+          ctx.moveTo(left, bottom);
+          ctx.lineTo(left + glassBorder, bottom - glassBorder);
+          ctx.moveTo(right, bottom);
+          ctx.lineTo(right - glassBorder, bottom - glassBorder);
+          ctx.stroke();
+          const gx = left + glassBorder;
+          const gy = top + glassBorder;
+          const gw = right - left - glassBorder * 2;
+          const gh = bottom - top - glassBorder * 2;
+          ctx.fillStyle = state.glassColor || '#8bd9f7';
+          ctx.fillRect(gx, gy, gw, gh);
+          ctx.strokeStyle = '#111';
+          ctx.strokeRect(gx, gy, gw, gh);
+        }
+      }
+      // انتخاب شیشه
+      if (state.selectedPart === 'glass') {
+        ctx.strokeStyle = state.dimensionColor;
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.strokeRect(inner.x + 2, inner.y + 2,
+          Math.max(0, inner.w - 4), Math.max(0, inner.h - 4));
+        ctx.setLineDash([]);
+      }
+    } else {
+      // فریم اصلی شکل هندسی
+      traceShape(type, x, y, fw, fh);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = state.selectedPart === 'frame' ? '#1672f9' : '#111';
+      ctx.lineWidth = state.selectedPart === 'frame' ? 2 : 1;
+      ctx.stroke();
+      // مرز داخلی فریم
+      traceShape(type, x, y, fw, fh, t);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // شیشه و نوار هر قسمت
+      drawCustomGlass(g, inner, glassBorder, mullionWidth);
+      // نیم‌سازهای گوشه‌های فریم و شیشه
+      if (type !== 'circle' && type !== 'ellipse') {
+        const outer = shapePoints(type, x, y, fw, fh, 0);
+        const frameInner = getInsetPoints(outer, t);
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        outer.forEach((p, i) => {
+          const q = frameInner[i];
+          if (!q) return;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+        });
+        ctx.stroke();
+        const glassOuter = getInsetPoints(outer, t);
+        const glassInner = getInsetPoints(outer, t + glassBorder);
+        ctx.beginPath();
+        glassOuter.forEach((p, i) => {
+          const q = glassInner[i];
+          if (!q) return;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+        });
+        ctx.stroke();
+      }
+    }
+    if (!isRectangle) {
+      ctx.save();
+      traceShape(type, x, y, fw, fh, t);
+      ctx.clip();
+    }
+    drawMullions(g, inner);
+    // بازشوها
+    state.openings.forEach((o, i) => {
+      const b = getOpeningBounds(o, inner);
+      const isDragging = state.drag?.type === 'opening' &&
+        state.drag.index === i;
+      let ox = b.x;
+      let oy = b.y;
+      let ow = b.w;
+      let oh = b.h;
+      const ft = Math.max(1, state.sashFrame * scale);
+      const overlap = Math.min(3, ft * 0.15);
+      if (!b.leftM) {
+        ox -= overlap;
+        ow += overlap;
+      }
+      if (!b.rightM) ow += overlap;
+      if (!b.topM) {
+        oy -= overlap;
+        oh += overlap;
+      }
+      if (!b.bottomM) oh += overlap;
+      ctx.save();
+      if (isDragging) ctx.globalAlpha = 0.85;
+      // فریم بازشو
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.fillRect(ox, oy, ow, oh);
+      ctx.strokeRect(ox, oy, ow, oh);
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ox + ft, oy + ft);
+      ctx.moveTo(ox + ow, oy);
+      ctx.lineTo(ox + ow - ft, oy + ft);
+      ctx.moveTo(ox, oy + oh);
+      ctx.lineTo(ox + ft, oy + oh - ft);
+      ctx.moveTo(ox + ow, oy + oh);
+      ctx.lineTo(ox + ow - ft, oy + oh - ft);
+      ctx.stroke();
+      // نوار و شیشه بازشو
+      const glassX = ox + ft;
+      const glassY = oy + ft;
+      const glassW = Math.max(0, ow - ft * 2);
+      const glassH = Math.max(0, oh - ft * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(glassX, glassY, glassW, glassH);
+      ctx.strokeStyle = '#111';
+      ctx.strokeRect(glassX, glassY, glassW, glassH);
+      ctx.beginPath();
+      ctx.moveTo(glassX, glassY);
+      ctx.lineTo(glassX + glassBorder, glassY + glassBorder);
+      ctx.moveTo(glassX + glassW, glassY);
+      ctx.lineTo(glassX + glassW - glassBorder, glassY + glassBorder);
+      ctx.moveTo(glassX, glassY + glassH);
+      ctx.lineTo(glassX + glassBorder, glassY + glassH - glassBorder);
+      ctx.moveTo(glassX + glassW, glassY + glassH);
+      ctx.lineTo(glassX + glassW - glassBorder, glassY + glassH - glassBorder);
+      ctx.stroke();
+      const gx = glassX + glassBorder;
+      const gy = glassY + glassBorder;
+      const gw = Math.max(0, glassW - glassBorder * 2);
+      const gh = Math.max(0, glassH - glassBorder * 2);
+      ctx.fillStyle = state.glassColor || '#8bd9f7';
+      ctx.fillRect(gx, gy, gw, gh);
+      ctx.strokeStyle = '#111';
+      ctx.strokeRect(gx, gy, gw, gh);
+      // پیکان بازشو
+      const cx = gx + gw / 2;
+      const cy = gy + gh / 2;
+      const len = Math.min(gw * 0.3, gh * 0.3);
+      const head = Math.min(len * 0.3, 8);
+      ctx.strokeStyle = state.dimensionColor;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - len, cy);
+      ctx.lineTo(cx + len, cy);
+      ctx.moveTo(cx - len, cy);
+      ctx.lineTo(cx - len + head, cy - head);
+      ctx.moveTo(cx - len, cy);
+      ctx.lineTo(cx - len + head, cy + head);
+      ctx.moveTo(cx + len, cy);
+      ctx.lineTo(cx + len - head, cy - head);
+      ctx.moveTo(cx + len, cy);
+      ctx.lineTo(cx + len - head, cy + head);
+      ctx.stroke();
+      // دستگیره و لولاها
+      const handleRight = o.direction !== 'left';
+      const handleX = handleRight ? ox + ow - ft / 2 : ox + ft / 2;
+      const hingeX = handleRight ? ox : ox + ow;
+      const handleY = gy + gh / 2;
+      function drawHardwareRect(x, y, w, h, radius = 6) {
+        ctx.beginPath();
+        ctx.roundRect(x - w / 2, y - h / 2, w, h, radius);
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#ddd';
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = Math.max(1, scale);
+      [oy + oh * 0.15, oy + oh * 0.85].forEach(y => {
+        const hingeW = 20 * scale;
+        const hingeH = 70 * scale;
+        drawHardwareRect(hingeX, y - hingeH / 4,
+          hingeW, hingeH / 2, 6 * scale);
+        drawHardwareRect(hingeX, y + hingeH / 4,
+          hingeW, hingeH / 2, 6 * scale);
+      });
+      const handleW = 25 * 1.5 * scale;
+      const handleH = 50 * 1.2 * 1.8 * scale;
+      drawHardwareRect(handleX, handleY - 10 * scale,
+        handleW, handleH, 10 * scale);
+      const handle2W = 16 * 1.3 * scale;
+      const handle2H = handleH;
+      drawHardwareRect(
+        handleX,
+        handleY - 10 * scale + handleH / 2 + handle2H / 2 - 55 * scale,
+        handle2W,
+        handle2H,
+        10 * scale
+      );
+      if (state.selected?.type === 'opening' &&
+        state.selected.index === i) {
+        ctx.setLineDash([5, 4]);
+        ctx.strokeStyle = state.dimensionColor;
+        ctx.strokeRect(ox - 3, oy - 3, ow + 6, oh + 6);
+        ctx.setLineDash([]);
+      }
+      ctx.restore();
+    });
+    if (!isRectangle) ctx.restore();
+    ctx.restore();
+  }
+  function drawCustomGlass(g, inner, glassBorder, mullionWidth) {
+    const { x, y, fw, fh } = g;
+    const type = state.shape || 'rectangle';
+    const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
+    const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+    const boundsX = [0, ...vertical.map(m => m.pos), 1];
+    const boundsY = [0, ...horizontal.map(m => m.pos), 1];
+    function clipPolygon(points, left, top, right, bottom) {
+      const edges = [
+        { inside: p => p.x >= left, intersect: (a, b) => ({ x: left, y: a.y + (b.y - a.y) * (left - a.x) / (b.x - a.x) }) },
+        { inside: p => p.x <= right, intersect: (a, b) => ({ x: right, y: a.y + (b.y - a.y) * (right - a.x) / (b.x - a.x) }) },
+        { inside: p => p.y >= top, intersect: (a, b) => ({ x: a.x + (b.x - a.x) * (top - a.y) / (b.y - a.y), y: top }) },
+        { inside: p => p.y <= bottom, intersect: (a, b) => ({ x: a.x + (b.x - a.x) * (bottom - a.y) / (b.y - a.y), y: bottom }) }
+      ];
+      let result = points;
+      for (const edge of edges) {
+        const input = result;
+        result = [];
+        if (!input.length) break;
+        let previous = input[input.length - 1];
+        for (const current of input) {
+          if (edge.inside(current)) {
+            if (!edge.inside(previous)) result.push(edge.intersect(previous, current));
+            result.push(current);
+          } else if (edge.inside(previous)) {
+            result.push(edge.intersect(previous, current));
+          }
+          previous = current;
+        }
+      }
+      return result;
+    }
+    function polygonPath(points) {
+      if (points.length < 3) return false;
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+      return true;
+    }
+    let outline;
+    if (type === 'circle' || type === 'ellipse') {
+      outline = [];
+      for (let i = 0; i < 180; i++) {
+        const angle = i * Math.PI * 2 / 180;
+        outline.push({
+          x: x + fw / 2 + Math.cos(angle) * (type === 'circle' ? Math.min(fw, fh) / 2 : fw / 2),
+          y: y + fh / 2 + Math.sin(angle) * (type === 'circle' ? Math.min(fw, fh) / 2 : fh / 2)
+        });
+      }
+    } else {
+      outline = shapePoints(type, x, y, fw, fh, 0);
+    }
+    const frameInner = getInsetPoints(outline, g.t);
+    if (!frameInner || frameInner.length < 3) return;
+    ctx.save();
+    traceShape(type, x, y, fw, fh, g.t);
+    ctx.clip();
+    for (let r = 0; r < boundsY.length - 1; r++) {
+      for (let c = 0; c < boundsX.length - 1; c++) {
+        const left = inner.x + boundsX[c] * inner.w + (c ? mullionWidth / 2 : 0);
+        const right = inner.x + boundsX[c + 1] * inner.w - (c < vertical.length ? mullionWidth / 2 : 0);
+        const top = inner.y + boundsY[r] * inner.h + (r ? mullionWidth / 2 : 0);
+        const bottom = inner.y + boundsY[r + 1] * inner.h - (r < horizontal.length ? mullionWidth / 2 : 0);
+        if (right - left <= glassBorder * 2 || bottom - top <= glassBorder * 2) continue;
+        const pane = clipPolygon(frameInner, left, top, right, bottom);
+        if (!polygonPath(pane)) continue;
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        const glass = getInsetPoints(pane, glassBorder);
+        if (!polygonPath(glass)) continue;
+        ctx.fillStyle = state.glassColor || '#8bd9f7';
+        ctx.fill();
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 0.7;
+        ctx.stroke();
+        ctx.beginPath();
+        pane.forEach((p, i) => {
+          const q = glass[i];
+          if (!q) return;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(q.x, q.y);
+        });
+        ctx.stroke();
+      }
+    }
+    if (state.selectedPart === 'glass') {
+      ctx.setLineDash([]);
+      ctx.strokeStyle = state.dimensionColor;
+      ctx.lineWidth = 3;
+      traceShape(type, x, y, fw, fh, g.t + glassBorder);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.restore();
+  }
+  function drawDimensions(g) {
+    const { x, y, fw, fh, t } = g;
+    const inner = {
+      x: x + t,
+      y: y + t,
+      w: Math.max(0, fw - 2 * t),
+      h: Math.max(0, fh - 2 * t)
+    };
+    const color = state.dimensionColor;
+    const size = Math.max(10, Math.min(14, inner.w * 0.035));
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    // اندازه کل عرض
+    const top = y + fh + 60;
+    const midX = x + fw / 2;
+    const widthGap = 25;
+    line(x, top, midX - widthGap, top);
+    line(midX + widthGap, top, x + fw, top);
+    line(x, top - 10, x, top + 10);
+    line(x + fw, top - 10, x + fw, top + 10);
+    dimensionText(String(state.width), midX, top, 18, 'width');
+    // اندازه کل ارتفاع
+    const left = x - 60;
+    const midY = y + fh / 2;
+    const heightGap = 25;
+    line(left, y, left, midY - heightGap);
+    line(left, midY + heightGap, left, y + fh);
+    line(left - 10, y, left + 10, y);
+    line(left - 10, y + fh, left + 10, y + fh);
+    ctx.save();
+    ctx.translate(left - 15, midY);
+    ctx.rotate(-Math.PI / 2);
+    text(String(state.height), 0, 16, 18);
+    ctx.restore();
+    dimensionLabels.push({
+      x: left - 15,
+      y: midY,
+      type: 'height',
+      radius: 20
+    });
+    if (state.mullions.length > 0) {
+      const sortedV = [...state.mullions].sort((a, b) => a.pos - b.pos);
+      const boundsV = [0, ...sortedV.map(m => m.pos), 1];
+      const columnY = inner.y + inner.h + 50;
+      boundsV.slice(0, -1).forEach((b, i) => {
+        const r = boundsV[i + 1];
+        const sx = x + b * fw;
+        const ex = x + r * fw;
+        const cx = (sx + ex) / 2;
+        const value = String(Math.round(state.width * (r - b)));
+        const gap = Math.min((ex - sx) / 2, Math.max(10, value.length * size * 0.55));
+        line(sx, columnY, cx - gap, columnY);
+        line(cx + gap, columnY, ex, columnY);
+        line(sx, columnY - 10, sx, columnY + 10);
+        line(ex, columnY - 10, ex, columnY + 10);
+        dimensionText(value, cx, columnY, 18, 'column', i);
+      });
+    }
+    if (state.horizontalMullions.length > 0) {
+      const sortedH = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+      const boundsH = [0, ...sortedH.map(m => m.pos), 1];
+      const rowX = x - 30;
+      boundsH.slice(0, -1).forEach((b, i) => {
+        const r = boundsH[i + 1];
+        const sy = y + b * fh;
+        const ey = y + r * fh;
+        const cy = (sy + ey) / 2;
+        const value = String(Math.round(state.height * (r - b)));
+        const gap = Math.min((ey - sy) / 2, Math.max(10, value.length * size * 0.55));
+        line(rowX, sy, rowX, cy - gap);
+        line(rowX, cy + gap, rowX, ey);
+        line(rowX - 10, sy, rowX + 10, sy);
+        line(rowX - 10, ey, rowX + 10, ey);
+        ctx.save();
+        ctx.translate(rowX - 13, cy);
+        ctx.rotate(-Math.PI / 2);
+        text(value, 0, 16, 18);
+        ctx.restore();
+        dimensionLabels.push({
+          x: rowX - 13,
+          y: cy,
+          type: 'row',
+          index: i,
+          radius: 20
+        });
+      });
+    }
+    ctx.restore();
+  }
+  function renderSettings() {
+    const box = $('partSettings');
+    if (!box) return;
+    if (state.selectedPart === 'frame') {
+      box.innerHTML = `
+    <div class="part-heading">تنظیمات فریم</div>
+    <div class="option-title">انتخاب مدل فریم</div>
+    <div class="option-grid">
+      ${frameOptions.map(o => `
+        <button class="option-btn ${state.frameType === o.name ? 'active' : ''}"
+          data-frame="${o.name}">${o.name}</button>
+      `).join('')}
+    </div>
+    <p class="option-info">با انتخاب مدل، ضخامت فریم متناسب با نوع آن تنظیم می‌شود.</p>
+  `;
+      box.querySelectorAll('[data-frame]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          saveHistory();
+          const option = frameOptions.find(o => o.name === btn.dataset.frame);
+          state.frameType = option.name;
+          state.frame = option.size;
+          renderSettings();
+          draw();
+        });
+      });
+      return;
+    }
+    if (state.selectedPart === 'glass') {
+      box.innerHTML = `
+        <div class="part-heading">تنظیمات شیشه</div>
+        <div class="option-title">ترکیب و رنگ شیشه</div>
+        <div class="option-grid">
+          ${glassOptions.map(o => `
+            <button class="option-btn ${state.glassType === o.name ? 'active' : ''}"
+              data-glass="${o.name}">${o.name}</button>
+          `).join('')}
+        </div>
+        <div class="option-title">انتخاب توری</div>
+        <div class="option-grid">
+          ${meshOptions.map(o => `
+            <button class="option-btn ${state.meshType === o ? 'active' : ''}"
+              data-mesh="${o}">${o}</button>
+          `).join('')}
+        </div>
+        <div class="option-title">انتخاب زهوار</div>
+        <div class="option-grid">
+          ${beadOptions.map(o => `
+            <button class="option-btn ${state.beadType === o ? 'active' : ''}"
+              data-bead="${o}">${o}</button>
+          `).join('')}
+        </div>
+        <p class="option-info">رنگ انتخابی شیشه در نقشه نمایش داده می‌شود.</p>
+      `;
+      box.querySelectorAll('[data-glass]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          saveHistory();
+          const option = glassOptions.find(o => o.name === btn.dataset.glass);
+          state.glassType = option.name;
+          state.glassColor = option.color;
+          renderSettings();
+          draw();
+        });
+      });
+      box.querySelectorAll('[data-mesh]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          saveHistory();
+          state.meshType = btn.dataset.mesh;
+          renderSettings();
+          draw();
+        });
+      });
+      box.querySelectorAll('[data-bead]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          saveHistory();
+          state.beadType = btn.dataset.bead;
+          renderSettings();
+          draw();
+        });
+      });
+      return;
+    }
+    box.innerHTML = '<p class="hint">برای تنظیم فریم یا شیشه، روی آن در نقشه کلیک کنید.</p>';
+  }
+  function point(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function hit(p) {
+    const g = geom();
+    const inner = getInner();
+    for (let i = state.mullions.length - 1; i >= 0; i--) {
+      const mx = inner.x + state.mullions[i].pos * inner.w;
+      if (
+        Math.abs(p.x - mx) < Math.max(12, state.mullionWidth * g.scale) &&
+        p.y >= inner.y - 4 &&
+        p.y <= inner.y + inner.h + 4
+      ) return { type: 'mullion', index: i };
+    }
+    for (let i = state.horizontalMullions.length - 1; i >= 0; i--) {
+      const my = inner.y + state.horizontalMullions[i].pos * inner.h;
+      if (
+        Math.abs(p.y - my) < 12 &&
+        p.x >= inner.x && p.x <= inner.x + inner.w
+      ) return { type: 'horizontalMullion', index: i };
+    }
+    for (let i = state.openings.length - 1; i >= 0; i--) {
+      const b = getOpeningBounds(state.openings[i], inner);
+      if (
+        p.x >= b.x + 5 && p.x <= b.x + b.w - 5 &&
+        p.y >= b.y + 5 && p.y <= b.y + b.h - 5
+      ) return { type: 'opening', index: i };
+    }
+    if (pointInShape(p, g.x, g.y, g.fw, g.fh, g.t)) return { type: 'glass' };
+    if (pointInShape(p, g.x, g.y, g.fw, g.fh)) return { type: 'frame' };
+    return null;
+  }
+  canvas.addEventListener('pointerdown', e => {
+    const p = point(e);
+    const label = [...dimensionLabels].reverse().find(d =>
+      Math.abs(p.x - d.x) <= d.radius &&
+      Math.abs(p.y - d.y) <= d.radius
+    );
+    if (label) {
+      let value = 0;
+      if (label.type === 'width') {
+        value = state.width;
+      } else if (label.type === 'height') {
+        value = state.height;
+      } else if (label.type === 'column') {
+        const items = [...state.mullions].sort((a, b) => a.pos - b.pos);
+        const bounds = [0, ...items.map(m => m.pos), 1];
+        value = state.width * (bounds[label.index + 1] - bounds[label.index]);
+      } else if (label.type === 'row') {
+        const items = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+        const bounds = [0, ...items.map(m => m.pos), 1];
+        value = state.height * (bounds[label.index + 1] - bounds[label.index]);
+      }
+      openDimensionEditor(label.type, label.index, value);
+      return;
+    }
+    const found = hit(p);
+    if (copiedItem && glassAt(p)) {
+      const gp = glassAt(p);
+      const cell = getCellAt(gp);
+      if (copiedItem.type === 'opening' &&
+        state.openings.some(o => sameCell(o, cell))) {
+        $('status').textContent = 'این قسمت قبلاً بازشو دارد.';
+        return;
+      }
+      saveHistory();
+      if (copiedItem.type === 'opening') {
+        const item = clone(copiedItem.item);
+        Object.assign(item, cell);
+        item.leftId = cell.leftId;
+        item.rightId = cell.rightId;
+        item.topId = cell.topId;
+        item.bottomId = cell.bottomId;
+        item.id = state.nextId++;
+        state.openings.push(item);
+        state.selected = {
+          type: 'opening',
+          index: state.openings.length - 1
+        };
+      } else if (copiedItem.type === 'mullion') {
+        const item = clone(copiedItem.item);
+        item.id = state.nextId++;
+        item.pos = Math.max(.04, Math.min(.96,
+          (p.x - getInner().x) / getInner().w
+        ));
+        state.mullions.push(item);
+        state.mullions.sort((a, b) => a.pos - b.pos);
+        state.selected = {
+          type: 'mullion',
+          index: state.mullions.findIndex(m => m.id === item.id)
+        };
+      } else {
+        const item = clone(copiedItem.item);
+        item.id = state.nextId++;
+        item.pos = Math.max(.04, Math.min(.96,
+          (p.y - getInner().y) / getInner().h
+        ));
+        state.horizontalMullions.push(item);
+        state.horizontalMullions.sort((a, b) => a.pos - b.pos);
+        state.selected = {
+          type: 'horizontalMullion',
+          index: state.horizontalMullions.findIndex(m => m.id === item.id)
+        };
+      }
+      copiedItem = null;
+      draw();
+      $('status').textContent = 'کپی با موفقیت انجام شد.';
+      return;
+    }
+    if (state.tool === 'mullion') {
+      const gp = glassAt(p);
+      if (!gp) return;
+      const cell = getCellAt(gp);
+      const inner = getInner();
+      const left = cell.leftId == null ? 0 : state.mullions.find(m => m.id === cell.leftId).pos;
+      const right = cell.rightId == null ? 1 : state.mullions.find(m => m.id === cell.rightId).pos;
+      const top = cell.topId == null ? 0 : state.horizontalMullions.find(m => m.id === cell.topId).pos;
+      const bottom = cell.bottomId == null ? 1 : state.horizontalMullions.find(m => m.id === cell.bottomId).pos;
+      saveHistory();
+      const n = Number(state.toolCount || 1);
+      for (let i = 1; i <= n; i++) {
+        state.mullions.push({
+          id: state.nextId++,
+          pos: left + (right - left) * i / (n + 1),
+          y1: top,
+          y2: bottom
+        });
+      }
+      state.mullions.sort((a, b) => a.pos - b.pos);
+      state.selected = { type: 'mullion', index: state.mullions.length - 1 };
+      state.tool = 'select';
+      canvas.style.cursor = 'grab';
+      draw();
+      return;
+    }
+    if (state.tool === 'horizontalMullion') {
+      const gp = glassAt(p);
+      if (!gp) return;
+      const cell = getCellAt(gp);
+      const left = cell.leftId == null ? 0 : state.mullions.find(m => m.id === cell.leftId).pos;
+      const right = cell.rightId == null ? 1 : state.mullions.find(m => m.id === cell.rightId).pos;
+      const top = cell.topId == null ? 0 : state.horizontalMullions.find(m => m.id === cell.topId).pos;
+      const bottom = cell.bottomId == null ? 1 : state.horizontalMullions.find(m => m.id === cell.bottomId).pos;
+      saveHistory();
+      const n = Number(state.toolCount || 1);
+      for (let i = 1; i <= n; i++) {
+        state.horizontalMullions.push({
+          id: state.nextId++,
+          pos: top + (bottom - top) * i / (n + 1),
+          x1: left,
+          x2: right
+        });
+      }
+      state.horizontalMullions.sort((a, b) => a.pos - b.pos);
+      state.selected = {
+        type: 'horizontalMullion',
+        index: state.horizontalMullions.length - 1
+      };
+      state.tool = 'select';
+      canvas.style.cursor = 'grab';
+      draw();
+      return;
+    }
+    if (state.tool === 'frenchWindow') {
+      const gp = glassAt(p);
+      if (!gp) return;
+      const cell = getCellAt(gp);
+      if (state.openings.some(o => sameCell(o, cell))) {
+        $('status').textContent = 'این قسمت قبلاً بازشو دارد.';
+        return;
+      }
+      saveHistory();
+      const leftPos = cell.leftId == null
+        ? 0
+        : state.mullions.find(m => m.id === cell.leftId).pos;
+      const rightPos = cell.rightId == null
+        ? 1
+        : state.mullions.find(m => m.id === cell.rightId).pos;
+      const id = state.nextId++;
+      state.mullions.push({
+        id,
+        pos: (leftPos + rightPos) / 2
+      });
+      state.openings.push(
+        { ...cell, rightId: id, direction: 'left', french: true },
+        { ...cell, leftId: id, direction: 'right', french: true }
+      );
+      state.tool = 'select';
+      canvas.style.cursor = 'default';
+      draw();
+      return;
+    }
+    if (state.tool === 'opening') {
+      const gp = glassAt(p);
+      if (!gp) return;
+      const cell = getCellAt(gp);
+      if (state.openings.some(o => sameCell(o, cell))) {
+        $('status').textContent = 'این قسمت قبلاً بازشو دارد.';
+        return;
+      }
+      saveHistory();
+      state.openings.push({
+        ...cell,
+        direction: state.openDirection || 'left'
+      });
+      state.selected = { type: 'opening', index: state.openings.length - 1 };
+      state.tool = 'select';
+      canvas.style.cursor = 'default';
+      draw();
+      return;
+    }
+    if (found?.type === 'frame' || found?.type === 'glass') {
+      state.selectedPart = found.type;
+      state.selected = null;
+      state.tool = 'select';
+      renderSettings();
+      canvas.style.cursor = 'default';
+      draw();
+      return;
+    }
+    state.selected = found;
+    if (found?.type === 'opening') {
+      saveHistory();
+      state.drag = {
+        ...found, start: p, current: p,
+        original: clone(state.openings[found.index])
+      };
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+      draw();
+      return;
+    }
+    if (found?.type === 'mullion') {
+      saveHistory();
+      state.drag = {
+        ...found, start: p,
+        original: clone(state.mullions[found.index])
+      };
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+      draw();
+      return;
+    }
+    if (found?.type === 'horizontalMullion') {
+      saveHistory();
+      state.drag = {
+        ...found, start: p,
+        original: clone(state.horizontalMullions[found.index])
+      };
+      canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+      draw();
+      return;
+    }
+    draw();
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!state.drag) return;
+    const p = point(e);
+    const g = geom();
+    const dx = (p.x - state.drag.start.x) /
+      Math.max(1, g.fw - 2 * g.t);
+    if (state.drag.type === 'opening') {
+      state.drag.current = p;
+    } else if (state.drag.type === 'mullion') {
+      state.drag.previewPos = Math.max(.04, Math.min(.96,
+        (p.x - (g.x + g.t)) / Math.max(1, g.fw - 2 * g.t)));
+    } else if (state.drag.type === 'horizontalMullion') {
+      state.drag.previewPos = Math.max(.04, Math.min(.96,
+        (p.y - (g.y + g.t)) / Math.max(1, g.fh - 2 * g.t)));
+    }
+    draw();
+  });
+  function endDrag(e) {
+    if (!state.drag) return;
+    const drag = state.drag;
+    if (drag.type === 'mullion' && Number.isFinite(drag.previewPos)) {
+      state.mullions[drag.index].pos = drag.previewPos;
+    } else if (drag.type === 'horizontalMullion' && Number.isFinite(drag.previewPos)) {
+      state.horizontalMullions[drag.index].pos = drag.previewPos;
+    } else if (drag.type === 'opening' && e) {
+      const gp = glassAt(point(e));
+      if (gp) {
+        const cell = getCellAt(gp);
+        const occupied = state.openings.some((o, i) =>
+          i !== drag.index && sameCell(o, cell)
+        );
+        if (!occupied) Object.assign(state.openings[drag.index], cell);
+      }
+    }
+    state.drag = null;
+    canvas.style.cursor = 'default';
+    draw();
+  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  function syncInputs() {
+    $('widthInput').value = state.width;
+    $('heightInput').value = state.height;
+    $('countInput').value = state.count;
+  }
+  function applyDims(w, h, c) {
+    w = Number(w);
+    h = Number(h);
+    c = Number(c);
+    if (!Number.isFinite(w) || !Number.isFinite(h) ||
+      !Number.isFinite(c) || w < 30 || h < 30 || c < 1) {
+      alert('لطفاً ابعاد و تعداد معتبر وارد کنید.');
+      return false;
+    }
+    saveHistory();
+    state.width = Math.min(6000, w);
+    state.height = Math.min(6000, h);
+    state.shape = 'rectangle';
+    state.count = Math.min(20, Math.floor(c));
+    state.mullions = [];
+    state.horizontalMullions = [];
+    state.openings = [];
+    state.selected = null;
+    state.selectedPart = null;
+    state.zoom = 1;
+    state.tool = 'select';
+    state.drag = null;
+    canvas.style.cursor = 'default';
+    renderSettings();
+    syncInputs();
+    draw();
+    return true;
+  }
+  ensureShapeDialog();
+  $('applyBtn').addEventListener('click', () => {
+    applyDims(
+      $('widthInput').value,
+      $('heightInput').value,
+      $('countInput').value
+    );
+  });
+  $('newBtn').addEventListener('click', () => {
+    $('newWidth').value = state.width;
+    $('newHeight').value = state.height;
+    $('newCount').value = state.count;
+    $('newDialog').showModal();
+  });
+  $('createBtn').addEventListener('click', e => {
+    e.preventDefault();
+    if (applyDims(
+      $('newWidth').value,
+      $('newHeight').value,
+      $('newCount').value
+    )) {
+      $('newDialog').close();
+    }
+  });
+  [1, 2, 3].forEach(n => {
+    $('mullion' + n).addEventListener('click', () => {
+      state.tool = 'mullion';
+      state.toolCount = n;
+      canvas.style.cursor = 'crosshair';
+      $('status').textContent = `مولین عمودی ${fa(n)}: روی شیشه کلیک کنید`;
+    });
+    $('horizontalMullion' + n).addEventListener('click', () => {
+      state.tool = 'horizontalMullion';
+      state.toolCount = n;
+      canvas.style.cursor = 'crosshair';
+      $('status').textContent = `مولین افقی ${fa(n)}: روی شیشه کلیک کنید`;
+    });
+  });
+  $('leftOpenBtn').addEventListener('click', () => {
+    state.tool = 'opening';
+    state.openDirection = 'left';
+    canvas.style.cursor = 'crosshair';
+    $('status').textContent = 'پنجره چپ‌بازشو: روی خانه شیشه کلیک کنید';
+  });
+  $('rightOpenBtn').addEventListener('click', () => {
+    state.tool = 'opening';
+    state.openDirection = 'right';
+    canvas.style.cursor = 'crosshair';
+    $('status').textContent = 'پنجره راست‌بازشو: روی خانه شیشه کلیک کنید';
+  });
+  $('frenchWindowBtn').addEventListener('click', () => {
+    state.tool = 'frenchWindow';
+    canvas.style.cursor = 'crosshair';
+    $('status').textContent = 'پنجره فرانسوی: روی خانه شیشه کلیک کنید';
+  });
+  $('selectBtn').addEventListener('click', () => {
+    state.tool = 'select';
+    canvas.style.cursor = 'default';
+  });
+  $('deleteBtn').addEventListener('click', () => {
+    if (!state.selected) return;
+    saveHistory();
+    const s = state.selected;
+    if (s.type === 'mullion') {
+      const gone = state.mullions[s.index];
+      state.openings.forEach(o => {
+        if (o.leftId === gone.id) o.leftId = null;
+        if (o.rightId === gone.id) o.rightId = null;
+      });
+      state.mullions.splice(s.index, 1);
+    } else if (s.type === 'horizontalMullion') {
+      const gone = state.horizontalMullions[s.index];
+      state.openings.forEach(o => {
+        if (o.topId === gone.id) o.topId = null;
+        if (o.bottomId === gone.id) o.bottomId = null;
+      });
+      state.horizontalMullions.splice(s.index, 1);
+    } else if (s.type === 'opening') {
+      state.openings.splice(s.index, 1);
+    }
+    state.selected = null;
+    state.drag = null;
+    draw();
+  });
+  $('reverseOpeningBtn').addEventListener('click', () => {
+    const s = state.selected;
+    if (!s || s.type !== 'opening') {
+      $('status').textContent = 'ابتدا پنجره را انتخاب کنید.';
+      return;
+    }
+    const opening = state.openings[s.index];
+    if (!opening || opening.french) {
+      $('status').textContent = 'فقط پنجره‌های معمولی قابل برعکس شدن هستند.';
+      return;
+    }
+    saveHistory();
+    opening.direction = opening.direction === 'right' ? 'left' : 'right';
+    draw();
+    $('status').textContent = 'جهت بازشوی پنجره برعکس شد.';
+  });
+  let copiedItem = null;
+  $('copyBtn').addEventListener('click', () => {
+    const s = state.selected;
+    if (!s || !['mullion', 'horizontalMullion', 'opening'].includes(s.type)) {
+      $('status').textContent = 'ابتدا مولین یا پنجره را انتخاب کنید.';
+      return;
+    }
+    copiedItem = {
+      type: s.type,
+      item: clone(
+        s.type === 'mullion' ? state.mullions[s.index] :
+          s.type === 'horizontalMullion' ? state.horizontalMullions[s.index] :
+            state.openings[s.index]
+      )
+    };
+    $('status').textContent = 'کپی شد؛ برای قرار دادن، روی قسمت خالی شیشه کلیک کنید.';
+  });
+  $('sortVerticalMullionsBtn').addEventListener('click', () => {
+    if (!state.mullions.length) return;
+    saveHistory();
+    const count = state.mullions.length;
+    state.mullions.sort((a, b) => a.pos - b.pos);
+    state.mullions.forEach((m, i) => {
+      m.pos = (i + 1) / (count + 1);
+    });
+    state.selected = null;
+    draw();
+  });
+  $('sortHorizontalMullionsBtn').addEventListener('click', () => {
+    if (!state.horizontalMullions.length) return;
+    saveHistory();
+    const count = state.horizontalMullions.length;
+    state.horizontalMullions.sort((a, b) => a.pos - b.pos);
+    state.horizontalMullions.forEach((m, i) => {
+      m.pos = (i + 1) / (count + 1);
+    });
+    state.selected = null;
+    draw();
+  });
+  $('undoBtn').addEventListener('click', undo);
+  $('redoBtn').addEventListener('click', redo);
+  function zoom(f) {
+    state.zoom = Math.max(.35, Math.min(3, state.zoom * f));
+    draw();
+  }
+  ['zoomInBtn', 'canvasZoomIn'].forEach(id =>
+    $(id).addEventListener('click', () => zoom(1.15))
+  );
+  ['zoomOutBtn', 'canvasZoomOut'].forEach(id =>
+    $(id).addEventListener('click', () => zoom(1 / 1.15))
+  );
+  function reset() {
+    state.zoom = 1;
+    state.selected = null;
+    state.selectedPart = null;
+    state.tool = 'select';
+    state.drag = null;
+    canvas.style.cursor = 'default';
+    renderSettings();
+    draw();
+  }
+  $('resetBtn').addEventListener('click', reset);
+  $('canvasReset').addEventListener('click', reset);
+  window.addEventListener('resize', resizeCanvas);
+  renderSettings();
+  resizeCanvas();
+})();
