@@ -67,7 +67,7 @@
           <button id="canvasZoomIn" aria-label="بزرگ‌نمایی">＋</button>
           <button id="canvasReset" aria-label="بازنشانی">◎</button>
         </div>
-        <div class="status" id="status">عرض: ۲۰۰ | ارتفاع: ۱۵۰ | تعداد: ۱</div>
+        <!-- <div class="status" id="status">عرض: ۲۰۰ | ارتفاع: ۱۵۰ | تعداد: ۱</div> -->
       </div>
     </section>
     <aside class="panel right-panel">
@@ -75,9 +75,16 @@
         <h2>پنجره بازشو</h2>
         <button class="tool-button" id="leftOpenBtn"><span class="window-icon">⇦</span> پنجره چپ‌بازشو</button>
         <button class="tool-button" id="rightOpenBtn"><span class="window-icon">⇨</span> پنجره راست‌بازشو</button>
+        <button class="tool-button" id="topOpenBtn">
+          <span class="window-icon">⇧</span> پنجره بالا‌بازشو
+        </button>
+        <button class="tool-button" id="bottomOpenBtn">
+          <span class="window-icon">⇩</span> پنجره پایین‌بازشو
+        </button>
         <button class="tool-button" id="frenchWindowBtn">
           پنجره فرانسوی دو لنگه
         </button>
+        <button id="addSideFrameBtn" class="primary">＋ افزودن فریم کناری</button>
         <p class="hint">ابتدا نوع بازشو را انتخاب کنید، سپس روی خانه شیشه کلیک کنید.</p>
       </section>
       <section class="card">
@@ -132,6 +139,30 @@
       <div class="dialog-actions">
         <button type="button" id="cancelPolygon">انصراف</button>
         <button type="submit" class="primary">ساخت شکل</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="sideFrameDialog">
+    <form id="sideFrameForm">
+      <h2>افزودن فریم کناری</h2>
+      <label>
+        عرض (سانتی‌متر)
+        <input id="sideFrameWidth" type="number" min="30" max="6000" value="500" required>
+      </label>
+      <label>
+        ارتفاع (سانتی‌متر)
+        <input id="sideFrameHeight" type="number" min="30" max="6000" value="1000" required>
+      </label>
+      <label>
+        جهت فریم
+        <select id="sideFrameDirection">
+          <option value="right">سمت راست</option>
+          <option value="bottom">پایین</option>
+        </select>
+      </label>
+      <div class="dialog-actions">
+        <button type="button" id="cancelSideFrameBtn">لغو</button>
+        <button type="submit" class="primary">افزودن</button>
       </div>
     </form>
   </dialog>

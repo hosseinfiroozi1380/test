@@ -16,6 +16,36 @@
     beadType: 'زهوار تک‌حالته',
     selectedPart: null,
     dimensionColor: '#000',
+    previewMullion: null,
+    dimensionFontSize: 60,
+    dimensionFontWeight: 'bold',
+    dimensionFontFamily: 'Roboto, sans-serif',
+    dimensionFontWeight: '500',
+  };
+  const frameOptions = [
+    { name: 'فریم معمولی پنجره', size: 60 },
+    { name: 'فریم درب چاق', size: 80 },
+    { name: 'سوپر فریم', size: 70 },
+    { name: 'فریم بازسازی', size: 90 },
+    { name: 'فریم پهن', size: 100 }
+  ];
+  const glassOptions = [
+    { name: '۴ + ۱۲ + ۴ ساده', color: '#8bd9f7' },
+    { name: 'شیشه دودی', color: '#65717e' },
+    { name: 'شیشه برنز', color: '#a87950' },
+    { name: 'شیشه آبی', color: '#429bd2' },
+    { name: 'شیشه سبز', color: '#71b99a' },
+    { name: 'شیشه رفلکس', color: '#b4d8e7' }
+  ];
+  const meshOptions = ['بدون توری', 'توری پلیسه', 'توری ثابت'];
+  const beadOptions = ['زهوار تک‌حالته', 'زهوار دوحالته', 'زهوار سه‌حالته'];
+  const shapeNames = {
+    triangle: 'مثلث', 'triangle-inverted': 'مثلث وارونه',
+    circle: 'دایره', ellipse: 'بیضی', trapezoid: 'ذوزنقه',
+    'trapezoid-inverted': 'ذوزنقه وارونه', parallelogram: 'متوازی‌الاضلاع',
+    'parallelogram-inverted': 'متوازی‌الاضلاع وارونه', rhombus: 'لوزی',
+    pentagon: 'پنج‌ضلعی', hexagon: 'شش‌ضلعی', heptagon: 'هفت‌ضلعی',
+    octagon: 'هشت‌ضلعی'
   };
   const dimensionLabels = [];
   function openDimensionEditor(type, index = null, value = 0) {
@@ -130,25 +160,7 @@
       .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
       .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
   }
-  const frameOptions = [
-    { name: 'فریم معمولی پنجره', size: 60 },
-    { name: 'فریم درب چاق', size: 80 },
-    { name: 'سوپر فریم', size: 70 },
-    { name: 'فریم بازسازی', size: 90 },
-    { name: 'فریم پهن', size: 100 }
-  ];
-  const glassOptions = [
-    { name: '۴ + ۱۲ + ۴ ساده', color: '#8bd9f7' },
-    { name: 'شیشه دودی', color: '#65717e' },
-    { name: 'شیشه برنز', color: '#a87950' },
-    { name: 'شیشه آبی', color: '#429bd2' },
-    { name: 'شیشه سبز', color: '#71b99a' },
-    { name: 'شیشه رفلکس', color: '#b4d8e7' }
-  ];
-  const meshOptions = ['بدون توری', 'توری پلیسه', 'توری ثابت'];
-  const beadOptions = ['زهوار تک‌حالته', 'زهوار دوحالته', 'زهوار سه‌حالته'];
-  const fa = n => String(Math.round(n))
-    .replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  const fa = n => String(Math.round(n)).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
   const clone = value => JSON.parse(JSON.stringify(value));
   function snapshot() {
     return {
@@ -167,7 +179,8 @@
       glassColor: state.glassColor,
       meshType: state.meshType,
       beadType: state.beadType,
-      selectedPart: state.selectedPart
+      selectedPart: state.selectedPart,
+      sideFrames: clone(state.sideFrames),
     };
   }
   function saveHistory() {
@@ -205,18 +218,52 @@
     const h = canvas.clientHeight;
     const padX = Math.min(115, w * .2);
     const padY = Math.min(90, h * .16);
+    const side = state.sideFrames[0] || null;
+    const gap = side ? 70 : 0;
+    const totalWidth = side
+      ? side.direction === 'right'
+        ? state.width + gap + side.width
+        : Math.max(state.width, side.width)
+      : state.width;
+    const totalHeight = side
+      ? side.direction === 'bottom'
+        ? state.height + gap + side.height
+        : Math.max(state.height, side.height)
+      : state.height;
     const scale = Math.max(.01, Math.min(
-      (w - padX * 2) / (state.width + 30),
-      (h - padY * 2) / (state.height + 30)
+      (w - padX * 2) / (totalWidth + 30),
+      (h - padY * 2) / (totalHeight + 30)
     ) * state.zoom);
     const fw = state.width * scale;
     const fh = state.height * scale;
+    const groupX = (w - totalWidth * scale) / 2;
+    const groupY = (h - totalHeight * scale) / 2;
+    const x = groupX + (side && side.direction === 'bottom'
+      ? (totalWidth - state.width) * scale / 2 : 0);
+    const y = groupY + (side && side.direction === 'right'
+      ? (totalHeight - state.height) * scale / 2 : 0);
     return {
-      w, h, scale,
-      x: (w - fw) / 2,
-      y: (h - fh) / 2,
-      fw, fh,
-      t: Math.max(1, state.frame * scale)
+      w, h, scale, x, y, fw, fh,
+      t: Math.max(1, state.frame * scale),
+      side: side ? {
+        direction: side.direction,
+        x: side.direction === 'right'
+          ? x + fw + gap * scale
+          : groupX + (totalWidth - side.width) * scale / 2,
+        y: side.direction === 'bottom'
+          ? y + fh + gap * scale
+          : groupY + (totalHeight - side.height) * scale / 2,
+        fw: side.width * scale,
+        fh: side.height * scale,
+        t: Math.max(1, state.frame * scale),
+        scale,
+        connector: {
+          x: side.direction === 'right' ? x + fw : groupX + (totalWidth - side.width) * scale / 2,
+          y: side.direction === 'bottom' ? y + fh : groupY + (totalHeight - side.height) * scale / 2,
+          w: side.direction === 'right' ? gap * scale : side.width * scale,
+          h: side.direction === 'bottom' ? gap * scale : side.height * scale
+        }
+      } : null
     };
   }
   function line(x1, y1, x2, y2) {
@@ -225,19 +272,8 @@
     ctx.lineTo(x2, y2);
     ctx.stroke();
   }
-  function arrow(x, y, a) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(a);
-    ctx.beginPath();
-    ctx.moveTo(-7, -4);
-    ctx.lineTo(0, 0);
-    ctx.lineTo(-7, 4);
-    ctx.stroke();
-    ctx.restore();
-  }
   function text(s, x, y, size, align = 'center') {
-    ctx.font = `bold ${size}px Tahoma,Arial`;
+    ctx.font = `${state.dimensionFontWeight} ${size}px ${state.dimensionFontFamily}`;
     ctx.textAlign = align;
     ctx.textBaseline = 'middle';
     ctx.fillText(s, x, y);
@@ -330,49 +366,6 @@
       a.topId === b.topId &&
       a.bottomId === b.bottomId;
   }
-  function drawGlass(x, y, w, h) {
-    ctx.fillStyle = state.glassColor;
-    ctx.fillRect(x, y, w, h);
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(x, y, w, h);
-    ctx.clip();
-    ctx.strokeStyle = '#ffffff50';
-    ctx.lineWidth = Math.max(5, w * .025);
-    ctx.beginPath();
-    ctx.moveTo(x - h * .15, y + h * .8);
-    ctx.lineTo(x + w * .7, y - h * .05);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x + w * .25, y + h * 1.1);
-    ctx.lineTo(x + w * 1.05, y + h * .2);
-    ctx.stroke();
-    if (state.meshType !== 'بدون توری') {
-      ctx.fillStyle = '#27334255';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeStyle = '#26344570';
-      ctx.lineWidth = .6;
-      const gap = state.meshType === 'توری پلیسه' ? 5 : 8;
-      for (let xx = x; xx < x + w; xx += gap) {
-        line(xx, y, xx, y + h);
-      }
-      for (let yy = y; yy < y + h; yy += gap) {
-        line(x, yy, x + w, yy);
-      }
-    }
-    ctx.restore();
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(x, y, w, h);
-  }
-  const shapeNames = {
-    triangle: 'مثلث', 'triangle-inverted': 'مثلث وارونه',
-    circle: 'دایره', ellipse: 'بیضی', trapezoid: 'ذوزنقه',
-    'trapezoid-inverted': 'ذوزنقه وارونه', parallelogram: 'متوازی‌الاضلاع',
-    'parallelogram-inverted': 'متوازی‌الاضلاع وارونه', rhombus: 'لوزی',
-    pentagon: 'پنج‌ضلعی', hexagon: 'شش‌ضلعی', heptagon: 'هفت‌ضلعی',
-    octagon: 'هشت‌ضلعی'
-  };
   function shapePoints(type, x, y, w, h, inset = 0) {
     const X = x + inset, Y = y + inset, W = Math.max(1, w - inset * 2), H = Math.max(1, h - inset * 2);
     const points = {
@@ -487,104 +480,6 @@
     inner.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
     ctx.closePath();
   }
-  function drawCustomShape(g) {
-    const { x, y, fw, fh, t } = g;
-    const type = state.shape || 'rectangle';
-    const scale = g.scale || 1;
-    const inner = {
-      x: x + t,
-      y: y + t,
-      w: Math.max(1, fw - 2 * t),
-      h: Math.max(1, fh - 2 * t)
-    };
-    drawWindow(g, inner);
-    const spanAtY = yy => {
-      let first = null;
-      let last = null;
-      for (let k = 0; k <= 500; k++) {
-        const xx = inner.x + inner.w * k / 500;
-        if (pointInShape({ x: xx, y: yy }, x, y, fw, fh, t)) {
-          if (first === null) first = xx;
-          last = xx;
-        }
-      }
-      return first === null ? null : { start: first, end: last };
-    };
-    const spanAtX = xx => {
-      let first = null;
-      let last = null;
-      for (let k = 0; k <= 500; k++) {
-        const yy = inner.y + inner.h * k / 500;
-        if (pointInShape({ x: xx, y: yy }, x, y, fw, fh, t)) {
-          if (first === null) first = yy;
-          last = yy;
-        }
-      }
-      return first === null ? null : { start: first, end: last };
-    };
-    const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
-    const vBounds = [0, ...vertical.map(m => m.pos), 1];
-    const horizontalSpan = spanAtY(inner.y + inner.h / 2);
-    if (horizontalSpan) {
-      const dimY = y + fh + 24;
-      ctx.save();
-      ctx.strokeStyle = state.dimensionColor;
-      ctx.fillStyle = state.dimensionColor;
-      ctx.lineWidth = 1;
-      vBounds.slice(0, -1).forEach((a, i) => {
-        const b = vBounds[i + 1];
-        const sx = Math.max(horizontalSpan.start, inner.x + a * inner.w);
-        const ex = Math.min(horizontalSpan.end, inner.x + b * inner.w);
-        if (ex <= sx) return;
-        line(sx, dimY, ex, dimY);
-        arrow(sx, dimY, 0);
-        arrow(ex, dimY, Math.PI);
-        line(sx, dimY - 5, sx, dimY + 5);
-        line(ex, dimY - 5, ex, dimY + 5);
-        text(
-          fa(state.width * (ex - sx) /
-            Math.max(1, horizontalSpan.end - horizontalSpan.start)),
-          (sx + ex) / 2,
-          dimY + 12,
-          12
-        );
-      });
-      ctx.restore();
-    }
-    const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
-    const hBounds = [0, ...horizontal.map(m => m.pos), 1];
-    const verticalSpan = spanAtX(inner.x + inner.w / 2);
-    if (verticalSpan) {
-      const dimX = x - 52;
-      ctx.save();
-      ctx.strokeStyle = state.dimensionColor;
-      ctx.fillStyle = state.dimensionColor;
-      ctx.lineWidth = 1;
-      hBounds.slice(0, -1).forEach((a, i) => {
-        const b = hBounds[i + 1];
-        const sy = Math.max(verticalSpan.start, inner.y + a * inner.h);
-        const ey = Math.min(verticalSpan.end, inner.y + b * inner.h);
-        if (ey <= sy) return;
-        line(dimX, sy, dimX, ey);
-        arrow(dimX, sy, Math.PI / 2);
-        arrow(dimX, ey, -Math.PI / 2);
-        line(dimX - 5, sy, dimX + 5, sy);
-        line(dimX - 5, ey, dimX + 5, ey);
-        ctx.save();
-        ctx.translate(dimX - 12, (sy + ey) / 2);
-        ctx.rotate(-Math.PI / 2);
-        text(
-          fa(state.height * (ey - sy) /
-            Math.max(1, verticalSpan.end - verticalSpan.start)),
-          0,
-          0,
-          12
-        );
-        ctx.restore();
-      });
-      ctx.restore();
-    }
-  }
   function ensureShapeDialog() {
     if (!$('polygonDialog')) document.body.insertAdjacentHTML('beforeend', `
       <dialog id="polygonDialog" class="dimension-dialog">
@@ -631,6 +526,85 @@
       syncInputs(); renderSettings(); draw(); $('polygonDialog').close();
     });
   }
+  function drawSideFrame() {
+    const g = geom();
+    const s = g.side;
+    if (!s) return;
+    const { x, y, fw, fh, t } = s;
+    const border = Math.max(1, state.glassBorder * s.scale);
+    const inner = {
+      x: x + t,
+      y: y + t,
+      w: Math.max(0, fw - 2 * t),
+      h: Math.max(0, fh - 2 * t)
+    };
+    ctx.save();
+    ctx.fillStyle = '#fff';
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 1;
+    ctx.fillRect(x, y, fw, fh);
+    ctx.strokeRect(x, y, fw, fh);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + t, y + t);
+    ctx.moveTo(x + fw, y);
+    ctx.lineTo(x + fw - t, y + t);
+    ctx.moveTo(x, y + fh);
+    ctx.lineTo(x + t, y + fh - t);
+    ctx.moveTo(x + fw, y + fh);
+    ctx.lineTo(x + fw - t, y + fh - t);
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(inner.x, inner.y, inner.w, inner.h);
+    ctx.strokeRect(inner.x, inner.y, inner.w, inner.h);
+    const vertical = [...(s.mullions || [])].sort((a, b) => a.pos - b.pos);
+    const horizontal = [...(s.horizontalMullions || [])].sort((a, b) => a.pos - b.pos);
+    const mw = Math.max(3, state.mullionWidth * s.scale);
+    const xs = [0, ...vertical.map(m => m.pos), 1];
+    const ys = [0, ...horizontal.map(m => m.pos), 1];
+    for (let r = 0; r < ys.length - 1; r++) {
+      for (let c = 0; c < xs.length - 1; c++) {
+        const left = inner.x + xs[c] * inner.w + (c ? mw / 2 : 0);
+        const right = inner.x + xs[c + 1] * inner.w - (c < vertical.length ? mw / 2 : 0);
+        const top = inner.y + ys[r] * inner.h + (r ? mw / 2 : 0);
+        const bottom = inner.y + ys[r + 1] * inner.h - (r < horizontal.length ? mw / 2 : 0);
+        if (right <= left || bottom <= top) continue;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(left, top, right - left, bottom - top);
+        ctx.strokeRect(left, top, right - left, bottom - top);
+        const gx = left + border;
+        const gy = top + border;
+        const gw = Math.max(0, right - left - border * 2);
+        const gh = Math.max(0, bottom - top - border * 2);
+        ctx.fillStyle = state.glassColor || '#8bd9f7';
+        ctx.fillRect(gx, gy, gw, gh);
+        ctx.strokeRect(gx, gy, gw, gh);
+        ctx.beginPath();
+        ctx.moveTo(left, top);
+        ctx.lineTo(gx, gy);
+        ctx.moveTo(right, top);
+        ctx.lineTo(gx + gw, gy);
+        ctx.moveTo(right, bottom);
+        ctx.lineTo(gx + gw, gy + gh);
+        ctx.moveTo(left, bottom);
+        ctx.lineTo(gx, gy + gh);
+        ctx.stroke();
+      }
+    }
+    vertical.forEach(m => {
+      const mx = inner.x + m.pos * inner.w;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(mx - mw / 2, inner.y, mw, inner.h);
+      ctx.strokeRect(mx - mw / 2, inner.y, mw, inner.h);
+    });
+    horizontal.forEach(m => {
+      const my = inner.y + m.pos * inner.h;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(inner.x, my - mw / 2, inner.w, mw);
+      ctx.strokeRect(inner.x, my - mw / 2, inner.w, mw);
+    });
+    ctx.restore();
+  }
   function draw() {
     if (!canvas.clientWidth) return;
     const g = geom();
@@ -648,6 +622,75 @@
     ctx.save();
     ctx.lineJoin = 'miter';
     drawWindow(g, inner);
+    if (g.side?.connector) {
+      const c = g.side.connector;
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.fillRect(c.x, c.y, c.w, c.h);
+      ctx.strokeRect(c.x, c.y, c.w, c.h);
+    }
+    drawSideFrame();
+    if (state.previewMullion && !state.drag) {
+      const p = state.previewMullion;
+      const gp = glassAt(p);
+      if (gp && (state.tool === 'mullion' || state.tool === 'horizontalMullion')) {
+        const cell = getCellAt(gp);
+        const vertical = state.tool === 'mullion';
+        const pos = vertical
+          ? (p.x - inner.x) / inner.w
+          : (p.y - inner.y) / inner.h;
+        const mw = Math.max(3, state.mullionWidth * g.scale);
+        ctx.save();
+        ctx.strokeStyle = '#1672f9';
+        ctx.fillStyle = 'rgba(22,114,249,.18)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([]);
+        if (vertical) {
+          const mx = inner.x + pos * inner.w;
+          const my = inner.y + inner.h / 2;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(22,114,249,.18)';
+          ctx.strokeStyle = '#1672f9';
+          ctx.fillRect(mx - mw / 2, inner.y, mw, inner.h);
+          ctx.strokeRect(mx - mw / 2, inner.y, mw, inner.h);
+          ctx.beginPath();
+          ctx.moveTo(x, my);
+          ctx.lineTo(x + fw, my);
+          ctx.stroke();
+          const left = Math.round(pos * state.width);
+          const right = state.width - left;
+          ctx.fillStyle = '#1672f9';
+          ctx.font = `${state.dimensionFontWeight} ${Math.max(16, state.dimensionFontSize * g.scale)}px ${state.dimensionFontFamily}`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const leftText = String(left);
+          const rightText = String(right);
+          ctx.fillText(leftText, (inner.x + mx) / 2, my - 8);
+          ctx.fillText(rightText, (mx + inner.x + inner.w) / 2, my - 8);
+        } else {
+          const my = inner.y + pos * inner.h;
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgba(22,114,249,.18)';
+          ctx.strokeStyle = '#1672f9';
+          ctx.fillRect(inner.x, my - mw / 2, inner.w, mw);
+          ctx.strokeRect(inner.x, my - mw / 2, inner.w, mw);
+          const top = Math.round(pos * state.height);
+          const bottom = state.height - top;
+          ctx.beginPath();
+          ctx.moveTo(inner.x + inner.w / 2, y);
+          ctx.lineTo(inner.x + inner.w / 2, y + fh);
+          ctx.stroke();
+          ctx.fillStyle = '#1672f9';
+          ctx.font = `${state.dimensionFontWeight} ${Math.max(16, state.dimensionFontSize * g.scale)}px ${state.dimensionFontFamily}`;
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'left';
+          ctx.fillText(String(top), inner.x + inner.w / 2 + 12, (y + my) / 2);
+          ctx.fillText(String(bottom), inner.x + inner.w / 2 + 12, (my + y + fh) / 2);
+        }
+        ctx.restore();
+      }
+    }
     if (state.drag) {
       const d = state.drag;
       ctx.save();
@@ -655,31 +698,111 @@
         traceShape(state.shape, x, y, fw, fh, t);
         ctx.clip();
       }
-      ctx.strokeStyle = state.dimensionColor;
+      ctx.strokeStyle = '#1672f9';
       ctx.fillStyle = 'rgba(22,114,249,.18)';
       ctx.lineWidth = 2;
       ctx.setLineDash([]);
+      const fontSize = Math.max(16, state.dimensionFontSize * g.scale);
+      ctx.font = `${state.dimensionFontWeight} ${fontSize}px ${state.dimensionFontFamily}`;
+      ctx.fillStyle = '#1672f9';
+      ctx.textBaseline = 'middle';
       if (d.type === 'mullion' && Number.isFinite(d.previewPos)) {
         const mx = inner.x + d.previewPos * inner.w;
+        const my = inner.y + inner.h / 2;
         const mw = Math.max(3, state.mullionWidth * g.scale);
+        ctx.fillStyle = 'rgba(22,114,249,.18)';
         ctx.fillRect(mx - mw / 2, inner.y, mw, inner.h);
         ctx.strokeRect(mx - mw / 2, inner.y, mw, inner.h);
+        ctx.beginPath();
+        ctx.moveTo(x, my);
+        ctx.lineTo(x + fw, my);
+        ctx.stroke();
+        const left = Math.round(d.previewPos * state.width);
+        const right = state.width - left;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1672f9';
+        ctx.fillText(String(left), (inner.x + mx) / 2, my - 8);
+        ctx.fillText(String(right), (mx + inner.x + inner.w) / 2, my - 8);
       } else if (d.type === 'horizontalMullion' && Number.isFinite(d.previewPos)) {
         const my = inner.y + d.previewPos * inner.h;
         const mh = Math.max(3, state.mullionWidth * g.scale);
+        const mx = inner.x + inner.w / 2;
+        ctx.fillStyle = 'rgba(22,114,249,.18)';
         ctx.fillRect(inner.x, my - mh / 2, inner.w, mh);
         ctx.strokeRect(inner.x, my - mh / 2, inner.w, mh);
+        ctx.beginPath();
+        ctx.moveTo(mx, y);
+        ctx.lineTo(mx, y + fh);
+        ctx.stroke();
+        const top = Math.round(d.previewPos * state.height);
+        const bottom = state.height - top;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#1672f9';
+        ctx.fillText(String(top), mx + 12, (y + my) / 2);
+        ctx.fillText(String(bottom), mx + 12, (my + y + fh) / 2);
       } else if (d.type === 'opening' && d.current) {
         const gp = glassAt(d.current);
         if (gp) {
           const cell = getCellAt(gp);
           const b = getOpeningBounds(cell, inner);
-          ctx.fillRect(b.x, b.y, b.w, b.h);
-          ctx.strokeRect(b.x, b.y, b.w, b.h);
+          const t = Math.max(2, g.t * 0.35);
+          const bead = Math.max(2, t * 0.35);
+          const drawMiterRect = (x, y, w, h, border, fill = true) => {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + w, y);
+            ctx.lineTo(x + w, y + h);
+            ctx.lineTo(x, y + h);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + border, y + border);
+            ctx.moveTo(x + w, y);
+            ctx.lineTo(x + w - border, y + border);
+            ctx.moveTo(x + w, y + h);
+            ctx.lineTo(x + w - border, y + h - border);
+            ctx.moveTo(x, y + h);
+            ctx.lineTo(x + border, y + h - border);
+            ctx.stroke();
+          };
+          ctx.save();
+          ctx.strokeStyle = '#1672f9';
+          ctx.lineWidth = 2;
+          // فریم اصلی
+          ctx.fillStyle = 'rgba(22,114,249,.12)';
+          drawMiterRect(b.x, b.y, b.w, b.h, t);
+          // نوار شیشه اول
+          const glassInset = t * 1.8;
+          const sx = b.x + t + glassInset;
+          const sy = b.y + t + glassInset;
+          const sw = Math.max(0, b.w - 2 * (t + glassInset));
+          const sh = Math.max(0, b.h - 2 * (t + glassInset));
+          const half = Math.max(t / 2, 1);
+          ctx.fillStyle = 'rgba(22,114,249,.08)';
+          drawMiterRect(sx, sy, sw, sh, Math.max(half, t * 0.35));
+          // نوار شیشه داخلی
+          const inset2 = Math.max(half, bead * 2);
+          const sx2 = sx + inset2;
+          const sy2 = sy + inset2;
+          const sw2 = Math.max(0, sw - 2 * inset2);
+          const sh2 = Math.max(0, sh - 2 * inset2);
+          // چهار نیم‌ساز از گوشه‌های فریم تا مرز نوار داخلی
           ctx.beginPath();
-          ctx.moveTo(b.x + b.w * .08, b.y + b.h * .08);
-          ctx.lineTo(b.x + b.w * .92, b.y + b.h * .92);
+          ctx.moveTo(b.x, b.y);
+          ctx.lineTo(sx2, sy2);
+          ctx.moveTo(b.x + b.w, b.y);
+          ctx.lineTo(sx2 + sw2, sy2);
+          ctx.moveTo(b.x + b.w, b.y + b.h);
+          ctx.lineTo(sx2 + sw2, sy2 + sh2);
+          ctx.moveTo(b.x, b.y + b.h);
+          ctx.lineTo(sx2, sy2 + sh2);
           ctx.stroke();
+          // مرز نوار داخلی، بدون پس‌زمینه شیشه وسط
+          ctx.fillStyle = 'rgba(22,114,249,.06)';
+          drawMiterRect(sx2, sy2, sw2, sh2, half, false);
+          ctx.restore();
         }
       }
       ctx.setLineDash([]);
@@ -687,8 +810,8 @@
     }
     ctx.restore();
     drawDimensions(g);
-    $('status').textContent =
-      `عرض: ${fa(state.width)} | ارتفاع: ${fa(state.height)} | تعداد: ${fa(state.count)} | مولین عمودی: ${fa(state.mullions.length)} | مولین افقی: ${fa(state.horizontalMullions.length)}`;
+    // $('status').textContent =
+    //   `عرض: ${fa(state.width)} | ارتفاع: ${fa(state.height)} | تعداد: ${fa(state.count)} | مولین عمودی: ${fa(state.mullions.length)} | مولین افقی: ${fa(state.horizontalMullions.length)}`;
   }
   function drawMullions(g, inner) {
     const mw = Math.max(3, state.mullionWidth * g.scale);
@@ -700,7 +823,6 @@
       ctx.lineWidth = 1;
       ctx.fillRect(bx, inner.y, mw, inner.h);
       ctx.strokeRect(bx, inner.y, mw, inner.h);
-  
       if (state.selected?.type === 'mullion' && state.selected.index === i) {
         ctx.strokeStyle = state.dimensionColor;
         ctx.lineWidth = 2;
@@ -709,17 +831,14 @@
         ctx.setLineDash([]);
       }
     });
-  
     state.horizontalMullions.forEach((m, i) => {
       const my = inner.y + m.pos * inner.h;
       const by = my - mw / 2;
-  
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 1;
       ctx.fillRect(inner.x, by, inner.w, mw);
       ctx.strokeRect(inner.x, by, inner.w, mw);
-  
       if (state.selected?.type === 'horizontalMullion' && state.selected.index === i) {
         ctx.strokeStyle = state.dimensionColor;
         ctx.lineWidth = 2;
@@ -728,7 +847,6 @@
         ctx.setLineDash([]);
       }
     });
-  
     ctx.restore();
   }
   function drawWindow(g, inner) {
@@ -1112,6 +1230,7 @@
   }
   function drawDimensions(g) {
     const { x, y, fw, fh, t } = g;
+    const side = g.side;
     const inner = {
       x: x + t,
       y: y + t,
@@ -1120,84 +1239,76 @@
     };
     const color = state.dimensionColor;
     const size = Math.max(10, Math.min(14, inner.w * 0.035));
+    const widthGap = 25;
+    const heightGap = 25;
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
     ctx.lineWidth = 1;
     ctx.setLineDash([]);
-    // اندازه کل عرض
-    const top = y + fh + 60;
-    const midX = x + fw / 2;
-    const widthGap = 25;
-    line(x, top, midX - widthGap, top);
-    line(midX + widthGap, top, x + fw, top);
-    line(x, top - 10, x, top + 10);
-    line(x + fw, top - 10, x + fw, top + 10);
-    dimensionText(String(state.width), midX, top, 18, 'width');
-    // اندازه کل ارتفاع
-    const left = x - 60;
-    const midY = y + fh / 2;
-    const heightGap = 25;
-    line(left, y, left, midY - heightGap);
-    line(left, midY + heightGap, left, y + fh);
-    line(left - 10, y, left + 10, y);
-    line(left - 10, y + fh, left + 10, y + fh);
-    ctx.save();
-    ctx.translate(left - 15, midY);
-    ctx.rotate(-Math.PI / 2);
-    text(String(state.height), 0, 16, 18);
-    ctx.restore();
-    dimensionLabels.push({
-      x: left - 15,
-      y: midY,
-      type: 'height',
-      radius: 20
-    });
+    function drawWidth(x1, x2, yy, value, type = 'width') {
+      const mid = (x1 + x2) / 2;
+      const gap = Math.min((x2 - x1) / 2, widthGap);
+      line(x1, yy, mid - gap, yy);
+      line(mid + gap, yy, x2, yy);
+      line(x1, yy - 10, x1, yy + 10);
+      line(x2, yy - 10, x2, yy + 10);
+      dimensionText(String(value), mid, yy, 18, type);
+    }
+    function drawHeight(yy1, yy2, xx, value, type = 'height') {
+      const mid = (yy1 + yy2) / 2;
+      const gap = Math.min((yy2 - yy1) / 2, heightGap);
+      line(xx, yy1, xx, mid - gap);
+      line(xx, mid + gap, xx, yy2);
+      line(xx - 10, yy1, xx + 10, yy1);
+      line(xx - 10, yy2, xx + 10, yy2);
+      ctx.save();
+      ctx.translate(xx - 15, mid);
+      ctx.rotate(-Math.PI / 2);
+      text(String(value), 0, 16, 18);
+      ctx.restore();
+      dimensionLabels.push({
+        x: xx - 15, y: mid, type, radius: 20
+      });
+    }
+    // فریم اصلی
+    if (side && side.direction === 'bottom') {
+      drawWidth(x, x + fw, y - 60, state.width);
+    } else {
+      drawWidth(x, x + fw, y + fh + 60, state.width);
+    }
+    drawHeight(y, y + fh, side?.direction === 'right' ? x - 60 : x - 60, state.height);
+    // فریم جدید
+    if (side) {
+      const s = side;
+      const sideWidth = state.sideFrames[0].width;
+      const sideHeight = state.sideFrames[0].height;
+      drawWidth(s.x, s.x + s.fw, s.y + s.fh + 60, sideWidth);
+      drawHeight(s.y, s.y + s.fh, s.x + s.fw + 40, sideHeight);
+    }
+    // اندازه ستون‌های فریم اصلی
     if (state.mullions.length > 0) {
       const sortedV = [...state.mullions].sort((a, b) => a.pos - b.pos);
       const boundsV = [0, ...sortedV.map(m => m.pos), 1];
-      const columnY = inner.y + inner.h + 50;
+      const columnY = side?.direction === 'bottom' ? y - 30 : y + fh + 30;
       boundsV.slice(0, -1).forEach((b, i) => {
         const r = boundsV[i + 1];
         const sx = x + b * fw;
         const ex = x + r * fw;
-        const cx = (sx + ex) / 2;
-        const value = String(Math.round(state.width * (r - b)));
-        const gap = Math.min((ex - sx) / 2, Math.max(10, value.length * size * 0.55));
-        line(sx, columnY, cx - gap, columnY);
-        line(cx + gap, columnY, ex, columnY);
-        line(sx, columnY - 10, sx, columnY + 10);
-        line(ex, columnY - 10, ex, columnY + 10);
-        dimensionText(value, cx, columnY, 18, 'column', i);
+        const value = Math.round(state.width * (r - b));
+        drawWidth(sx, ex, columnY, value, 'column');
       });
     }
+    // اندازه ردیف‌های فریم اصلی
     if (state.horizontalMullions.length > 0) {
       const sortedH = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
       const boundsH = [0, ...sortedH.map(m => m.pos), 1];
-      const rowX = x - 30;
+      const rowX = x - (side?.direction === 'bottom' ? 15 : 30);
       boundsH.slice(0, -1).forEach((b, i) => {
-        const r = boundsH[i + 1];
         const sy = y + b * fh;
-        const ey = y + r * fh;
-        const cy = (sy + ey) / 2;
-        const value = String(Math.round(state.height * (r - b)));
-        const gap = Math.min((ey - sy) / 2, Math.max(10, value.length * size * 0.55));
-        line(rowX, sy, rowX, cy - gap);
-        line(rowX, cy + gap, rowX, ey);
-        line(rowX - 10, sy, rowX + 10, sy);
-        line(rowX - 10, ey, rowX + 10, ey);
-        ctx.save();
-        ctx.translate(rowX - 13, cy);
-        ctx.rotate(-Math.PI / 2);
-        text(value, 0, 16, 18);
-        ctx.restore();
-        dimensionLabels.push({
-          x: rowX - 13,
-          y: cy,
-          type: 'row',
-          index: i,
-          radius: 20
-        });
+        const ey = y + boundsH[i + 1] * fh;
+        const value = Math.round(state.height * (boundsH[i + 1] - b));
+        drawHeight(sy, ey, rowX, value, 'row');
       });
     }
     ctx.restore();
@@ -1524,6 +1635,7 @@
         ...found, start: p,
         original: clone(state.mullions[found.index])
       };
+      state.previewMullion = p;
       canvas.setPointerCapture(e.pointerId);
       canvas.style.cursor = 'grabbing';
       draw();
@@ -1535,6 +1647,7 @@
         ...found, start: p,
         original: clone(state.horizontalMullions[found.index])
       };
+      state.previewMullion = p;
       canvas.setPointerCapture(e.pointerId);
       canvas.style.cursor = 'grabbing';
       draw();
@@ -1543,19 +1656,27 @@
     draw();
   });
   canvas.addEventListener('pointermove', e => {
-    if (!state.drag) return;
     const p = point(e);
+    if (!state.drag) {
+      state.previewMullion =
+        (state.tool === 'mullion' || state.tool === 'horizontalMullion') &&
+          Number(state.toolCount || 1) === 1
+          ? p
+          : null;
+      draw();
+      return;
+    }
     const g = geom();
-    const dx = (p.x - state.drag.start.x) /
-      Math.max(1, g.fw - 2 * g.t);
     if (state.drag.type === 'opening') {
       state.drag.current = p;
     } else if (state.drag.type === 'mullion') {
       state.drag.previewPos = Math.max(.04, Math.min(.96,
         (p.x - (g.x + g.t)) / Math.max(1, g.fw - 2 * g.t)));
+      state.previewMullion = p;
     } else if (state.drag.type === 'horizontalMullion') {
       state.drag.previewPos = Math.max(.04, Math.min(.96,
         (p.y - (g.y + g.t)) / Math.max(1, g.fh - 2 * g.t)));
+      state.previewMullion = p;
     }
     draw();
   });
@@ -1578,6 +1699,7 @@
     }
     state.drag = null;
     canvas.style.cursor = 'default';
+    state.previewMullion = null;
     draw();
   }
   canvas.addEventListener('pointerup', endDrag);
@@ -1778,6 +1900,46 @@
   }
   $('resetBtn').addEventListener('click', reset);
   $('canvasReset').addEventListener('click', reset);
+  $('addSideFrameBtn').addEventListener('click', () => {
+    if (state.sideFrames.length) {
+      $('status').textContent = 'فقط یک فریم کناری می‌توانید داشته باشید.';
+      return;
+    }
+    $('sideFrameWidth').value = state.width;
+    $('sideFrameHeight').value = state.height;
+    $('sideFrameDialog').showModal();
+  });
+  $('cancelSideFrameBtn').addEventListener('click', () => {
+    $('sideFrameDialog').close();
+  });
+  $('sideFrameForm').addEventListener('submit', e => {
+    e.preventDefault();
+    if (state.sideFrames.length) {
+      $('status').textContent = 'فقط یک فریم کناری می‌توانید داشته باشید.';
+      $('sideFrameDialog').close();
+      return;
+    }
+    const width = Number($('sideFrameWidth').value);
+    const height = Number($('sideFrameHeight').value);
+    const direction = $('sideFrameDirection').value;
+    if (![width, height].every(Number.isFinite) ||
+      width < 30 || width > 6000 ||
+      height < 30 || height > 6000) {
+      alert('عرض و ارتفاع باید بین ۳۰ تا ۶۰۰۰ باشند.');
+      return;
+    }
+    saveHistory();
+    state.sideFrames = [{
+      width,
+      height,
+      direction,
+      mullions: [],
+      horizontalMullions: [],
+      openings: []
+    }];
+    $('sideFrameDialog').close();
+    draw();
+  });
   window.addEventListener('resize', resizeCanvas);
   renderSettings();
   resizeCanvas();
