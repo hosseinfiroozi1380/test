@@ -5,168 +5,735 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>طراحی درب و پنجره</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.lineicons.com/4.0/lineicons.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css" />
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>
-  <header class="topbar">
-    <div class="brand">▦ طراحی درب و پنجره</div>
-    <div class="shape-buttons">
-      <button id="newBtn" class="primary">＋ مستطیل جدید</button>
-      <button id="polygonBtn" class="primary">＋ غیرمستطیل</button>
-    </div>
-    <div class="toolbar">
-      <button id="undoBtn">↶ بازگشت</button>
-      <button id="redoBtn">↷ انجام مجدد</button>
-      <button id="deleteBtn">▤ حذف انتخاب</button>
-      <button id="zoomOutBtn">− زوم</button>
-      <button id="zoomInBtn">＋ زوم</button>
-      <button id="resetBtn">◎ بازنشانی</button>
-      <button id="reverseOpeningBtn" type="button">برعکس کردن بازشو</button>
-      <button id="copyBtn" type="button">کپی</button>
-      <button id="sortVerticalMullionsBtn" type="button">مرتب‌سازی مولین‌های عمودی</button>
-<button id="sortHorizontalMullionsBtn" type="button">مرتب‌سازی مولین‌های افقی</button>
-    </div>
-  </header>
+  <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
   <main class="layout">
-    <aside class="panel left-panel">
-      <section class="card">
-        <h2>مشخصات طرح</h2>
-        <label>عرض (سانتی‌متر)<input id="widthInput" type="number" min="30" max="6000" value="1000"></label>
-        <label>ارتفاع (سانتی‌متر)<input id="heightInput" type="number" min="30" max="6000" value="1000"></label>
-        <label>تعداد<input id="countInput" type="number" min="1" max="20" value="1"></label>
-        <button id="applyBtn" class="primary wide">اعمال ابعاد</button>
-      </section>
-      <section class="card">
-        <h2>محصولات و ابزارها</h2>
-        <button class="tool-button" id="mullion1">▥ مولین عمودی ۱</button>
-        <button class="tool-button" id="mullion2">▥ مولین عمودی ۲</button>
-        <button class="tool-button" id="mullion3">▥ مولین عمودی ۳</button>
-        <button class="tool-button" id="horizontalMullion1">▤ مولین افقی ۱</button>
-        <button class="tool-button" id="horizontalMullion2">▤ مولین افقی ۲</button>
-        <button class="tool-button" id="horizontalMullion3">▤ مولین افقی ۳</button>
-        <p class="hint">ابزار را انتخاب کنید و سپس روی شیشه کلیک کنید.</p>
-      </section>
-      <section class="card">
-        <h2>تنظیمات قسمت انتخاب‌شده</h2>
-        <div id="partSettings">
-          <p class="hint">برای تنظیم فریم یا شیشه، روی آن در نقشه کلیک کنید.</p>
+    <!-- منو راست -->
+    <aside class="panel right-panel">
+      <div class="brand">
+        <span class="brand-icon">
+          <img src="./icons/favicon.svg" alt="عایق فیروز">
+        </span>
+        <div class="brand-text">
+          <span>عایق فیروز</span>
+          <small>طراحی درب و پنجره</small>
         </div>
-      </section>
+      </div>
+      <div class="panel-divider"></div>
+      <div class="side-actions">
+        <button class="side-action" id="calculationsBtn">
+          <span><strong>محاسبات</strong></span>
+        </button>
+        <button class="side-action" id="saveBtn">
+          <span><strong>ذخیره پروژه</strong></span>
+        </button>
+        <button class="side-action" id="settingsBtn">
+          <span><strong>تنظیمات</strong></span>
+        </button>
+      </div>
+      <div class="shape-buttons">
+        <button id="newBtn" class="primary">مستطیل</button>
+        <button id="polygonBtn" class="primary">غیرمستطیل</button>
+      </div>
+      <div class="panel-divider"></div>
       <section class="card">
-        <h2>انتخاب و جابه‌جایی</h2>
-        <p class="hint">برای جابه‌جایی مولین یا بازشو، روی آن کلیک کنید و بکشید.</p>
+        <h3>قسمت انتخاب‌شده</h3>
+        <div id="partSettings">
+          <p class="hint">برای تنظیم فریم یا شیشه، روی آن کلیک کنید.</p>
+        </div>
         <button id="selectBtn" class="wide">حالت انتخاب</button>
       </section>
     </aside>
+    <!-- بوم طراحی -->
     <section class="workspace">
       <div class="canvas-wrap" id="canvasWrap">
         <canvas id="designCanvas" aria-label="بوم طراحی درب و پنجره"></canvas>
         <div class="canvas-tools">
-          <button id="canvasZoomOut" aria-label="کوچک‌نمایی">−</button>
-          <button id="canvasZoomIn" aria-label="بزرگ‌نمایی">＋</button>
-          <button id="canvasReset" aria-label="بازنشانی">◎</button>
+          <button id="openRightMenuBtn" type="button" title="منوی راست"><i
+              class="ti ti-layout-sidebar-right"></i></button>
+          <button id="openLeftMenuBtn" type="button" title="منوی چپ"><i class="ti ti-menu-2"></i></button>
+          <button id="sortVerticalMullionsBtn" type="button" title="یکسان‌سازی مولین‌های عمودی"><i
+              class="ti ti-ruler-measure"></i></button>
+          <button id="sortHorizontalMullionsBtn" type="button" title="یکسان‌سازی مولین‌های افقی"><i
+              class="ti ti-ruler-measure wd-ruler-vertical"></i></button>
+          <button id="reverseOpeningBtn" type="button" title="برعکس بازشو"><i class="ti ti-flip-vertical"></i></button>
+          <button id="copyBtn" type="button" title="کپی"><i class="ti ti-copy"></i></button>
+          <button id="deleteBtn" title="حذف"><i class="ti ti-trash"></i></button>
+          <button id="undoBtn" title="بازگشت"><i class="ti ti-arrow-back-up"></i></button>
+          <button id="redoBtn" title="انجام مجدد"><i class="ti ti-arrow-forward-up"></i></button>
+          <button id="resetBtn" title="بازنشانی"><i class="ti ti-arrows-maximize"></i></button>
+          <button id="zoomOutBtn" title="کوچک‌نمایی"><i class="ti ti-minus"></i></button>
+          <button id="zoomInBtn" title="بزرگ‌نمایی"><i class="ti ti-plus"></i></button>
+          <button id="" type="button" title="نمایش سه‌بعدی"><i class="ti ti-box"></i></button>
+          <!-- <button id="view3DButton" type="button" aria-label="نمایش سه‌بعدی"><i class="ti ti-box"></i></button> -->
         </div>
-        <!-- <div class="status" id="status">عرض: ۲۰۰ | ارتفاع: ۱۵۰ | تعداد: ۱</div> -->
       </div>
     </section>
-    <aside class="panel right-panel">
-      <section class="card">
-        <h2>پنجره بازشو</h2>
-        <button class="tool-button" id="leftOpenBtn"><span class="window-icon">⇦</span> پنجره چپ‌بازشو</button>
-        <button class="tool-button" id="rightOpenBtn"><span class="window-icon">⇨</span> پنجره راست‌بازشو</button>
-        <button class="tool-button" id="topOpenBtn">
-          <span class="window-icon">⇧</span> پنجره بالا‌بازشو
-        </button>
-        <button class="tool-button" id="bottomOpenBtn">
-          <span class="window-icon">⇩</span> پنجره پایین‌بازشو
-        </button>
-        <button class="tool-button" id="frenchWindowBtn">
-          پنجره فرانسوی دو لنگه
-        </button>
-        <button id="addSideFrameBtn" class="primary">＋ افزودن فریم کناری</button>
-        <p class="hint">ابتدا نوع بازشو را انتخاب کنید، سپس روی خانه شیشه کلیک کنید.</p>
-      </section>
-      <section class="card">
-        <h2>راهنما</h2>
-        <div class="legend"><i class="frame-swatch"></i> فریم و مولین</div>
-        <div class="legend"><i class="glass-swatch"></i> شیشه</div>
-        <div class="legend"><i class="selected-swatch"></i> قسمت انتخاب‌شده</div>
-      </section>
+    <!-- منو چپ -->
+    <aside class="panel left-panel">
+      <div class="brand user-brand">
+        <span class="brand-icon">
+          <i class="ti ti-user"></i>
+        </span>
+        <div class="brand-text">
+          <span>نام کاربر</span>
+          <small>مشتری / مدیر</small>
+        </div>
+      </div>
+      <div class="panel-divider user-divider"></div>
+      <button class="category-button" data-modal="mullionDialog">
+        <img src="./icons/mullion.svg" alt="" class="" />
+        <span><strong>مولین</strong></span>
+      </button>
+      <button class="category-button" data-modal="windowDialog">
+        <img src="./icons/window.svg" alt="" class="" />
+        <span><strong>پنجره</strong></span>
+      </button>
+      <button class="category-button" data-modal="doorDialog">
+        <img src="./icons/door.svg" alt="" class="" />
+        <span><strong>در</strong></span>
+      </button>
+      <button class="category-button" data-modal="panelDialog">
+        <img src="./icons/panel.svg" alt="" class="" />
+        <span><strong>پنل</strong></span>
+      </button>
+      <button class="category-button" data-modal="otherDialog">
+        <img src="./icons/other.svg" alt="" class="" />
+        <span><strong>سایر</strong></span>
+      </button>
+      <div class="panel-divider"></div>
+      <div class="help-card">
+        <div>
+          <strong>راهنمای طراحی</strong>
+          <p>یک ابزار انتخاب کنید و سپس روی قسمت موردنظر در بوم کلیک کنید.</p>
+        </div>
+      </div>
     </aside>
   </main>
-  <dialog id="newDialog">
-    <form method="dialog" id="newForm">
-      <h2>ساخت مستطیل جدید</h2>
-      <label>عرض (سانتی‌متر)<input id="newWidth" type="number" min="30" max="6000" value="200" required></label>
-      <label>ارتفاع (سانتی‌متر)<input id="newHeight" type="number" min="30" max="6000" value="150" required></label>
-      <label>تعداد<input id="newCount" type="number" min="1" max="20" value="1" required></label>
+  <dialog id="mullionDialog" class="tool-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>ابزارهای مولین</h2>
+        <p>نوع تقسیم‌بندی موردنظر را انتخاب کنید.</p>
+      </div>
+      <button class="close-dialog" data-close aria-label="بستن">×</button>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="mullion1">
+        <img src="icons/svg/mullian/v-mullian-1.svg" alt="" />
+        مولین عمودی ۱
+      </button>
+      <button class="modal-tool" id="mullion2">
+        <img src="icons/svg/mullian/v-mullian-2.svg" alt="" />
+        مولین عمودی ۲
+      </button>
+      <button class="modal-tool" id="mullion3">
+        <img src="icons/svg/mullian/v-mullian-3.svg" alt="" />
+        مولین عمودی ۳
+      </button>
+      <button class="modal-tool" id="horizontalMullion1">
+        <img src="icons/svg/mullian/h-mullian-1.svg" alt="" />
+        مولین افقی ۱
+      </button>
+      <button class="modal-tool" id="horizontalMullion2">
+        <img src="icons/svg/mullian/h-mullian-2.svg" alt="" />
+        مولین افقی ۲
+      </button>
+      <button class="modal-tool" id="horizontalMullion3">
+        <img src="icons/svg/mullian/h-mullian-3.svg" alt="" />
+        مولین افقی ۳
+      </button>
+      <button class="modal-tool" id="fullVerticalMullion">
+        <img src="icons/svg/mullian/v-mullian-1.svg" alt="" />
+        مولین عمودی سراسر فریم
+      </button>
+      <button class="modal-tool" id="fullHorizontalMullion">
+        <img src="icons/svg/mullian/h-mullian-1.svg" alt="" />
+        مولین افقی سراسر فریم
+      </button>
+    </div>
+    <p class="modal-hint">ابزار را انتخاب کنید، سپس روی شیشه کلیک کنید.</p>
+  </dialog>
+  <dialog id="windowDialog" class="tool-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>ابزارهای پنجره</h2>
+        <p>جهت بازشو را انتخاب کنید.</p>
+      </div>
+      <button class="close-dialog" data-close aria-label="بستن">×</button>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="leftOpenBtn"><span>⇦</span>پنجره چپ‌بازشو</button>
+      <button class="modal-tool" id="rightOpenBtn"><span>⇨</span>پنجره راست‌بازشو</button>
+      <button class="modal-tool" id="topOpenBtn"><span>⇧</span>پنجره بالا‌بازشو</button>
+      <button class="modal-tool" id="bottomOpenBtn"><span>⇩</span>پنجره پایین‌بازشو</button>
+      <button class="modal-tool" id="frenchWindowBtn"><span>⇔</span>پنجره فرانسوی دو لنگه</button>
+      <button class="modal-tool" id="addSideFrameBtn"><span>⊞</span>افزودن فریم کناری</button>
+    </div>
+  </dialog>
+  <dialog id="doorDialog" class="tool-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>ابزارهای در</h2>
+        <p>ابزارهای درب در این بخش اضافه می‌شوند.</p>
+      </div>
+      <button class="close-dialog" data-close aria-label="بستن">×</button>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool placeholder-tool" disabled>＋ درب تک‌لنگه</button>
+      <button class="modal-tool placeholder-tool" disabled>＋ درب دولنگه</button>
+      <button class="modal-tool placeholder-tool" disabled>＋ درب کشویی</button>
+    </div>
+    <p class="modal-hint">این ابزارها فعلاً نمایشی هستند.</p>
+  </dialog>
+  <dialog id="panelDialog" class="tool-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>ابزارهای پنل</h2>
+        <p>ابزارهای پنل را در این بخش اضافه می‌کنیم.</p>
+      </div>
+      <button class="close-dialog" data-close aria-label="بستن">×</button>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool placeholder-tool" disabled>＋ پنل ساده</button>
+      <button class="modal-tool placeholder-tool" disabled>＋ پنل طرح‌دار</button>
+    </div>
+  </dialog>
+  <dialog id="otherDialog" class="tool-dialog">
+    <div class="dialog-header">
+      <div>
+        <h2>سایر ابزارها</h2>
+        <p>ابزارهای تکمیلی طراحی.</p>
+      </div>
+      <button class="close-dialog" data-close aria-label="بستن">×</button>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool placeholder-tool" disabled>＋ ابزارهای بیشتر</button>
+    </div>
+  </dialog>
+  <dialog id="newDialog" class="tool-dialog">
+    <form id="newForm">
+      <div class="dialog-header">
+        <h2>ساخت مستطیل جدید</h2>
+        <button type="button" class="close-dialog" data-close-new>×</button>
+      </div>
+      <div class="wd-form-grid">
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newItemNumber">شماره آیتم</label>
+          <input type="text" id="newItemNumber" class="wd-input-box" placeholder="مثال: 101">
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newItemName">نام آیتم</label>
+          <input type="text" id="newItemName" class="wd-input-box" placeholder="مثال: پنجره دو لنگه">
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newInstallationCode">کد نصب</label>
+          <input type="text" id="newInstallationCode" class="wd-input-box" placeholder="مثال: INS-101">
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newSystem">سیستم</label>
+          <select id="newSystem" class="wd-select-box">
+            <option value="UPVC">UPVC</option>
+            <option value="Al">AL</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newProfileId">پروفیل</label>
+          <select id="newProfileId" class="wd-select-box">
+            <option value="4" data-system="UPVC" data-width="60">وینتک سری 640 / لولایی</option>
+            <option value="112" data-system="UPVC" data-width="60">بوتیا لولایی 2500</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newProfileColor">رنگ</label>
+          <select id="newProfileColor" class="wd-select-box">
+            <option value="1" data-system="UPVC" data-hex="#ffffff">سفید</option>
+            <option value="2" data-system="UPVC" data-hex="#fffcd6">داخل رنگ</option>
+            <option value="4" data-system="UPVC" data-hex="#b3ff00">بیرون رنگ</option>
+            <option value="5" data-system="UPVC" data-hex="#9c590d">داخل لمینت</option>
+            <option value="6" data-system="UPVC" data-hex="#ffbb00">بیرون لمینت</option>
+            <option value="7" data-system="UPVC" data-hex="#fbdbff">تمام رنگ</option>
+            <option value="8" data-system="Al" data-hex="#ffffff">پودری</option>
+            <option value="9" data-system="UPVC" data-hex="#b0a100">دو طرف لمینت</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newAccessoryId">یراق</label>
+          <select id="newAccessoryId" class="wd-select-box">
+            <option value="11" data-system="UPVC">آکادو Accado</option>
+            <option value="112" data-system="UPVC">GU</option>
+            <option value="114" data-system="Al">یراق آلومینیوم</option>
+            <option value="120" data-system="UPVC">اندو Endow</option>
+            <option value="121" data-system="UPVC">ویناک Winac</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newGlassId">شیشه</label>
+          <select id="newGlassId" class="wd-select-box">
+            <option value="1" data-color="#8acde8">شیشه 4+12+4 ساده ساده</option>
+            <option value="9" data-color="#c9c9c9">شیشه 4+12+4 ساده سیلور</option>
+            <option value="10" data-color="#f1f1f1">شیشه 4+12+4 آیینه مشجر</option>
+            <option value="11" data-color="#fdffeb">شیشه 4+12+4 مشجر مشجر</option>
+            <option value="13" data-color="#fffdcc">شیشه 4+12+4 ساده طلایی</option>
+            <option value="14" data-color="#777777">شیشه 4+12+4 رفلکس دودی</option>
+            <option value="15" data-color="#c98f72">شیشه 4+12+4 ساده برنز لایت</option>
+            <option value="16" data-color="#e5ffff">شیشه 6+8+6 ساده ساده</option>
+            <option value="17" data-color="#c2f7ff">شیشه 4+10+6 ساده ساده</option>
+            <option value="18" data-color="#feffad">شیشه 6+10+4 ساده طلایی</option>
+            <option value="19" data-color="#ededed">شیشه 6+10+4 ساده سیلور</option>
+            <option value="20" data-color="#ffefc2">شیشه 6+10+4 ساده رفلکس برنز</option>
+            <option value="21" data-color="#f2f2f2">شیشه 6+10+4 ساده دودی لایت</option>
+            <option value="22" data-color="#e0e0e0">شیشه 6+10+4 ساده رفلکس دودی</option>
+            <option value="23" data-color="#fff4d6">شیشه 6+10+4 ساده برنز لایت</option>
+            <option value="24" data-color="#f4ebf1">شیشه 6+10+4 سکوریت ساده</option>
+            <option value="25" data-color="#f9dbff">شیشه 6+8+6 سکوریت سکوریت</option>
+            <option value="26" data-color="#fafafa">شیشه 4+12+4 آیینه آیینه</option>
+            <option value="27" data-color="#dbfffb">شیشه 4+12+4 سندبلاست ساده</option>
+            <option value="28" data-color="#fcfff0">شیشه 4+10+4 ساده ساده</option>
+            <option value="29" data-color="#fef5ff">شیشه 4-8-4 ساده ساده</option>
+            <option value="30" data-color="#f5f5f5">شیشه 4+12+4 ساده دودی</option>
+            <option value="31" data-color="#f4e0ff">شیشه 4+12+4 آینه ساتینا</option>
+            <option value="32" data-color="#e3eef2">شیشه 4+12+4 ساتینا ساتینا</option>
+            <option value="33" data-color="#e5e8ff">شیشه 4+12+4 ساده ساتینا</option>
+            <option value="34" data-color="#cbfbe2">شیشه 4+10+6 ساده ساده سوپرکلیر</option>
+            <option value="35" data-color="#e0ffee">شیشه 4+12+4 ساده مشجر</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newCount">تعداد</label>
+          <input id="newCount" class="wd-input-box" type="number" min="1" max="20" value="1" required>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newWidthClearance">عرض بادخور (سانتی‌متر)</label>
+          <input id="newWidthClearance" class="wd-input-box" type="number" min="0" max="6000" value="0" required>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="newHeightClearance">ارتفاع بادخور (سانتی‌متر)</label>
+          <input id="newHeightClearance" class="wd-input-box" type="number" min="0" max="6000" value="0" required>
+        </div>
+      </div>
+      <div class="wd-nonrect-layout">
+        <div class="shape-preview-box">
+          <img id="fullShapeView" class="shape-preview-image" src="./icons/shapes/rectangle.svg" alt="پیش‌نمایش" />
+          <div class="height-line-top"></div>
+          <div class="height-line-bottom"></div>
+          <div class="width-line-left"></div>
+          <div class="width-line-right"></div>
+          <input type="number" name="newWidth" id="newWidth" class="shape-dimension-input" placeholder="?"
+            value="1000" />
+          <input type="number" name="newHeight" id="newHeight" class="shape-dimension-input" placeholder="?"
+            value="1000" />
+        </div>
+      </div>
       <div class="dialog-actions">
-        <button value="cancel">انصراف</button>
-        <button id="createBtn" value="default" class="primary">ساخت</button>
+        <button type="button" id="cancelNew">انصراف</button>
+        <button type="submit" id="createBtn" class="primary">ساخت مستطیل</button>
       </div>
     </form>
   </dialog>
-  <dialog id="polygonDialog">
+  <style>
+    .shape-preview-box {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      min-height: 260px;
+      max-height: 260px;
+      box-sizing: border-box;
+      display: block;
+      overflow: visible;
+    }
+
+    .shape-preview-image {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 210px;
+      height: 210px;
+      transform: translate(-50%, -50%);
+      display: block;
+      object-fit: contain;
+      object-position: center center;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .shape-preview-box::before {
+      content: "";
+      position: absolute;
+      top: calc(50% - 95px);
+      bottom: calc(50% - 95px);
+      left: calc(50% - 145px);
+      width: 2px;
+      background: #000000;
+    }
+
+    .shape-preview-box::after {
+      content: "";
+      position: absolute;
+      left: calc(50% - 95px);
+      right: calc(50% - 95px);
+      top: calc(50% + 144px);
+      height: 2px;
+      background: #000000;
+    }
+
+    .shape-preview-box .height-line-top,
+    .shape-preview-box .height-line-bottom,
+    .shape-preview-box .width-line-left,
+    .shape-preview-box .width-line-right {
+      position: absolute;
+      background: #000000;
+    }
+
+    .shape-dimension-input {
+      position: absolute;
+      z-index: 10;
+      width: 70px;
+      height: 28px;
+      box-sizing: border-box;
+      padding: 2px 5px;
+      border: 1px solid #e5e7eb;
+      border-radius: 5px;
+      background: #ffffff;
+      color: #374151;
+      font-size: 11px;
+      font-family: inherit;
+      text-align: center;
+      outline: none;
+      margin: 0;
+    }
+
+    .shape-preview-box #newHeight {
+      top: 50%;
+      left: calc(50% - 145px);
+      transform: translate(-50%, -50%) rotate(-90deg);
+    }
+
+    .shape-preview-box #newWidth {
+      top: auto;
+      left: 50%;
+      bottom: 5px;
+      transform: translate(-50%, 50%);
+    }
+
+    .height-line-top,
+    .height-line-bottom {
+      position: absolute;
+      width: 12px;
+      height: 2px;
+      left: calc(50% - 151px);
+      background: #000000;
+    }
+
+    .shape-preview-box .height-line-top,
+    .shape-preview-box .height-line-bottom {
+      position: absolute;
+      width: 12px;
+      height: 2px;
+      left: calc(50% - 150px);
+      background: #000000;
+    }
+
+    .shape-preview-box .height-line-top {
+      top: calc(50% - 95px);
+    }
+
+    .shape-preview-box .height-line-bottom {
+      top: calc(50% + 95px);
+    }
+
+    .shape-preview-box .width-line-left,
+    .shape-preview-box .width-line-right {
+      position: absolute;
+      width: 1px;
+      height: 12px;
+      top: calc(50% + 139px);
+      background: #000000;
+    }
+
+    .shape-preview-box .width-line-left {
+      left: calc(50% - 95px);
+    }
+
+    .shape-preview-box .width-line-right {
+      left: calc(50% + 95px);
+    }
+
+    .height-line-top {
+      position: absolute;
+      width: 12px;
+      height: 2px;
+      left: calc(50% - 151px);
+      top: calc(50% - 120px);
+      background: #000000;
+    }
+
+    .height-line-bottom {
+      position: absolute;
+      width: 12px;
+      height: 2px;
+      left: calc(50% - 151px);
+      top: calc(50% + 120px);
+      background: #000000;
+    }
+
+    .width-line-left {
+      position: absolute;
+      width: 2px;
+      height: 12px;
+      left: calc(50% - 120px);
+      top: calc(50% + 139px);
+      background: #000000;
+    }
+
+    .width-line-right {
+      position: absolute;
+      width: 2px;
+      height: 12px;
+      left: calc(50% + 120px);
+      top: calc(50% + 139px);
+      background: #000000;
+    }
+
+    .shape-preview-box .height-line-bottom {
+      bottom: 25px;
+    }
+
+    .shape-preview-box .width-line-left,
+    .shape-preview-box .width-line-right {
+      position: absolute;
+      width: 2px;
+      height: 12px;
+      top: calc(50% + 139px);
+      background: #000000;
+    }
+
+    .shape-preview-box .width-line-left {
+      left: calc(50% - 95px);
+    }
+
+    .shape-preview-box .width-line-right {
+      left: calc(50% + 95px);
+    }
+
+    .shape-dimension-input:focus {
+      border-color: #2563eb;
+    }
+
+    .shape-corner-input {
+      position: absolute;
+      z-index: 11;
+      width: 50px;
+      height: 26px;
+      box-sizing: border-box;
+      padding: 2px 5px;
+      border: 1px solid #e5e7eb;
+      border-radius: 5px;
+      background: #ffffff;
+      color: #374151;
+      font-size: 11px;
+      font-family: inherit;
+      text-align: center;
+      outline: none;
+      margin: 0;
+    }
+
+    .shape-preview-box #a,
+    .shape-preview-box #b,
+    .shape-preview-box #c,
+    .shape-preview-box #d {
+      position: absolute;
+    }
+
+    #newDialog .wd-nonrect-layout {
+      width: 100%;
+      margin: 35px 0 45px;
+      padding: 10px 0;
+      display: flex;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    #newDialog .shape-preview-box {
+      width: 100%;
+      max-width: 420px;
+      height: 300px;
+      min-height: 300px;
+      margin: 0 auto;
+    }
+
+    #newDialog .shape-preview-image {
+      max-width: 210px;
+      max-height: 210px;
+    }
+
+    #newDialog .dialog-actions {
+      margin-top: 20px;
+    }
+
+    @media (max-width: 520px) {
+      #newDialog .wd-nonrect-layout {
+        margin: 30px 0 40px;
+      }
+
+      #newDialog .shape-preview-box {
+        height: 300px;
+        min-height: 300px;
+      }
+
+      #newDialog .dialog-actions {
+        margin-top: 15px;
+      }
+    }
+  </style>
+  <dialog id="polygonDialog" class="tool-dialog">
     <form id="polygonForm">
-      <h2>ساخت شکل هندسی</h2>
-      <label>نوع شکل
-        <select id="shapeType">
-          <option value="triangle">مثلث</option>
-          <option value="triangle-inverted">مثلث برعکس</option>
-          <option value="circle">دایره</option>
-          <option value="ellipse">بیضی</option>
-          <option value="trapezoid">ذوزنقه</option>
-          <option value="trapezoid-inverted">ذوزنقه برعکس</option>
-          <option value="parallelogram">متوازی‌الاضلاع</option>
-          <option value="parallelogram-inverted">متوازی‌الاضلاع برعکس</option>
-          <option value="rhombus">لوزی</option>
-          <option value="pentagon">پنج‌ضلعی</option>
-          <option value="hexagon">شش‌ضلعی</option>
-          <option value="heptagon">هفت‌ضلعی</option>
-          <option value="octagon">هشت‌ضلعی</option>
-        </select>
-      </label>
-      <label>عرض (سانتی‌متر)
-        <input id="shapeWidth" type="number" min="30" max="6000" value="200" required>
-      </label>
-      <label>ارتفاع (سانتی‌متر)
-        <input id="shapeHeight" type="number" min="30" max="6000" value="150" required>
-      </label>
-      <label>تعداد
-        <input id="shapeCount" type="number" min="1" max="20" value="1" required>
-      </label>
+      <div class="dialog-header">
+        <h2>ساخت شکل هندسی</h2>
+        <button type="button" class="close-dialog" data-close>×</button>
+      </div>
+      <div class="wd-form-grid">
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonItemNumber">شماره آیتم</label>
+          <input type="text" id="polygonItemNumber" class="wd-input-box" placeholder="مثال: 101">
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonItemName">نام آیتم</label>
+          <input type="text" id="polygonItemName" class="wd-input-box" placeholder="مثال: پنجره دو لنگه">
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonInstallationCode">کد نصب</label>
+          <input type="text" id="polygonInstallationCode" class="wd-input-box" placeholder="مثال: INS-101">
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonSystem">سیستم</label>
+          <select id="polygonSystem" class="wd-select-box">
+            <option value="UPVC">UPVC</option>
+            <option value="Al">AL</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonProfileId">پروفیل</label>
+          <select id="polygonProfileId" class="wd-select-box">
+            <option value="4" data-system="UPVC" data-width="60">وینتک سری 640 / لولایی</option>
+            <option value="112" data-system="UPVC" data-width="60">بوتیا لولایی 2500</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonProfileColor">رنگ</label>
+          <select id="polygonProfileColor" class="wd-select-box">
+            <option value="1" data-system="UPVC" data-hex="#ffffff">سفید</option>
+            <option value="2" data-system="UPVC" data-hex="#fffcd6">داخل رنگ</option>
+            <option value="4" data-system="UPVC" data-hex="#b3ff00">بیرون رنگ</option>
+            <option value="5" data-system="UPVC" data-hex="#9c590d">داخل لمینت</option>
+            <option value="6" data-system="UPVC" data-hex="#ffbb00">بیرون لمینت</option>
+            <option value="7" data-system="UPVC" data-hex="#fbdbff">تمام رنگ</option>
+            <option value="8" data-system="Al" data-hex="#ffffff">پودری</option>
+            <option value="9" data-system="UPVC" data-hex="#b0a100">دو طرف لمینت</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonAccessoryId">یراق</label>
+          <select id="polygonAccessoryId" class="wd-select-box">
+            <option value="11" data-system="UPVC">آکادو Accado</option>
+            <option value="112" data-system="UPVC">GU</option>
+            <option value="114" data-system="Al">یراق آلومینیوم</option>
+            <option value="120" data-system="UPVC">اندو Endow</option>
+            <option value="121" data-system="UPVC">ویناک Winac</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonGlassId">شیشه</label>
+          <select id="polygonGlassId" class="wd-select-box">
+            <option value="1" data-color="#8acde8">شیشه 4+12+4 ساده ساده</option>
+            <option value="9" data-color="#c9c9c9">شیشه 4+12+4 ساده سیلور</option>
+            <option value="10" data-color="#f1f1f1">شیشه 4+12+4 آیینه مشجر</option>
+            <option value="11" data-color="#fdffeb">شیشه 4+12+4 مشجر مشجر</option>
+            <option value="13" data-color="#fffdcc">شیشه 4+12+4 ساده طلایی</option>
+            <option value="14" data-color="#777777">شیشه 4+12+4 رفلکس دودی</option>
+            <option value="15" data-color="#c98f72">شیشه 4+12+4 ساده برنز لایت</option>
+            <option value="16" data-color="#e5ffff">شیشه 6+8+6 ساده ساده</option>
+            <option value="17" data-color="#c2f7ff">شیشه 4+10+6 ساده ساده</option>
+            <option value="18" data-color="#feffad">شیشه 6+10+4 ساده طلایی</option>
+            <option value="19" data-color="#ededed">شیشه 6+10+4 ساده سیلور</option>
+            <option value="20" data-color="#ffefc2">شیشه 6+10+4 ساده رفلکس برنز</option>
+            <option value="21" data-color="#f2f2f2">شیشه 6+10+4 ساده دودی لایت</option>
+            <option value="22" data-color="#e0e0e0">شیشه 6+10+4 ساده رفلکس دودی</option>
+            <option value="23" data-color="#fff4d6">شیشه 6+10+4 ساده برنز لایت</option>
+            <option value="24" data-color="#f4ebf1">شیشه 6+10+4 سکوریت ساده</option>
+            <option value="25" data-color="#f9dbff">شیشه 6+8+6 سکوریت سکوریت</option>
+            <option value="26" data-color="#fafafa">شیشه 4+12+4 آیینه آیینه</option>
+            <option value="27" data-color="#dbfffb">شیشه 4+12+4 سندبلاست ساده</option>
+            <option value="28" data-color="#fcfff0">شیشه 4+10+4 ساده ساده</option>
+            <option value="29" data-color="#fef5ff">شیشه 4-8-4 ساده ساده</option>
+            <option value="30" data-color="#f5f5f5">شیشه 4+12+4 ساده دودی</option>
+            <option value="31" data-color="#f4e0ff">شیشه 4+12+4 آینه ساتینا</option>
+            <option value="32" data-color="#e3eef2">شیشه 4+12+4 ساتینا ساتینا</option>
+            <option value="33" data-color="#e5e8ff">شیشه 4+12+4 ساده ساتینا</option>
+            <option value="34" data-color="#cbfbe2">شیشه 4+10+6 ساده ساده سوپرکلیر</option>
+            <option value="35" data-color="#e0ffee">شیشه 4+12+4 ساده مشجر</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonShapeType">نوع شکل</label>
+          <select id="polygonShapeType" class="wd-select-box">
+            <option value="triangle">مثلث</option>
+            <option value="triangle-inverted">مثلث برعکس</option>
+            <option value="circle">دایره</option>
+            <option value="ellipse">بیضی</option>
+            <option value="trapezoid">ذوزنقه</option>
+            <option value="trapezoid-inverted">ذوزنقه برعکس</option>
+            <option value="parallelogram">متوازی‌الاضلاع</option>
+            <option value="parallelogram-inverted">متوازی‌الاضلاع برعکس</option>
+            <option value="rhombus">لوزی</option>
+            <option value="pentagon">پنج‌ضلعی</option>
+            <option value="hexagon">شش‌ضلعی</option>
+            <option value="heptagon">هفت‌ضلعی</option>
+            <option value="octagon">هشت‌ضلعی</option>
+          </select>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonShapeWidth">عرض (سانتی‌متر)</label>
+          <input id="polygonShapeWidth" class="wd-input-box" type="number" min="30" max="6000" value="200" required>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonShapeHeight">ارتفاع (سانتی‌متر)</label>
+          <input id="polygonShapeHeight" class="wd-input-box" type="number" min="30" max="6000" value="150" required>
+        </div>
+        <div class="wd-form-line">
+          <label class="wd-form-label" for="polygonShapeCount">تعداد</label>
+          <input id="polygonShapeCount" class="wd-input-box" type="number" min="1" max="20" value="1" required>
+        </div>
+      </div>
       <div class="dialog-actions">
         <button type="button" id="cancelPolygon">انصراف</button>
         <button type="submit" class="primary">ساخت شکل</button>
       </div>
     </form>
   </dialog>
-  <dialog id="sideFrameDialog">
+  <dialog id="sideFrameDialog" class="tool-dialog">
     <form id="sideFrameForm">
-      <h2>افزودن فریم کناری</h2>
-      <label>
-        عرض (سانتی‌متر)
-        <input id="sideFrameWidth" type="number" min="30" max="6000" value="500" required>
-      </label>
-      <label>
-        ارتفاع (سانتی‌متر)
-        <input id="sideFrameHeight" type="number" min="30" max="6000" value="1000" required>
-      </label>
-      <label>
-        جهت فریم
-        <select id="sideFrameDirection">
+      <div class="dialog-header">
+        <h2>افزودن فریم کناری</h2><button type="button" class="close-dialog" data-close>×</button>
+      </div>
+      <label>عرض (سانتی‌متر)<input id="sideFrameWidth" type="number" min="30" max="6000" value="500" required></label>
+      <label>ارتفاع (سانتی‌متر)<input id="sideFrameHeight" type="number" min="30" max="6000" value="1000"
+          required></label>
+      <label>جهت فریم<select id="sideFrameDirection">
           <option value="right">سمت راست</option>
           <option value="bottom">پایین</option>
-        </select>
-      </label>
-      <div class="dialog-actions">
-        <button type="button" id="cancelSideFrameBtn">لغو</button>
-        <button type="submit" class="primary">افزودن</button>
-      </div>
+        </select></label>
+      <div class="dialog-actions"><button type="button" id="cancelSideFrameBtn">لغو</button><button type="submit"
+          class="primary">افزودن</button></div>
     </form>
   </dialog>
-  <script src="app.js"></script>
+  <script src="./js/app.js"></script>
 </body>
 
 </html>

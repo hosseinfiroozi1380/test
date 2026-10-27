@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Preview parallelogram right">
+  <polygon points="10,10 175,10 190,190 25,190" fill="white" stroke="#888" stroke-width="0.5"/>
+  <polygon points="24,22 163,22 176,178 37,178" fill="#8acde8" stroke="#888" stroke-width="0.5"/>
+  <path d="M10 10 L24 22 M175 10 L163 22 M25 190 L37 178 M190 190 L176 178" fill="none" stroke="#888" stroke-width="0.5"/>
+</svg>

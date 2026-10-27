@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Preview polygon">
+  <polygon points="100,12 185,72 153,180 47,180 15,72" fill="white" stroke="#888" stroke-width="0.5"/>
+  <polygon points="100,27 171,77 143,168 57,168 29,77" fill="#8acde8" stroke="#888" stroke-width="0.5"/>
+  <path d="M100 12 L100 27 M185 72 L171 77 M153 180 L143 168 M47 180 L57 168 M15 72 L29 77" fill="none" stroke="#888" stroke-width="0.5"/>
+</svg>

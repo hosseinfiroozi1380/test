@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Preview two vertical mullions">
+  <rect x="10" y="10" width="180" height="180" fill="#e0e0e0" stroke="#000" stroke-width="0.8"/>
+  <rect x="20" y="20" width="160" height="160" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <rect x="67" y="20" width="12" height="160" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="121" y="20" width="12" height="160" fill="white" stroke="#000" stroke-width="0.8"/>
+  <path d="M10 10 L20 20
+           M190 10 L180 20
+           M10 190 L20 180
+           M190 190 L180 180" fill="none" stroke="#000" stroke-width="0.8"/>
+</svg>

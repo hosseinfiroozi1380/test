@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" width="60" height="60" aria-label="Preview trapezoid">
+  <path d="M30 10 L170 10 L190 130 L10 130 Z" fill="white" stroke="#000" stroke-width="0.8"/>
+  <path d="M38 20 L162 20 L179 120 L21 120 Z" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <path d="M30 10 L38 20
+           M170 10 L162 20
+           M10 130 L21 120
+           M190 130 L179 120" fill="none" stroke="#000" stroke-width="0.8"/>
+</svg>

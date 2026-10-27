@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 200 200"
+     width="60"
+     height="60"
+     aria-label="Preview rectangle diagonal top">
+
+  <rect x="10" y="10" width="180" height="180"
+        fill="white"
+        stroke="#000"
+        stroke-width="0.8"/>
+
+  <rect x="20" y="20" width="160" height="160"
+        fill="#8acde8"
+        stroke="#000"
+        stroke-width="0.8"/>
+
+  <!-- دستگیره داخل فریم، کنار مرز بالایی -->
+  <rect x="80" y="10" width="40" height="14"
+        fill="#555"/>
+
+  <!-- لولاها پایین -->
+  <rect x="25" y="180" width="20" height="8" rx="2" fill="#555"/>
+  <rect x="155" y="180" width="20" height="8" rx="2" fill="#555"/>
+
+  <!-- گوشه‌های قاب -->
+  <path d="M10 10 L20 20
+           M190 10 L180 20
+           M10 190 L20 180
+           M190 190 L180 180"
+        fill="none"
+        stroke="#000"
+        stroke-width="0.8"/>
+
+  <!-- بازشو به سمت بالا -->
+  <path d="M20 180 L100 24
+           M180 180 L100 24"
+        fill="none"
+        stroke="#0611dd"
+        stroke-width="1.2"/>
+
+</svg>

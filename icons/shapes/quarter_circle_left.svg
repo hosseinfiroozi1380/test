@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Preview quarter circle">
+  <path d="M 10 190
+    A 180 180 0 0 1 190 10
+    L 190 190
+    Z" fill="white" stroke="#888" stroke-width="0.5"/>
+  <path d="M 24 176
+    A 166 166 0 0 1 176 24
+    L 176 176
+    Z" fill="#8acde8" stroke="#888" stroke-width="0.5"/>
+  <path d="M10 190 L24 176 M190 10 L176 24 M190 190 L176 176" fill="none" stroke="#888" stroke-width="0.5"/>
+</svg>

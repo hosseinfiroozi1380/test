@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Four separate framed squares">
+  <rect x="10" y="10" width="85" height="85" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="20" y="20" width="65" height="65" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <rect x="105" y="10" width="85" height="85" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="115" y="20" width="65" height="65" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <rect x="10" y="105" width="85" height="85" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="20" y="115" width="65" height="65" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <rect x="105" y="105" width="85" height="85" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="115" y="115" width="65" height="65" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <path d="M10 10 L20 20
+           M95 10 L85 20
+           M10 95 L20 85
+           M95 95 L85 85" fill="none" stroke="#000" stroke-width="0.8"/>
+  <path d="M105 10 L115 20
+           M190 10 L180 20
+           M105 95 L115 85
+           M190 95 L180 85" fill="none" stroke="#000" stroke-width="0.8"/>
+  <path d="M10 105 L20 115
+           M95 105 L85 115
+           M10 190 L20 180
+           M95 190 L85 180" fill="none" stroke="#000" stroke-width="0.8"/>
+  <path d="M105 105 L115 115
+           M190 105 L180 115
+           M105 190 L115 180
+           M190 190 L180 180" fill="none" stroke="#000" stroke-width="0.8"/>
+</svg>

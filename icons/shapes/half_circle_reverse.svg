@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Preview half circle reverse">
+  <path d="M 15 100
+    A 85 85 0 0 0 185 100
+    L 185 85
+    L 15 85
+    Z" fill="white" stroke="#888" stroke-width="0.5"/>
+
+  <path d="M 28 100
+    A 72 72 0 0 0 172 100
+    L 172 98
+    L 28 98
+    Z" fill="#8acde8" stroke="#888" stroke-width="0.5"/>
+
+  <path d="M15 85 L28 98 M185 85 L172 98"
+    fill="none" stroke="#888" stroke-width="0.5"/>
+</svg>

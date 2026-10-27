@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Two tall framed squares side by side">
+  <rect x="10" y="10" width="85" height="180" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="20" y="20" width="65" height="160" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <rect x="95" y="10" width="85" height="180" fill="white" stroke="#000" stroke-width="0.8"/>
+  <rect x="105" y="20" width="65" height="160" fill="#8acde8" stroke="#000" stroke-width="0.8"/>
+  <path d="M10 10 L20 20
+           M95 10 L85 20
+           M10 190 L20 180
+           M95 190 L85 180" fill="none" stroke="#000" stroke-width="0.8"/>
+  <path d="M95 10 L105 20
+           M180 10 L170 20
+           M95 190 L105 180
+           M180 190 L170 180" fill="none" stroke="#000" stroke-width="0.8"/>
+</svg>

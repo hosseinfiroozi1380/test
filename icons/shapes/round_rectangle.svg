@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="60" height="60" aria-label="Preview round rectangle">
+  <rect x="10" y="10" width="180" height="180" rx="30" fill="white" stroke="#888" stroke-width="0.5"/>
+  <rect x="24" y="24" width="152" height="152" rx="19" fill="#8acde8" stroke="#888" stroke-width="0.5"/>
+  <path d="M10 40 L24 43 M10 160 L24 157 M190 40 L176 43 M190 160 L176 157" fill="none" stroke="#888" stroke-width="0.5"/>
+</svg>

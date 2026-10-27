@@ -54,40 +54,82 @@
     let dialog = $('dimensionDialog');
     if (!dialog) {
       document.body.insertAdjacentHTML('beforeend', `
-      <dialog id="dimensionDialog" class="dimension-dialog">
-        <form id="dimensionForm">
-          <h3 id="dimensionTitle">ویرایش اندازه</h3>
-          <label for="dimensionValue">مقدار جدید</label>
-          <input id="dimensionValue" type="number" min="1" max="6000" required>
-          <div class="dimension-actions">
-            <button type="submit" class="primary">تغییر</button>
-            <button type="button" id="cancelDimension">لغو</button>
-          </div>
-        </form>
-      </dialog>
-    `);
+      <dialog id="dimensionDialog" class="tool-dialog dimension-dialog">
+          <form id="dimensionForm">
+            <div class="dialog-header">
+              <h2 id="dimensionTitle">ویرایش اندازه</h2>
+              <button type="button" class="close-dialog" id="cancelDimension">×</button>
+            </div>
+            <div class="wd-form-grid">
+              <div class="wd-form-line">
+                <label class="wd-form-label" for="dimensionValue">مقدار جدید (سانتی‌متر)</label>
+                <input id="dimensionValue" class="wd-input-box" type="text"
+                  inputmode="none" autocomplete="off" readonly required>
+                <div class="numeric-keyboard" id="numericKeyboard">
+                  <button type="button" data-num="1">۱</button>
+                  <button type="button" data-num="2">۲</button>
+                  <button type="button" data-num="3">۳</button>
+                  <button type="button" data-num="4">۴</button>
+                  <button type="button" data-num="5">۵</button>
+                  <button type="button" data-num="6">۶</button>
+                  <button type="button" data-num="7">۷</button>
+                  <button type="button" data-num="8">۸</button>
+                  <button type="button" data-num="9">۹</button>
+                  <button type="button" data-action="clear">پاک</button>
+                  <button type="button" data-num="0">۰</button>
+                  <button type="button" data-action="backspace">⌫</button>
+                </div>
+              </div>
+            </div>
+            <div class="dialog-actions">
+              <button type="button" id="cancelDimensionBtn">انصراف</button>
+              <button type="submit" class="primary">تغییر</button>
+            </div>
+          </form>
+        </dialog>
+      `);
+      dialog = $('dimensionDialog');
       $('cancelDimension').addEventListener('click', () => {
         $('dimensionDialog').close();
       });
+      $('cancelDimensionBtn').addEventListener('click', () => {
+        $('dimensionDialog').close();
+      });
+      $('numericKeyboard').addEventListener('click', e => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        const input = $('dimensionValue');
+
+        if (btn.dataset.num !== undefined) {
+          input.value += btn.dataset.num;
+        } else if (btn.dataset.action === 'clear') {
+          input.value = '';
+        } else if (btn.dataset.action === 'backspace') {
+          input.value = input.value.slice(0, -1);
+        }
+
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
       $('dimensionForm').addEventListener('submit', e => {
         e.preventDefault();
-        const value = Number($('dimensionValue').value);
+        const newValue = Number($('dimensionValue').value);
         const edit = state.editingDimension;
-        if (!edit || !Number.isFinite(value) || value < 1 || value > 6000) {
+        if (!edit || !Number.isFinite(newValue) || newValue < 1 || newValue > 6000) {
           alert('عدد باید بین ۱ تا ۶۰۰۰ باشد.');
           return;
         }
         saveHistory();
         if (edit.type === 'width') {
-          state.width = value;
+          state.width = newValue;
         } else if (edit.type === 'height') {
-          state.height = value;
+          state.height = newValue;
         } else if (edit.type === 'column') {
           const items = [...state.mullions].sort((a, b) => a.pos - b.pos);
           const bounds = [0, ...items.map(m => m.pos), 1];
           const i = edit.index;
           const minGap = 0.04;
-          const size = value / state.width;
+          const size = newValue / state.width;
           if (i < items.length) {
             const min = bounds[i] + minGap;
             const max = bounds[i + 2] - minGap;
@@ -112,7 +154,7 @@
           const bounds = [0, ...items.map(m => m.pos), 1];
           const i = edit.index;
           const minGap = 0.04;
-          const size = value / state.height;
+          const size = newValue / state.height;
           if (i < items.length) {
             const min = bounds[i] + minGap;
             const max = bounds[i + 2] - minGap;
@@ -145,11 +187,23 @@
       height: 'ویرایش ارتفاع کل',
       column: 'ویرایش عرض ستون',
       row: 'ویرایش ارتفاع ردیف'
-    }[type];
+    }[type] || 'ویرایش اندازه';
     $('dimensionValue').value = Math.round(value);
-    $('dimensionDialog').showModal();
+    activePointers.clear();
+    panStart = null;
+    pinchStart = null;
+    state.drag = null;
+    if (!dialog.open) {
+      dialog.showModal();
+    }
     $('dimensionValue').focus();
   }
+  document.addEventListener('click', function (e) {
+    const dialog = $('dimensionDialog');
+    if (dialog?.open && e.target === dialog) {
+      dialog.close();
+    }
+  });
   function dimensionText(value, x, y, size, type, index = null) {
     text(en(value), x, y, size);
     dimensionLabels.push({
@@ -218,8 +272,8 @@
   function geom() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
-    const padX = Math.min(115, w * .2);
-    const padY = Math.min(90, h * .16);
+    const padX = Math.min(160, w * .25);
+    const padY = Math.min(130, h * .22);
     const side = state.sideFrames[0] || null;
     const gap = side ? 70 : 0;
     const totalWidth = side
@@ -357,8 +411,14 @@
     };
   }
   function getCellAt(gp) {
-    const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
-    const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+    const vertical = state.mullions.filter(m => {
+      const range = getMullionRange(m, 'vertical');
+      return gp.y >= range.first - 0.0001 && gp.y <= range.last + 0.0001;
+    }).sort((a, b) => a.pos - b.pos);
+    const horizontal = state.horizontalMullions.filter(m => {
+      const range = getMullionRange(m, 'horizontal');
+      return gp.x >= range.first - 0.0001 && gp.x <= range.last + 0.0001;
+    }).sort((a, b) => a.pos - b.pos);
     let col = vertical.findIndex(m => gp.x < m.pos);
     if (col === -1) col = vertical.length;
     let row = horizontal.findIndex(m => gp.y < m.pos);
@@ -369,6 +429,61 @@
       topId: row === 0 ? null : horizontal[row - 1].id,
       bottomId: row === horizontal.length ? null : horizontal[row].id
     };
+  }
+  function getMullionRange(m, axis) {
+    const vertical = axis === 'vertical';
+    const firstKey = vertical ? 'topId' : 'leftId';
+    const lastKey = vertical ? 'bottomId' : 'rightId';
+    const list = vertical ? state.horizontalMullions : state.mullions;
+    const oldFirst = vertical ? 'y1' : 'x1';
+    const oldLast = vertical ? 'y2' : 'x2';
+    const getPos = (id, fallback) => {
+      if (id == null) return fallback;
+      const item = list.find(v => v.id === id);
+      return item ? item.pos : fallback;
+    };
+    let first = Object.prototype.hasOwnProperty.call(m, firstKey)
+      ? getPos(m[firstKey], 0)
+      : Number.isFinite(m[oldFirst]) ? m[oldFirst] : 0;
+    let last = Object.prototype.hasOwnProperty.call(m, lastKey)
+      ? getPos(m[lastKey], 1)
+      : Number.isFinite(m[oldLast]) ? m[oldLast] : 1;
+    const inner = getInner();
+    const g = geom();
+    const half = Math.max(3, state.mullionWidth * g.scale) / 2;
+    if (!vertical) {
+      if (m[firstKey] != null) {
+        const edge = list.find(v => v.id === m[firstKey]);
+        if (edge) first += half / inner.w;
+      }
+      if (m[lastKey] != null) {
+        const edge = list.find(v => v.id === m[lastKey]);
+        if (edge) last -= half / inner.w;
+      }
+    } else {
+      if (m[firstKey] != null) {
+        const edge = list.find(v => v.id === m[firstKey]);
+        if (edge) first += half / inner.h;
+      }
+      if (m[lastKey] != null) {
+        const edge = list.find(v => v.id === m[lastKey]);
+        if (edge) last -= half / inner.h;
+      }
+    }
+    return {
+      first: Math.min(first, last),
+      last: Math.max(first, last)
+    };
+  }
+  function verticalMullionCoversRow(m, top, bottom) {
+    const range = getMullionRange(m, 'vertical');
+    const middle = (top + bottom) / 2;
+    return middle >= range.first - 0.0001 && middle <= range.last + 0.0001;
+  }
+  function horizontalMullionCoversColumn(m, left, right) {
+    const range = getMullionRange(m, 'horizontal');
+    const middle = (left + right) / 2;
+    return middle >= range.first - 0.0001 && middle <= range.last + 0.0001;
   }
   function sameCell(a, b) {
     return a.leftId === b.leftId &&
@@ -443,6 +558,63 @@
     }
     return result;
   }
+  function getInsetPointsSelective(points, inset, rect, edges) {
+    if (!points || points.length < 3) return [];
+    const n = points.length;
+    let area = 0;
+    for (let i = 0; i < n; i++) {
+      const a = points[i], b = points[(i + 1) % n];
+      area += a.x * b.y - b.x * a.y;
+    }
+    const orientation = area >= 0 ? 1 : -1;
+    const lines = [];
+    const tolerance = 0.75;
+    for (let i = 0; i < n; i++) {
+      const a = points[i], b = points[(i + 1) % n];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const length = Math.hypot(dx, dy) || 1;
+      let amount = inset;
+      const onLeft = Math.abs(a.x - rect.left) < tolerance && Math.abs(b.x - rect.left) < tolerance;
+      const onRight = Math.abs(a.x - rect.right) < tolerance && Math.abs(b.x - rect.right) < tolerance;
+      const onTop = Math.abs(a.y - rect.top) < tolerance && Math.abs(b.y - rect.top) < tolerance;
+      const onBottom = Math.abs(a.y - rect.bottom) < tolerance && Math.abs(b.y - rect.bottom) < tolerance;
+      if ((onLeft && !edges.left) || (onRight && !edges.right) ||
+        (onTop && !edges.top) || (onBottom && !edges.bottom)) amount = 0;
+      const nx = orientation * -dy / length;
+      const ny = orientation * dx / length;
+      lines.push({ x: a.x + nx * amount, y: a.y + ny * amount, dx, dy });
+    }
+    const result = [];
+    for (let i = 0; i < n; i++) {
+      const prev = lines[(i + n - 1) % n], curr = lines[i];
+      const cross = prev.dx * curr.dy - prev.dy * curr.dx;
+      if (Math.abs(cross) < 0.000001) {
+        result.push({ x: curr.x, y: curr.y });
+        continue;
+      }
+      const qx = curr.x - prev.x, qy = curr.y - prev.y;
+      const factor = (qx * curr.dy - qy * curr.dx) / cross;
+      result.push({ x: prev.x + factor * prev.dx, y: prev.y + factor * prev.dy });
+    }
+    return result;
+  }
+  function strokePaneEdges(points, rect, edges) {
+    if (!points || points.length < 2) return;
+    const tolerance = 0.75;
+    ctx.beginPath();
+    for (let i = 0; i < points.length; i++) {
+      const a = points[i], b = points[(i + 1) % points.length];
+      const onLeft = Math.abs(a.x - rect.left) < tolerance && Math.abs(b.x - rect.left) < tolerance;
+      const onRight = Math.abs(a.x - rect.right) < tolerance && Math.abs(b.x - rect.right) < tolerance;
+      const onTop = Math.abs(a.y - rect.top) < tolerance && Math.abs(b.y - rect.top) < tolerance;
+      const onBottom = Math.abs(a.y - rect.bottom) < tolerance && Math.abs(b.y - rect.bottom) < tolerance;
+      if ((onLeft && !edges.left) || (onRight && !edges.right) ||
+        (onTop && !edges.top) || (onBottom && !edges.bottom)) continue;
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
+    ctx.stroke();
+  }
   function traceShape(type, x, y, w, h, inset = 0) {
     ctx.beginPath();
     if (type === 'circle') {
@@ -492,22 +664,129 @@
   }
   function ensureShapeDialog() {
     if (!$('polygonDialog')) document.body.insertAdjacentHTML('beforeend', `
-      <dialog id="polygonDialog" class="dimension-dialog">
+      <dialog id="polygonDialog" class="tool-dialog">
         <form id="polygonForm">
-          <h3>ساخت شکل غیرمستطیل</h3>
-          <label for="shapeType">نوع شکل</label>
-          <select id="shapeType">
-            <option value="triangle">مثلث</option><option value="triangle-inverted">مثلث وارونه</option>
-            <option value="circle">دایره</option><option value="ellipse">بیضی</option>
-            <option value="trapezoid">ذوزنقه</option><option value="trapezoid-inverted">ذوزنقه وارونه</option>
-            <option value="parallelogram">متوازی‌الاضلاع</option><option value="parallelogram-inverted">متوازی‌الاضلاع وارونه</option>
-            <option value="rhombus">لوزی</option><option value="pentagon">پنج‌ضلعی</option>
-            <option value="hexagon">شش‌ضلعی</option><option value="heptagon">هفت‌ضلعی</option><option value="octagon">هشت‌ضلعی</option>
-          </select>
-          <label for="shapeWidth">عرض</label><input id="shapeWidth" type="number" min="30" max="6000" value="200" required>
-          <label for="shapeHeight">ارتفاع</label><input id="shapeHeight" type="number" min="30" max="6000" value="150" required>
-          <label for="shapeCount">تعداد</label><input id="shapeCount" type="number" min="1" max="20" value="1" required>
-          <div class="dimension-actions"><button type="submit" class="primary">نمایش در کانواس</button><button type="button" id="cancelPolygon">لغو</button></div>
+          <div class="dialog-header">
+            <h2>ساخت شکل هندسی</h2>
+            <button type="button" class="close-dialog" data-close>×</button>
+          </div>
+          <div class="wd-form-grid">
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonItemNumber">شماره آیتم</label>
+              <input id="polygonItemNumber" class="wd-input-box" placeholder="مثال: 101">
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonItemName">نام آیتم</label>
+              <input id="polygonItemName" class="wd-input-box" placeholder="مثال: پنجره دو لنگه">
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonInstallationCode">کد نصب</label>
+              <input id="polygonInstallationCode" class="wd-input-box" placeholder="مثال: INS-101">
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonSystem">سیستم</label>
+              <select id="polygonSystem" class="wd-select-box">
+                <option value="UPVC">UPVC</option>
+                <option value="Al">AL</option>
+              </select>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonProfileId">پروفیل</label>
+              <select id="polygonProfileId" class="wd-select-box">
+                <option value="4" data-system="UPVC" data-width="60">وینتک سری 640 / لولایی</option>
+                <option value="112" data-system="UPVC" data-width="60">بوتیا لولایی 2500</option>
+              </select>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonProfileColor">رنگ</label>
+              <select id="polygonProfileColor" class="wd-select-box">
+                <option value="1" data-system="UPVC" data-hex="#ffffff">سفید</option>
+                <option value="2" data-system="UPVC" data-hex="#fffcd6">داخل رنگ</option>
+                <option value="4" data-system="UPVC" data-hex="#b3ff00">بیرون رنگ</option>
+                <option value="5" data-system="UPVC" data-hex="#9c590d">داخل لمینت</option>
+                <option value="6" data-system="UPVC" data-hex="#ffbb00">بیرون لمینت</option>
+                <option value="7" data-system="UPVC" data-hex="#fbdbff">تمام رنگ</option>
+                <option value="8" data-system="Al" data-hex="#ffffff">پودری</option>
+                <option value="9" data-system="UPVC" data-hex="#b0a100">دو طرف لمینت</option>
+              </select>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonAccessoryId">یراق</label>
+              <select id="polygonAccessoryId" class="wd-select-box">
+                <option value="11" data-system="UPVC">آکادو Accado</option>
+                <option value="112" data-system="UPVC">GU</option>
+                <option value="114" data-system="Al">یراق آلومینیوم</option>
+                <option value="120" data-system="UPVC">اندو Endow</option>
+                <option value="121" data-system="UPVC">ویناک Winac</option>
+              </select>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonGlassId">شیشه</label>
+              <select id="polygonGlassId" class="wd-select-box">
+                <option value="1" data-color="#8acde8">شیشه 4+12+4 ساده ساده</option>
+                <option value="9" data-color="#c9c9c9">شیشه 4+12+4 ساده سیلور</option>
+                <option value="10" data-color="#f1f1f1">شیشه 4+12+4 آیینه مشجر</option>
+                <option value="11" data-color="#fdffeb">شیشه 4+12+4 مشجر مشجر</option>
+                <option value="13" data-color="#fffdcc">شیشه 4+12+4 ساده طلایی</option>
+                <option value="14" data-color="#777777">شیشه 4+12+4 رفلکس دودی</option>
+                <option value="15" data-color="#c98f72">شیشه 4+12+4 ساده برنز لایت</option>
+                <option value="16" data-color="#e5ffff">شیشه 6+8+6 ساده ساده</option>
+                <option value="17" data-color="#c2f7ff">شیشه 4+10+6 ساده ساده</option>
+                <option value="18" data-color="#feffad">شیشه 6+10+4 ساده طلایی</option>
+                <option value="19" data-color="#ededed">شیشه 6+10+4 ساده سیلور</option>
+                <option value="20" data-color="#ffefc2">شیشه 6+10+4 ساده رفلکس برنز</option>
+                <option value="21" data-color="#f2f2f2">شیشه 6+10+4 ساده دودی لایت</option>
+                <option value="22" data-color="#e0e0e0">شیشه 6+10+4 ساده رفلکس دودی</option>
+                <option value="23" data-color="#fff4d6">شیشه 6+10+4 ساده برنز لایت</option>
+                <option value="24" data-color="#f4ebf1">شیشه 6+10+4 سکوریت ساده</option>
+                <option value="25" data-color="#f9dbff">شیشه 6+8+6 سکوریت سکوریت</option>
+                <option value="26" data-color="#fafafa">شیشه 4+12+4 آیینه آیینه</option>
+                <option value="27" data-color="#dbfffb">شیشه 4+12+4 سندبلاست ساده</option>
+                <option value="28" data-color="#fcfff0">شیشه 4+10+4 ساده ساده</option>
+                <option value="29" data-color="#fef5ff">شیشه 4-8-4 ساده ساده</option>
+                <option value="30" data-color="#f5f5f5">شیشه 4+12+4 ساده دودی</option>
+                <option value="31" data-color="#f4e0ff">شیشه 4+12+4 آینه ساتینا</option>
+                <option value="32" data-color="#e3eef2">شیشه 4+12+4 ساتینا ساتینا</option>
+                <option value="33" data-color="#e5e8ff">شیشه 4+12+4 ساده ساتینا</option>
+                <option value="34" data-color="#cbfbe2">شیشه 4+10+6 ساده ساده سوپرکلیر</option>
+                <option value="35" data-color="#e0ffee">شیشه 4+12+4 ساده مشجر</option>
+              </select>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonShapeType">نوع شکل</label>
+              <select id="polygonShapeType" class="wd-select-box">
+                <option value="triangle">مثلث</option>
+                <option value="triangle-inverted">مثلث برعکس</option>
+                <option value="circle">دایره</option>
+                <option value="ellipse">بیضی</option>
+                <option value="trapezoid">ذوزنقه</option>
+                <option value="trapezoid-inverted">ذوزنقه برعکس</option>
+                <option value="parallelogram">متوازی‌الاضلاع</option>
+                <option value="parallelogram-inverted">متوازی‌الاضلاع برعکس</option>
+                <option value="rhombus">لوزی</option>
+                <option value="pentagon">پنج‌ضلعی</option>
+                <option value="hexagon">شش‌ضلعی</option>
+                <option value="heptagon">هفت‌ضلعی</option>
+                <option value="octagon">هشت‌ضلعی</option>
+              </select>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonShapeWidth">عرض</label>
+              <input id="polygonShapeWidth" class="wd-input-box" type="number" min="30" max="6000" value="200" required>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonShapeHeight">ارتفاع</label>
+              <input id="polygonShapeHeight" class="wd-input-box" type="number" min="30" max="6000" value="150" required>
+            </div>
+            <div class="wd-form-line">
+              <label class="wd-form-label" for="polygonShapeCount">تعداد</label>
+              <input id="polygonShapeCount" class="wd-input-box" type="number" min="1" max="20" value="1" required>
+            </div>
+          </div>
+          <div class="dialog-actions">
+            <button type="button" id="cancelPolygon">انصراف</button>
+            <button type="submit" class="primary">ساخت شکل</button>
+          </div>
         </form>
       </dialog>`);
     let btn = $('polygonBtn');
@@ -515,25 +794,91 @@
       $('newBtn').insertAdjacentHTML('afterend', ' <button type="button" id="polygonBtn" class="primary">＋ غیرمستطیل</button>');
       btn = $('polygonBtn');
     }
+    const dialog = $('polygonDialog');
+    const form = $('polygonForm');
+    const $p = id => document.getElementById('polygon' + id);
     if (!btn || btn.dataset.shapeReady) return;
     btn.dataset.shapeReady = '1';
     btn.addEventListener('click', () => {
-      $('shapeWidth').value = state.width; $('shapeHeight').value = state.height; $('shapeCount').value = state.count;
-      $('shapeType').value = state.shape === 'rectangle' ? 'triangle' : state.shape;
-      $('polygonDialog').showModal();
+      const mainFields = {
+        ItemNumber: 'itemNumber',
+        ItemName: 'itemName',
+        InstallationCode: 'installationCode',
+        System: 'system',
+        ProfileId: 'profile_id',
+        ProfileColor: 'profile_color',
+        AccessoryId: 'accessory_id',
+        GlassId: 'glass_id'
+      };
+      Object.entries(mainFields).forEach(([target, source]) => {
+        const from = $(source);
+        const to = $p(target);
+        if (from && to) to.value = from.value;
+      });
+      $p('ShapeWidth').value = state.width;
+      $p('ShapeHeight').value = state.height;
+      $p('ShapeCount').value = state.count;
+      $p('ShapeType').value = state.shape === 'rectangle' ? 'triangle' : state.shape;
+      updatePolygonOptions();
+      dialog.showModal();
     });
-    $('cancelPolygon').addEventListener('click', () => $('polygonDialog').close());
-    $('polygonForm').addEventListener('submit', e => {
+    function updatePolygonOptions() {
+      const system = $p('System').value;
+      ['ProfileId', 'ProfileColor', 'AccessoryId'].forEach(name => {
+        const select = $p(name);
+        [...select.options].forEach(option => {
+          option.hidden = !!option.dataset.system && option.dataset.system !== system;
+        });
+        if (select.selectedOptions[0]?.hidden) {
+          const option = [...select.options].find(option => !option.hidden);
+          if (option) select.value = option.value;
+        }
+      });
+    }
+    $p('System').addEventListener('change', updatePolygonOptions);
+    dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
+    $('cancelPolygon').addEventListener('click', () => dialog.close());
+    form.addEventListener('submit', e => {
       e.preventDefault();
-      const w = Number($('shapeWidth').value), h = Number($('shapeHeight').value), c = Number($('shapeCount').value);
+      const w = Number($p('ShapeWidth').value);
+      const h = Number($p('ShapeHeight').value);
+      const c = Number($p('ShapeCount').value);
       if (![w, h, c].every(Number.isFinite) || w < 30 || h < 30 || w > 6000 || h > 6000 || c < 1 || c > 20) {
-        alert('عرض و ارتفاع باید بین ۳۰ تا ۶۰۰۰ و تعداد بین ۱ تا ۲۰ باشد.'); return;
+        alert('عرض و ارتفاع باید بین ۳۰ تا ۶۰۰۰ و تعداد بین ۱ تا ۲۰ باشد.');
+        return;
       }
+      const mainFields = {
+        ItemNumber: 'itemNumber',
+        ItemName: 'itemName',
+        InstallationCode: 'installationCode',
+        System: 'system',
+        ProfileId: 'profile_id',
+        ProfileColor: 'profile_color',
+        AccessoryId: 'accessory_id',
+        GlassId: 'glass_id'
+      };
+      Object.entries(mainFields).forEach(([source, target]) => {
+        const from = $p(source);
+        const to = $(target);
+        if (from && to) to.value = from.value;
+      });
       saveHistory();
-      state.width = w; state.height = h; state.count = Math.floor(c); state.shape = $('shapeType').value;
-      state.mullions = []; state.horizontalMullions = []; state.openings = []; state.selected = null; state.selectedPart = null;
-      state.zoom = 1; state.tool = 'select'; state.drag = null;
-      syncInputs(); renderSettings(); draw(); $('polygonDialog').close();
+      state.width = w;
+      state.height = h;
+      state.count = Math.floor(c);
+      state.shape = $p('ShapeType').value;
+      state.mullions = [];
+      state.horizontalMullions = [];
+      state.openings = [];
+      state.selected = null;
+      state.selectedPart = null;
+      state.zoom = 1;
+      state.tool = 'select';
+      state.drag = null;
+      syncInputs();
+      renderSettings();
+      draw();
+      dialog.close();
     });
   }
   function drawSideFrame() {
@@ -628,8 +973,7 @@
       h: Math.max(0, fh - 2 * t)
     };
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, w, h);
+    ctx.clearRect(0, 0, w, h);
     ctx.save();
     ctx.lineJoin = 'miter';
     drawWindow(g, inner);
@@ -648,10 +992,12 @@
       if (gp && (state.tool === 'mullion' || state.tool === 'horizontalMullion')) {
         const cell = getCellAt(gp);
         const vertical = state.tool === 'mullion';
-        const pos = vertical
-          ? (p.x - inner.x) / inner.w
-          : (p.y - inner.y) / inner.h;
+        const pos = vertical ? (p.x - inner.x) / inner.w : (p.y - inner.y) / inner.h;
         const mw = Math.max(3, state.mullionWidth * g.scale);
+        const left = cell.leftId == null ? 0 : state.mullions.find(m => m.id === cell.leftId).pos;
+        const right = cell.rightId == null ? 1 : state.mullions.find(m => m.id === cell.rightId).pos;
+        const top = cell.topId == null ? 0 : state.horizontalMullions.find(m => m.id === cell.topId).pos;
+        const bottom = cell.bottomId == null ? 1 : state.horizontalMullions.find(m => m.id === cell.bottomId).pos;
         ctx.save();
         ctx.strokeStyle = '#1672f9';
         ctx.fillStyle = 'rgba(22,114,249,.18)';
@@ -659,45 +1005,38 @@
         ctx.setLineDash([]);
         if (vertical) {
           const mx = inner.x + pos * inner.w;
-          const my = inner.y + inner.h / 2;
-          ctx.setLineDash([]);
-          ctx.fillStyle = 'rgba(22,114,249,.18)';
-          ctx.strokeStyle = '#1672f9';
-          ctx.fillRect(mx - mw / 2, inner.y, mw, inner.h);
-          ctx.strokeRect(mx - mw / 2, inner.y, mw, inner.h);
+          const y1 = inner.y + top * inner.h;
+          const y2 = inner.y + bottom * inner.h;
+          ctx.fillRect(mx - mw / 2, y1, mw, y2 - y1);
+          ctx.strokeRect(mx - mw / 2, y1, mw, y2 - y1);
+          const my = (y1 + y2) / 2;
           ctx.beginPath();
           ctx.moveTo(x, my);
           ctx.lineTo(x + fw, my);
           ctx.stroke();
-          const left = Math.round(pos * state.width);
-          const right = state.width - left;
           ctx.fillStyle = '#1672f9';
           ctx.font = `${state.dimensionFontWeight} ${Math.max(16, state.dimensionFontSize * g.scale)}px ${state.dimensionFontFamily}`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          const leftText = String(left);
-          const rightText = String(right);
-          ctx.fillText(leftText, (inner.x + mx) / 2, my - 8);
-          ctx.fillText(rightText, (mx + inner.x + inner.w) / 2, my - 8);
+          ctx.fillText(String(Math.round((pos - left) * state.width)), (inner.x + left * inner.w + mx) / 2, my - 8);
+          ctx.fillText(String(Math.round((right - pos) * state.width)), (mx + inner.x + right * inner.w) / 2, my - 8);
         } else {
           const my = inner.y + pos * inner.h;
-          ctx.setLineDash([]);
-          ctx.fillStyle = 'rgba(22,114,249,.18)';
-          ctx.strokeStyle = '#1672f9';
-          ctx.fillRect(inner.x, my - mw / 2, inner.w, mw);
-          ctx.strokeRect(inner.x, my - mw / 2, inner.w, mw);
-          const top = Math.round(pos * state.height);
-          const bottom = state.height - top;
+          const x1 = inner.x + left * inner.w;
+          const x2 = inner.x + right * inner.w;
+          ctx.fillRect(x1, my - mw / 2, x2 - x1, mw);
+          ctx.strokeRect(x1, my - mw / 2, x2 - x1, mw);
+          const mx = (x1 + x2) / 2;
           ctx.beginPath();
-          ctx.moveTo(inner.x + inner.w / 2, y);
-          ctx.lineTo(inner.x + inner.w / 2, y + fh);
+          ctx.moveTo(mx, y);
+          ctx.lineTo(mx, y + fh);
           ctx.stroke();
           ctx.fillStyle = '#1672f9';
           ctx.font = `${state.dimensionFontWeight} ${Math.max(16, state.dimensionFontSize * g.scale)}px ${state.dimensionFontFamily}`;
           ctx.textBaseline = 'middle';
           ctx.textAlign = 'left';
-          ctx.fillText(String(top), inner.x + inner.w / 2 + 12, (y + my) / 2);
-          ctx.fillText(String(bottom), inner.x + inner.w / 2 + 12, (my + y + fh) / 2);
+          ctx.fillText(String(Math.round((pos - top) * state.height)), mx + 12, (inner.y + top * inner.h + my) / 2);
+          ctx.fillText(String(Math.round((bottom - pos) * state.height)), mx + 12, (my + inner.y + bottom * inner.h) / 2);
         }
         ctx.restore();
       }
@@ -718,39 +1057,23 @@
       ctx.fillStyle = '#1672f9';
       ctx.textBaseline = 'middle';
       if (d.type === 'mullion' && Number.isFinite(d.previewPos)) {
+        const range = getMullionRange(state.mullions[d.index], 'vertical');
         const mx = inner.x + d.previewPos * inner.w;
-        const my = inner.y + inner.h / 2;
+        const y1 = inner.y + range.first * inner.h;
+        const y2 = inner.y + range.last * inner.h;
         const mw = Math.max(3, state.mullionWidth * g.scale);
         ctx.fillStyle = 'rgba(22,114,249,.18)';
-        ctx.fillRect(mx - mw / 2, inner.y, mw, inner.h);
-        ctx.strokeRect(mx - mw / 2, inner.y, mw, inner.h);
-        ctx.beginPath();
-        ctx.moveTo(x, my);
-        ctx.lineTo(x + fw, my);
-        ctx.stroke();
-        const left = Math.round(d.previewPos * state.width);
-        const right = state.width - left;
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#1672f9';
-        ctx.fillText(String(left), (inner.x + mx) / 2, my - 8);
-        ctx.fillText(String(right), (mx + inner.x + inner.w) / 2, my - 8);
+        ctx.fillRect(mx - mw / 2, y1, mw, y2 - y1);
+        ctx.strokeRect(mx - mw / 2, y1, mw, y2 - y1);
       } else if (d.type === 'horizontalMullion' && Number.isFinite(d.previewPos)) {
+        const range = getMullionRange(state.horizontalMullions[d.index], 'horizontal');
         const my = inner.y + d.previewPos * inner.h;
+        const x1 = inner.x + range.first * inner.w;
+        const x2 = inner.x + range.last * inner.w;
         const mh = Math.max(3, state.mullionWidth * g.scale);
-        const mx = inner.x + inner.w / 2;
         ctx.fillStyle = 'rgba(22,114,249,.18)';
-        ctx.fillRect(inner.x, my - mh / 2, inner.w, mh);
-        ctx.strokeRect(inner.x, my - mh / 2, inner.w, mh);
-        ctx.beginPath();
-        ctx.moveTo(mx, y);
-        ctx.lineTo(mx, y + fh);
-        ctx.stroke();
-        const top = Math.round(d.previewPos * state.height);
-        const bottom = state.height - top;
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#1672f9';
-        ctx.fillText(String(top), mx + 12, (y + my) / 2);
-        ctx.fillText(String(bottom), mx + 12, (my + y + fh) / 2);
+        ctx.fillRect(x1, my - mh / 2, x2 - x1, mh);
+        ctx.strokeRect(x1, my - mh / 2, x2 - x1, mh);
       } else if (d.type === 'opening' && d.current) {
         const gp = glassAt(d.current);
         if (gp) {
@@ -828,36 +1151,43 @@
     const mw = Math.max(3, state.mullionWidth * g.scale);
     state.mullions.forEach((m, i) => {
       const mx = inner.x + m.pos * inner.w;
+      const range = getMullionRange(m, 'vertical');
+      const y1 = inner.y + range.first * inner.h;
+      const y2 = inner.y + range.last * inner.h;
+      if (y2 <= y1) return;
       const bx = mx - mw / 2;
-      ctx.fillStyle = '#fff';
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 1;
-      ctx.fillRect(bx, inner.y, mw, inner.h);
-      ctx.strokeRect(bx, inner.y, mw, inner.h);
-      if (state.selected?.type === 'mullion' && state.selected.index === i) {
-        ctx.strokeStyle = state.dimensionColor;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 4]);
-        ctx.strokeRect(bx - 3, inner.y + 1, mw + 6, inner.h - 2);
-        ctx.setLineDash([]);
+      const selected = state.selected?.type === 'mullion' &&
+        state.selected.index === i;
+      ctx.fillStyle = selected ? 'rgba(22,114,249,.18)' : '#fff';
+      ctx.strokeStyle = selected ? '#1672f9' : '#111';
+      ctx.lineWidth = selected ? 2.5 : 1;
+      ctx.setLineDash([]);
+      ctx.fillRect(bx, y1, mw, y2 - y1);
+      ctx.strokeRect(bx, y1, mw, y2 - y1);
+      if (selected) {
+        ctx.strokeRect(bx - 2, y1 + 1, mw + 4, Math.max(0, y2 - y1 - 2));
       }
     });
     state.horizontalMullions.forEach((m, i) => {
       const my = inner.y + m.pos * inner.h;
+      const range = getMullionRange(m, 'horizontal');
+      const x1 = inner.x + range.first * inner.w;
+      const x2 = inner.x + range.last * inner.w;
+      if (x2 <= x1) return;
       const by = my - mw / 2;
-      ctx.fillStyle = '#fff';
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 1;
-      ctx.fillRect(inner.x, by, inner.w, mw);
-      ctx.strokeRect(inner.x, by, inner.w, mw);
-      if (state.selected?.type === 'horizontalMullion' && state.selected.index === i) {
-        ctx.strokeStyle = state.dimensionColor;
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 4]);
-        ctx.strokeRect(inner.x, by - 3, inner.w, mw + 6);
-        ctx.setLineDash([]);
+      const selected = state.selected?.type === 'horizontalMullion' &&
+        state.selected.index === i;
+      ctx.fillStyle = selected ? 'rgba(22,114,249,.18)' : '#fff';
+      ctx.strokeStyle = selected ? '#1672f9' : '#111';
+      ctx.lineWidth = selected ? 2.5 : 1;
+      ctx.setLineDash([]);
+      ctx.fillRect(x1, by, x2 - x1, mw);
+      ctx.strokeRect(x1, by, x2 - x1, mw);
+      if (selected) {
+        ctx.strokeRect(x1 + 1, by - 2, Math.max(0, x2 - x1 - 2), mw + 4);
       }
     });
+    ctx.setLineDash([]);
     ctx.restore();
   }
   function drawWindow(g, inner) {
@@ -904,58 +1234,102 @@
       ctx.moveTo(inner.x + inner.w, inner.y + inner.h);
       ctx.lineTo(inner.x + inner.w - glassBorder, inner.y + inner.h - glassBorder);
       ctx.stroke();
-      // شیشه هر قسمت
+      // شیشه هر خانه؛ فقط مولین‌هایی که از همان خانه عبور می‌کنند مرز می‌سازند
       const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
       const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
-      for (let r = 0; r <= horizontal.length; r++) {
-        for (let c = 0; c <= vertical.length; c++) {
-          const left = c === 0
-            ? inner.x
-            : inner.x + vertical[c - 1].pos * inner.w + mullionWidth / 2;
-          const right = c === vertical.length
-            ? inner.x + inner.w
-            : inner.x + vertical[c].pos * inner.w - mullionWidth / 2;
-          const top = r === 0
-            ? inner.y
-            : inner.y + horizontal[r - 1].pos * inner.h + mullionWidth / 2;
-          const bottom = r === horizontal.length
-            ? inner.y + inner.h
-            : inner.y + horizontal[r].pos * inner.h - mullionWidth / 2;
-          if (right - left <= glassBorder * 2 ||
-            bottom - top <= glassBorder * 2) continue;
+      const boundsX = [0, ...vertical.map(m => m.pos), 1];
+      const boundsY = [0, ...horizontal.map(m => m.pos), 1];
+      for (let r = 0; r < boundsY.length - 1; r++) {
+        for (let c = 0; c < boundsX.length - 1; c++) {
+          const rowTop = boundsY[r], rowBottom = boundsY[r + 1];
+          const colLeft = boundsX[c], colRight = boundsX[c + 1];
+          const edges = {
+            left: c === 0 || verticalMullionCoversRow(vertical[c - 1], rowTop, rowBottom),
+            right: c === vertical.length || verticalMullionCoversRow(vertical[c], rowTop, rowBottom),
+            top: r === 0 || horizontalMullionCoversColumn(horizontal[r - 1], colLeft, colRight),
+            bottom: r === horizontal.length || horizontalMullionCoversColumn(horizontal[r], colLeft, colRight)
+          };
+          const left = inner.x + colLeft * inner.w + (c > 0 && edges.left ? mullionWidth / 2 : 0);
+          const right = inner.x + colRight * inner.w - (c < vertical.length && edges.right ? mullionWidth / 2 : 0);
+          const top = inner.y + rowTop * inner.h + (r > 0 && edges.top ? mullionWidth / 2 : 0);
+          const bottom = inner.y + rowBottom * inner.h - (r < horizontal.length && edges.bottom ? mullionWidth / 2 : 0);
+          if (right <= left || bottom <= top) continue;
           ctx.fillStyle = '#fff';
+          ctx.fillRect(left, top, right - left, bottom - top);
           ctx.strokeStyle = '#111';
           ctx.lineWidth = 0.7;
-          ctx.fillRect(left, top, right - left, bottom - top);
-          ctx.strokeRect(left, top, right - left, bottom - top);
           ctx.beginPath();
-          ctx.moveTo(left, top);
-          ctx.lineTo(left + glassBorder, top + glassBorder);
-          ctx.moveTo(right, top);
-          ctx.lineTo(right - glassBorder, top + glassBorder);
-          ctx.moveTo(left, bottom);
-          ctx.lineTo(left + glassBorder, bottom - glassBorder);
-          ctx.moveTo(right, bottom);
-          ctx.lineTo(right - glassBorder, bottom - glassBorder);
+          if (edges.left) { ctx.moveTo(left, top); ctx.lineTo(left, bottom); }
+          if (edges.right) { ctx.moveTo(right, top); ctx.lineTo(right, bottom); }
+          if (edges.top) { ctx.moveTo(left, top); ctx.lineTo(right, top); }
+          if (edges.bottom) { ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); }
           ctx.stroke();
-          const gx = left + glassBorder;
-          const gy = top + glassBorder;
-          const gw = right - left - glassBorder * 2;
-          const gh = bottom - top - glassBorder * 2;
+          ctx.beginPath();
+          if (edges.left && edges.top) { ctx.moveTo(left, top); ctx.lineTo(left + glassBorder, top + glassBorder); }
+          if (edges.right && edges.top) { ctx.moveTo(right, top); ctx.lineTo(right - glassBorder, top + glassBorder); }
+          if (edges.left && edges.bottom) { ctx.moveTo(left, bottom); ctx.lineTo(left + glassBorder, bottom - glassBorder); }
+          if (edges.right && edges.bottom) { ctx.moveTo(right, bottom); ctx.lineTo(right - glassBorder, bottom - glassBorder); }
+          ctx.stroke();
+          const insetLeft = edges.left ? glassBorder : 0;
+          const insetRight = edges.right ? glassBorder : 0;
+          const insetTop = edges.top ? glassBorder : 0;
+          const insetBottom = edges.bottom ? glassBorder : 0;
+          const gx = left + insetLeft;
+          const gy = top + insetTop;
+          const gw = right - left - insetLeft - insetRight;
+          const gh = bottom - top - insetTop - insetBottom;
+          if (gw <= 0 || gh <= 0) continue;
           ctx.fillStyle = state.glassColor || '#8bd9f7';
           ctx.fillRect(gx, gy, gw, gh);
-          ctx.strokeStyle = '#111';
-          ctx.strokeRect(gx, gy, gw, gh);
+          ctx.strokeStyle = state.selectedPart === 'glass' ? '#1672f9' : '#111';
+          ctx.lineWidth = state.selectedPart === 'glass' ? 2 : 0.7;
+          ctx.beginPath();
+          if (edges.left) { ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + gh); }
+          if (edges.right) { ctx.moveTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + gh); }
+          if (edges.top) { ctx.moveTo(gx, gy); ctx.lineTo(gx + gw, gy); }
+          if (edges.bottom) { ctx.moveTo(gx, gy + gh); ctx.lineTo(gx + gw, gy + gh); }
+          ctx.stroke();
+          if (state.selectedPart === 'glass') {
+            ctx.fillStyle = 'rgba(22,114,249,.22)';
+            ctx.fillRect(gx, gy, gw, gh);
+            ctx.strokeStyle = '#1672f9';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            if (edges.left) { ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + gh); }
+            if (edges.right) { ctx.moveTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + gh); }
+            if (edges.top) { ctx.moveTo(gx, gy); ctx.lineTo(gx + gw, gy); }
+            if (edges.bottom) { ctx.moveTo(gx, gy + gh); ctx.lineTo(gx + gw, gy + gh); }
+            ctx.stroke();
+            ctx.lineWidth = 0.7;
+          }
         }
       }
       // انتخاب شیشه
       if (state.selectedPart === 'glass') {
-        ctx.strokeStyle = state.dimensionColor;
+        ctx.strokeStyle = '#1672f9';
         ctx.lineWidth = 3;
         ctx.setLineDash([]);
         ctx.strokeRect(inner.x + 2, inner.y + 2,
           Math.max(0, inner.w - 4), Math.max(0, inner.h - 4));
         ctx.setLineDash([]);
+      }
+      if (state.selectedPart === 'frame') {
+        ctx.fillStyle = 'rgba(22,114,249,.12)';
+        ctx.fillRect(x + 1, y + 1, fw - 2, fh - 2);
+        ctx.strokeStyle = '#1672f9';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x + 1, y + 1, fw - 2, fh - 2);
+        ctx.beginPath();
+        ctx.moveTo(x + 1, y + 1);
+        ctx.lineTo(x + t, y + t);
+        ctx.moveTo(x + fw - 1, y + 1);
+        ctx.lineTo(x + fw - t, y + t);
+        ctx.moveTo(x + 1, y + fh - 1);
+        ctx.lineTo(x + t, y + fh - t);
+        ctx.moveTo(x + fw - 1, y + fh - 1);
+        ctx.lineTo(x + fw - t, y + fh - t);
+        ctx.stroke();
+        ctx.strokeRect(inner.x + 1, inner.y + 1, inner.w - 2, inner.h - 2);
       }
     } else {
       // فریم اصلی شکل هندسی
@@ -1072,7 +1446,41 @@
       ctx.fillRect(gx, gy, gw, gh);
       ctx.strokeStyle = '#111';
       ctx.strokeRect(gx, gy, gw, gh);
-      drawOpeningLines(gx, gy, gw, gh, o.type || 'normal', o.direction);
+      if (state.selectedPart === 'openingGlass' &&
+        state.selected?.index === i && state.selected.type === 'opening') {
+        ctx.fillStyle = 'rgba(22,114,249,.22)';
+        ctx.fillRect(gx, gy, gw, gh);
+        ctx.strokeStyle = '#1672f9';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(gx, gy, gw, gh);
+        ctx.lineWidth = 1;
+      }
+      if (state.selectedPart === 'openingFrame' &&
+        state.selected?.index === i && state.selected.type === 'opening') {
+        // آبی شدن شیشه بازشو
+        ctx.fillStyle = 'rgba(22,114,249,.22)';
+        ctx.fillRect(gx, gy, gw, gh);
+        // کادر آبی فریم
+        ctx.strokeStyle = '#1672f9';
+        ctx.lineWidth = 3;
+        ctx.fillStyle = 'rgba(22,114,249,.12)';
+        ctx.fillRect(ox + 1, oy + 1, ow - 2, oh - 2);
+        ctx.strokeRect(ox + 1, oy + 1, ow - 2, oh - 2);
+        ctx.strokeRect(glassX + 1, glassY + 1, glassW - 2, glassH - 2);
+        // چهار نیم‌ساز گوشه‌ها
+        ctx.beginPath();
+        ctx.moveTo(ox + 1, oy + 1);
+        ctx.lineTo(ox + ft, oy + ft);
+        ctx.moveTo(ox + ow - 1, oy + 1);
+        ctx.lineTo(ox + ow - ft, oy + ft);
+        ctx.moveTo(ox + 1, oy + oh - 1);
+        ctx.lineTo(ox + ft, oy + oh - ft);
+        ctx.moveTo(ox + ow - 1, oy + oh - 1);
+        ctx.lineTo(ox + ow - ft, oy + oh - ft);
+        ctx.stroke();
+        ctx.lineWidth = 1;
+      }
+      drawOpeningLines(gx, gy, gw, gh, o.type || 'normal', o.direction, ox, oy, ow, oh, ft);
       // دستگیره و لولاها
       drawOpeningHardware(ox, oy, ow, oh, ft, scale, o.direction, gy, gh);
       if (state.selected?.type === 'opening' &&
@@ -1087,85 +1495,40 @@
     if (!isRectangle) ctx.restore();
     ctx.restore();
   }
-  function drawOpeningLines(gx, gy, gw, gh, olType, handlePosition, hingePosition) {
-    const cx = gx + gw / 2;
-    const cy = gy + gh / 2;
-    const offset = 25;
-    const len = Math.min(gw * 0.3, gh * 0.3);
-    const tipLength = Math.min(60, gw * 0.2);
-    const tipHeight = Math.min(30, gh * 0.15);
+  function drawOpeningLines(gx, gy, gw, gh, olType, handlePosition, ox, oy, ow, oh, ft) {
+    const scale = geom().scale || 1;
+    const moveDistance = 1 * scale;
+    const cx = ox + ow / 2;
+    const cy = oy + oh / 2;
     ctx.save();
-    ctx.strokeStyle = state.openingLineColor;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'miter';
+    ctx.strokeStyle = state.openingLineColor || '#1672f9';
+    ctx.lineWidth = 5 * scale;
     ctx.lineCap = 'butt';
     ctx.setLineDash([]);
-    function drawLine(points, dash = []) {
-      ctx.beginPath();
-      ctx.setLineDash(dash);
-      ctx.moveTo(points[0][0], points[0][1]);
-      for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i][0], points[i][1]);
-      }
-      ctx.stroke();
+    ctx.beginPath();
+    switch (handlePosition) {
+      case 'left':
+        ctx.moveTo(ox + ow, oy + ft);
+        ctx.lineTo(ox + ft / 2, cy);
+        ctx.lineTo(ox + ow, oy + oh - ft);
+        break;
+      case 'right':
+        ctx.moveTo(ox, oy + ft);
+        ctx.lineTo(ox + ow - ft / 2, cy);
+        ctx.lineTo(ox, oy + oh - ft);
+        break;
+      case 'top':
+        ctx.moveTo(ox + ft, oy + moveDistance);
+        ctx.lineTo(cx, oy + oh - ft / 2);
+        ctx.lineTo(ox + ow - ft, oy + moveDistance);
+        break;
+      case 'bottom':
+        ctx.moveTo(ox + ft, oy + oh - moveDistance);
+        ctx.lineTo(cx, oy + ft / 2);
+        ctx.lineTo(ox + ow - ft, oy + oh - moveDistance);
+        break;
     }
-    function drawArrow(x1, y1, x2, y2) {
-      const angle = Math.atan2(y2 - y1, x2 - x1);
-      const size = Math.min(10, len * 0.25);
-      drawLine([[x1, y1], [x2, y2]]);
-      drawLine([
-        [x2, y2],
-        [x2 - size * Math.cos(angle - Math.PI / 6),
-        y2 - size * Math.sin(angle - Math.PI / 6)]
-      ]);
-      drawLine([
-        [x2, y2],
-        [x2 - size * Math.cos(angle + Math.PI / 6),
-        y2 - size * Math.sin(angle + Math.PI / 6)]
-      ]);
-    }
-    if (olType === 'normal') {
-      if (handlePosition === 'left') {
-        drawLine([[gx + gw, gy], [gx, cy], [gx + gw, gy + gh]]);
-      } else if (handlePosition === 'right') {
-        drawLine([[gx, gy], [gx + gw, cy], [gx, gy + gh]]);
-      } else if (handlePosition === 'top') {
-        drawLine([[gx, gy], [cx, gy + gh], [gx + gw, gy]]);
-      } else if (handlePosition === 'bottom') {
-        drawLine([[gx, gy + gh], [cx, gy], [gx + gw, gy + gh]]);
-      }
-    } else if (olType === 'dual') {
-      drawLine([[gx + offset, gy + gh], [cx, gy + offset], [gx + gw - offset, gy + gh]]);
-      drawLine([[gx, cy], [cx, gy + offset], [gx + gw, cy]], [60, 25]);
-    } else if (olType === 'radial') {
-      drawLine([
-        [cx, gy + gh - offset],
-        [gx + offset, cy],
-        [cx, gy + offset],
-        [gx + gw - offset, cy],
-        [cx, gy + gh - offset]
-      ]);
-    } else if (olType === 'volkswagen') {
-      const left = handlePosition === 'left';
-      const startX = left ? gx : gx + gw;
-      const midX = left ? cx + gw * 0.2 : cx - gw * 0.2;
-      const endX = left ? gx + gw - offset : gx + offset;
-      const tipX = endX;
-      const tipY = cy;
-      drawLine([
-        [startX, gy + gh],
-        [cx, gy + offset],
-        [midX, cy],
-        [tipX, tipY]
-      ]);
-      drawLine([
-        [tipX + (left ? -tipLength : tipLength), tipY - tipHeight],
-        [tipX, tipY],
-        [tipX + (left ? -tipLength : tipLength), tipY + tipHeight],
-        [tipX + (left ? -tipLength : tipLength), tipY - tipHeight]
-      ]);
-    }
-    ctx.setLineDash([]);
+    ctx.stroke();
     ctx.restore();
   }
   function drawOpeningHardware(ox, oy, ow, oh, ft, scale, direction, gy, gh) {
@@ -1289,38 +1652,53 @@
     ctx.clip();
     for (let r = 0; r < boundsY.length - 1; r++) {
       for (let c = 0; c < boundsX.length - 1; c++) {
-        const left = inner.x + boundsX[c] * inner.w + (c ? mullionWidth / 2 : 0);
-        const right = inner.x + boundsX[c + 1] * inner.w - (c < vertical.length ? mullionWidth / 2 : 0);
-        const top = inner.y + boundsY[r] * inner.h + (r ? mullionWidth / 2 : 0);
-        const bottom = inner.y + boundsY[r + 1] * inner.h - (r < horizontal.length ? mullionWidth / 2 : 0);
-        if (right - left <= glassBorder * 2 || bottom - top <= glassBorder * 2) continue;
+        const rowTop = boundsY[r], rowBottom = boundsY[r + 1];
+        const colLeft = boundsX[c], colRight = boundsX[c + 1];
+        const edges = {
+          left: c === 0 || verticalMullionCoversRow(vertical[c - 1], rowTop, rowBottom),
+          right: c === vertical.length || verticalMullionCoversRow(vertical[c], rowTop, rowBottom),
+          top: r === 0 || horizontalMullionCoversColumn(horizontal[r - 1], colLeft, colRight),
+          bottom: r === horizontal.length || horizontalMullionCoversColumn(horizontal[r], colLeft, colRight)
+        };
+        const left = inner.x + colLeft * inner.w + (c > 0 && edges.left ? mullionWidth / 2 : 0);
+        const right = inner.x + colRight * inner.w - (c < vertical.length && edges.right ? mullionWidth / 2 : 0);
+        const top = inner.y + rowTop * inner.h + (r > 0 && edges.top ? mullionWidth / 2 : 0);
+        const bottom = inner.y + rowBottom * inner.h - (r < horizontal.length && edges.bottom ? mullionWidth / 2 : 0);
+        if (right - left <= 0 || bottom - top <= 0) continue;
+        const rect = { left, right, top, bottom };
         const pane = clipPolygon(frameInner, left, top, right, bottom);
         if (!polygonPath(pane)) continue;
         ctx.fillStyle = '#fff';
         ctx.fill();
         ctx.strokeStyle = '#111';
         ctx.lineWidth = 0.7;
-        ctx.stroke();
-        const glass = getInsetPoints(pane, glassBorder);
+        strokePaneEdges(pane, rect, edges);
+        const glass = getInsetPointsSelective(pane, glassBorder, rect, edges);
         if (!polygonPath(glass)) continue;
         ctx.fillStyle = state.glassColor || '#8bd9f7';
         ctx.fill();
         ctx.strokeStyle = '#111';
         ctx.lineWidth = 0.7;
-        ctx.stroke();
+        strokePaneEdges(glass, rect, edges);
         ctx.beginPath();
-        pane.forEach((p, i) => {
-          const q = glass[i];
-          if (!q) return;
-          ctx.moveTo(p.x, p.y);
+        for (let i = 0; i < pane.length; i++) {
+          const a = pane[i], b = pane[(i + 1) % pane.length], q = glass[i];
+          if (!q) continue;
+          const onLeft = Math.abs(a.x - rect.left) < 0.75 && Math.abs(b.x - rect.left) < 0.75;
+          const onRight = Math.abs(a.x - rect.right) < 0.75 && Math.abs(b.x - rect.right) < 0.75;
+          const onTop = Math.abs(a.y - rect.top) < 0.75 && Math.abs(b.y - rect.top) < 0.75;
+          const onBottom = Math.abs(a.y - rect.bottom) < 0.75 && Math.abs(b.y - rect.bottom) < 0.75;
+          if ((onLeft && !edges.left) || (onRight && !edges.right) ||
+            (onTop && !edges.top) || (onBottom && !edges.bottom)) continue;
+          ctx.moveTo(a.x, a.y);
           ctx.lineTo(q.x, q.y);
-        });
+        }
         ctx.stroke();
       }
     }
     if (state.selectedPart === 'glass') {
       ctx.setLineDash([]);
-      ctx.strokeStyle = state.dimensionColor;
+      ctx.strokeStyle = '#1672f9';
       ctx.lineWidth = 3;
       traceShape(type, x, y, fw, fh, g.t + glassBorder);
       ctx.stroke();
@@ -1339,8 +1717,8 @@
     };
     const color = state.dimensionColor;
     const size = Math.max(10, Math.min(14, inner.w * 0.035));
-    const widthGap = 25;
-    const heightGap = 25;
+    const widthGap = 22.5;
+    const heightGap = 22.5;
     ctx.save();
     ctx.strokeStyle = color;
     ctx.fillStyle = color;
@@ -1503,33 +1881,173 @@
   function hit(p) {
     const g = geom();
     const inner = getInner();
+    for (let i = state.openings.length - 1; i >= 0; i--) {
+      const b = getOpeningBounds(state.openings[i], inner);
+      const scale = g.scale || 1;
+      const ft = Math.max(1, state.sashFrame * scale);
+      const gb = Math.max(1, state.glassBorder * scale);
+      const overlap = Math.min(3, ft * 0.15);
+      const ox = b.x - (!b.leftM ? overlap : 0);
+      const oy = b.y - (!b.topM ? overlap : 0);
+      const ow = b.w + (!b.leftM ? overlap : 0) + (!b.rightM ? overlap : 0);
+      const oh = b.h + (!b.topM ? overlap : 0) + (!b.bottomM ? overlap : 0);
+      if (p.x < ox || p.x > ox + ow || p.y < oy || p.y > oy + oh) continue;
+      // لبه بیرونی برای جابه‌جایی بازشو حفظ می‌شود
+      if (
+        p.x <= ox + 5 || p.x >= ox + ow - 5 ||
+        p.y <= oy + 5 || p.y >= oy + oh - 5
+      ) return { type: 'opening', index: i };
+      const gx = ox + ft + gb;
+      const gy = oy + ft + gb;
+      const gw = Math.max(0, ow - 2 * (ft + gb));
+      const gh = Math.max(0, oh - 2 * (ft + gb));
+      if (p.x >= gx && p.x <= gx + gw &&
+        p.y >= gy && p.y <= gy + gh) {
+        return { type: 'openingGlass', index: i };
+      }
+      return { type: 'openingFrame', index: i };
+    }
     for (let i = state.mullions.length - 1; i >= 0; i--) {
-      const mx = inner.x + state.mullions[i].pos * inner.w;
+      const m = state.mullions[i];
+      const mx = inner.x + m.pos * inner.w;
+      const range = getMullionRange(m, 'vertical');
       if (
         Math.abs(p.x - mx) < Math.max(12, state.mullionWidth * g.scale) &&
-        p.y >= inner.y - 4 &&
-        p.y <= inner.y + inner.h + 4
+        p.y >= inner.y + range.first * inner.h - 4 &&
+        p.y <= inner.y + range.last * inner.h + 4
       ) return { type: 'mullion', index: i };
     }
     for (let i = state.horizontalMullions.length - 1; i >= 0; i--) {
-      const my = inner.y + state.horizontalMullions[i].pos * inner.h;
+      const m = state.horizontalMullions[i];
+      const my = inner.y + m.pos * inner.h;
+      const range = getMullionRange(m, 'horizontal');
       if (
         Math.abs(p.y - my) < 12 &&
-        p.x >= inner.x && p.x <= inner.x + inner.w
+        p.x >= inner.x + range.first * inner.w - 4 &&
+        p.x <= inner.x + range.last * inner.w + 4
       ) return { type: 'horizontalMullion', index: i };
-    }
-    for (let i = state.openings.length - 1; i >= 0; i--) {
-      const b = getOpeningBounds(state.openings[i], inner);
-      if (
-        p.x >= b.x + 5 && p.x <= b.x + b.w - 5 &&
-        p.y >= b.y + 5 && p.y <= b.y + b.h - 5
-      ) return { type: 'opening', index: i };
     }
     if (pointInShape(p, g.x, g.y, g.fw, g.fh, g.t)) return { type: 'glass' };
     if (pointInShape(p, g.x, g.y, g.fw, g.fh)) return { type: 'frame' };
     return null;
   }
+  let messageTimer = null;
+  let removeTimer = null;
+  function showMessage(textMsg, type = "success", timer = 3000) {
+    document.querySelector(".wd-system-message")?.remove();
+    clearTimeout(messageTimer);
+    clearTimeout(removeTimer);
+    const icons = {
+      success: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="m7.5 12 3 3 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      error: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="m9 9 6 6m0-6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+      warning: `<svg viewBox="0 0 24 24"><path d="M10.3 3.8a2 2 0 0 1 3.4 0l8 14A2 2 0 0 1 20 20.8H4a2 2 0 0 1-1.7-3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v4m0 3h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+      info: `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v5m0-8h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`
+    };
+    const message = document.createElement("div");
+    message.className = "wd-system-message";
+    const box = document.createElement("div");
+    box.className = `wd-system-message-box ${type}`;
+    const icon = document.createElement("div");
+    icon.className = `wd-system-message-icon ${type}`;
+    icon.innerHTML = `
+  <span>${icons[type] || icons.success}</span>
+  <i class="wd-message-ring"></i>
+`;
+    const text = document.createElement("div");
+    text.className = "wd-system-message-text";
+    text.textContent = typeof convertNumbersToPersian === "function"
+      ? convertNumbersToPersian(String(textMsg))
+      : String(textMsg);
+    box.append(icon, text);
+    message.appendChild(box);
+    document.body.appendChild(message);
+    requestAnimationFrame(() => message.classList.add("show"));
+    messageTimer = setTimeout(() => {
+      message.classList.remove("show");
+      removeTimer = setTimeout(() => {
+        message.remove();
+      }, 300);
+    }, timer);
+  }
+  function clearGesture(e) {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinchStart = null;
+    if (!activePointers.size) panStart = null;
+  }
+  function endDrag(e) {
+    pendingOpeningDrag = null;
+    if (!state.drag) return;
+    const drag = state.drag;
+    if (drag.type === 'mullion' && Number.isFinite(drag.previewPos)) {
+      state.mullions[drag.index].pos = drag.previewPos;
+    } else if (drag.type === 'horizontalMullion' && Number.isFinite(drag.previewPos)) {
+      state.horizontalMullions[drag.index].pos = drag.previewPos;
+    } else if (drag.type === 'opening' && e) {
+      const gp = glassAt(point(e));
+      if (gp) {
+        const cell = getCellAt(gp);
+        const occupied = state.openings.some((o, i) =>
+          i !== drag.index && sameCell(o, cell)
+        );
+        if (!occupied) Object.assign(state.openings[drag.index], cell);
+      }
+    }
+    state.drag = null;
+    canvas.style.cursor = 'default';
+    state.previewMullion = null;
+    draw();
+  }
+  function syncInputs() {
+    if ($('widthInput')) $('widthInput').value = state.width;
+    if ($('heightInput')) $('heightInput').value = state.height;
+    if ($('countInput')) $('countInput').value = state.count;
+  }
+  function applyDims(w, h, c) {
+    w = Number(w);
+    h = Number(h);
+    c = Number(c);
+    if (!Number.isFinite(w) || !Number.isFinite(h) ||
+      !Number.isFinite(c) || w < 30 || h < 30 || c < 1) {
+      alert('لطفاً ابعاد و تعداد معتبر وارد کنید.');
+      return false;
+    }
+    saveHistory();
+    state.width = Math.min(6000, w);
+    state.height = Math.min(6000, h);
+    state.shape = 'rectangle';
+    state.count = Math.min(20, Math.floor(c));
+    state.mullions = [];
+    state.horizontalMullions = [];
+    state.openings = [];
+    state.selected = null;
+    state.selectedPart = null;
+    state.zoom = 1;
+    state.tool = 'select';
+    state.drag = null;
+    canvas.style.cursor = 'default';
+    renderSettings();
+    syncInputs();
+    draw();
+    return true;
+  }
+  function zoom(f) {
+    state.zoom = Math.max(.35, Math.min(3, state.zoom * f));
+    draw();
+  }
+  function reset() {
+    state.zoom = 1;
+    state.panX = 0;
+    state.panY = 0;
+    state.selected = null;
+    state.selectedPart = null;
+    state.tool = 'select';
+    state.drag = null;
+    canvas.style.cursor = 'default';
+    renderSettings();
+    draw();
+  }
   let panStart = null;
+  let pendingOpeningDrag = null;
   let activePointers = new Map();
   let pinchStart = null;
   canvas.addEventListener('pointerdown', e => {
@@ -1545,16 +2063,23 @@
       };
       panStart = null;
     } else if (activePointers.size === 1 && e.button === 0) {
-      panStart = {
-        x: e.clientX,
-        y: e.clientY,
-        panX: state.panX,
-        panY: state.panY
-      };
+      const found = hit(point(e));
+      panStart = found?.type === 'frame'
+        ? {
+          x: e.clientX,
+          y: e.clientY,
+          panX: state.panX,
+          panY: state.panY
+        }
+        : null;
     }
   }, true);
   canvas.addEventListener('pointermove', e => {
     if (!activePointers.has(e.pointerId)) return;
+    if (e.pointerType === 'mouse' && !(e.buttons & 1)) {
+      clearGesture(e);
+      return;
+    }
     activePointers.set(e.pointerId, point(e));
     if (activePointers.size === 2 && pinchStart) {
       const pts = [...activePointers.values()];
@@ -1567,7 +2092,7 @@
         Math.min(3, pinchStart.zoom * distance / pinchStart.distance)
       );
       draw();
-    } else if (activePointers.size === 1 && panStart &&
+    } else if (activePointers.size === 1 && panStart && !state.drag &&
       (Math.abs(e.clientX - panStart.x) > 3 ||
         Math.abs(e.clientY - panStart.y) > 3)) {
       state.panX = panStart.panX + e.clientX - panStart.x;
@@ -1575,11 +2100,21 @@
       draw();
     }
   }, true);
-  function clearGesture(e) {
-    activePointers.delete(e.pointerId);
-    if (activePointers.size < 2) pinchStart = null;
-    if (!activePointers.size) panStart = null;
-  }
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  ensureShapeDialog();
+  ['dimensionDialog', 'polygonDialog'].forEach(id => {
+    const dialog = $(id);
+    if (!dialog) return;
+    dialog.addEventListener('close', () => {
+      activePointers.clear();
+      panStart = null;
+      pinchStart = null;
+      state.drag = null;
+      state.previewMullion = null;
+      draw();
+    });
+  });
   canvas.addEventListener('pointerup', clearGesture, true);
   canvas.addEventListener('pointercancel', clearGesture, true);
   canvas.addEventListener('wheel', e => {
@@ -1611,6 +2146,9 @@
       return;
     }
     const found = hit(p);
+    pendingOpeningDrag = (found?.type === 'openingFrame' || found?.type === 'openingGlass')
+      ? { index: found.index, start: p, original: clone(state.openings[found.index]), moved: false }
+      : null;
     if (copiedItem && glassAt(p)) {
       const gp = glassAt(p);
       const cell = getCellAt(gp);
@@ -1639,6 +2177,10 @@
         item.pos = Math.max(.04, Math.min(.96,
           (p.x - getInner().x) / getInner().w
         ));
+        item.topId = cell.topId;
+        item.bottomId = cell.bottomId;
+        delete item.y1;
+        delete item.y2;
         state.mullions.push(item);
         state.mullions.sort((a, b) => a.pos - b.pos);
         state.selected = {
@@ -1651,6 +2193,10 @@
         item.pos = Math.max(.04, Math.min(.96,
           (p.y - getInner().y) / getInner().h
         ));
+        item.leftId = cell.leftId;
+        item.rightId = cell.rightId;
+        delete item.x1;
+        delete item.x2;
         state.horizontalMullions.push(item);
         state.horizontalMullions.sort((a, b) => a.pos - b.pos);
         state.selected = {
@@ -1674,16 +2220,18 @@
       const bottom = cell.bottomId == null ? 1 : state.horizontalMullions.find(m => m.id === cell.bottomId).pos;
       saveHistory();
       const n = Number(state.toolCount || 1);
+      let lastId;
       for (let i = 1; i <= n; i++) {
+        lastId = state.nextId++;
         state.mullions.push({
-          id: state.nextId++,
+          id: lastId,
           pos: left + (right - left) * i / (n + 1),
-          y1: top,
-          y2: bottom
+          topId: cell.topId,
+          bottomId: cell.bottomId
         });
       }
       state.mullions.sort((a, b) => a.pos - b.pos);
-      state.selected = { type: 'mullion', index: state.mullions.length - 1 };
+      state.selected = { type: 'mullion', index: state.mullions.findIndex(m => m.id === lastId) };
       state.tool = 'select';
       canvas.style.cursor = 'grab';
       draw();
@@ -1699,18 +2247,20 @@
       const bottom = cell.bottomId == null ? 1 : state.horizontalMullions.find(m => m.id === cell.bottomId).pos;
       saveHistory();
       const n = Number(state.toolCount || 1);
+      let lastId;
       for (let i = 1; i <= n; i++) {
+        lastId = state.nextId++;
         state.horizontalMullions.push({
-          id: state.nextId++,
+          id: lastId,
           pos: top + (bottom - top) * i / (n + 1),
-          x1: left,
-          x2: right
+          leftId: cell.leftId,
+          rightId: cell.rightId
         });
       }
       state.horizontalMullions.sort((a, b) => a.pos - b.pos);
       state.selected = {
         type: 'horizontalMullion',
-        index: state.horizontalMullions.length - 1
+        index: state.horizontalMullions.findIndex(m => m.id === lastId)
       };
       state.tool = 'select';
       canvas.style.cursor = 'grab';
@@ -1735,7 +2285,9 @@
       const id = state.nextId++;
       state.mullions.push({
         id,
-        pos: (leftPos + rightPos) / 2
+        pos: (leftPos + rightPos) / 2,
+        topId: cell.topId,
+        bottomId: cell.bottomId
       });
       state.openings.push(
         { ...cell, rightId: id, direction: 'left', french: true },
@@ -1765,9 +2317,14 @@
       draw();
       return;
     }
-    if (found?.type === 'frame' || found?.type === 'glass') {
+    if (
+      found?.type === 'frame' || found?.type === 'glass' ||
+      found?.type === 'openingFrame' || found?.type === 'openingGlass'
+    ) {
       state.selectedPart = found.type;
-      state.selected = null;
+      state.selected = found.type.startsWith('opening')
+        ? { type: 'opening', index: found.index }
+        : null;
       state.tool = 'select';
       renderSettings();
       canvas.style.cursor = 'default';
@@ -1775,6 +2332,18 @@
       return;
     }
     state.selected = found;
+    if (found?.type === 'mullion' || found?.type === 'horizontalMullion') {
+      state.selectedPart = null;
+      renderSettings();
+      draw();
+    }
+    if (!found) {
+      state.selectedPart = null;
+      state.selected = null;
+      renderSettings();
+      draw();
+      return;
+    }
     if (found?.type === 'opening') {
       saveHistory();
       state.drag = {
@@ -1814,6 +2383,18 @@
   });
   canvas.addEventListener('pointermove', e => {
     const p = point(e);
+    if (pendingOpeningDrag && !state.drag &&
+      (Math.abs(p.x - pendingOpeningDrag.start.x) > 3 || Math.abs(p.y - pendingOpeningDrag.start.y) > 3)) {
+      saveHistory();
+      state.drag = {
+        type: 'opening', index: pendingOpeningDrag.index,
+        start: pendingOpeningDrag.start, current: p,
+        original: pendingOpeningDrag.original
+      };
+      pendingOpeningDrag = null;
+      if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
+    }
     if (!state.drag) {
       state.previewMullion =
         (state.tool === 'mullion' || state.tool === 'horizontalMullion') &&
@@ -1837,84 +2418,19 @@
     }
     draw();
   });
-  function endDrag(e) {
-    if (!state.drag) return;
-    const drag = state.drag;
-    if (drag.type === 'mullion' && Number.isFinite(drag.previewPos)) {
-      state.mullions[drag.index].pos = drag.previewPos;
-    } else if (drag.type === 'horizontalMullion' && Number.isFinite(drag.previewPos)) {
-      state.horizontalMullions[drag.index].pos = drag.previewPos;
-    } else if (drag.type === 'opening' && e) {
-      const gp = glassAt(point(e));
-      if (gp) {
-        const cell = getCellAt(gp);
-        const occupied = state.openings.some((o, i) =>
-          i !== drag.index && sameCell(o, cell)
-        );
-        if (!occupied) Object.assign(state.openings[drag.index], cell);
-      }
-    }
-    state.drag = null;
-    canvas.style.cursor = 'default';
-    state.previewMullion = null;
-    draw();
-  }
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
-  function syncInputs() {
-    $('widthInput').value = state.width;
-    $('heightInput').value = state.height;
-    $('countInput').value = state.count;
-  }
-  function applyDims(w, h, c) {
-    w = Number(w);
-    h = Number(h);
-    c = Number(c);
-    if (!Number.isFinite(w) || !Number.isFinite(h) ||
-      !Number.isFinite(c) || w < 30 || h < 30 || c < 1) {
-      alert('لطفاً ابعاد و تعداد معتبر وارد کنید.');
-      return false;
-    }
-    saveHistory();
-    state.width = Math.min(6000, w);
-    state.height = Math.min(6000, h);
-    state.shape = 'rectangle';
-    state.count = Math.min(20, Math.floor(c));
-    state.mullions = [];
-    state.horizontalMullions = [];
-    state.openings = [];
-    state.selected = null;
-    state.selectedPart = null;
-    state.zoom = 1;
-    state.tool = 'select';
-    state.drag = null;
-    canvas.style.cursor = 'default';
-    renderSettings();
-    syncInputs();
-    draw();
-    return true;
-  }
-  ensureShapeDialog();
-  $('applyBtn').addEventListener('click', () => {
-    applyDims(
-      $('widthInput').value,
-      $('heightInput').value,
-      $('countInput').value
-    );
-  });
   $('newBtn').addEventListener('click', () => {
     $('newWidth').value = state.width;
     $('newHeight').value = state.height;
     $('newCount').value = state.count;
+    $('newWidthClearance').value = state.widthClearance ?? 0;
+    $('newHeightClearance').value = state.heightClearance ?? 0;
     $('newDialog').showModal();
   });
   $('createBtn').addEventListener('click', e => {
     e.preventDefault();
-    if (applyDims(
-      $('newWidth').value,
-      $('newHeight').value,
-      $('newCount').value
-    )) {
+    const w = Number($('newWidth').value) - Number($('newWidthClearance').value || 0);
+    const h = Number($('newHeight').value) - Number($('newHeightClearance').value || 0);
+    if (applyDims(w, h, $('newCount').value)) {
       $('newDialog').close();
     }
   });
@@ -1971,16 +2487,32 @@
     const s = state.selected;
     if (s.type === 'mullion') {
       const gone = state.mullions[s.index];
+      const sorted = [...state.mullions].sort((a, b) => a.pos - b.pos);
+      const at = sorted.findIndex(m => m.id === gone.id);
+      const leftId = at > 0 ? sorted[at - 1].id : null;
+      const rightId = at >= 0 && at < sorted.length - 1 ? sorted[at + 1].id : null;
+      state.horizontalMullions.forEach(m => {
+        if (m.leftId === gone.id) m.leftId = leftId;
+        if (m.rightId === gone.id) m.rightId = rightId;
+      });
       state.openings.forEach(o => {
-        if (o.leftId === gone.id) o.leftId = null;
-        if (o.rightId === gone.id) o.rightId = null;
+        if (o.leftId === gone.id) o.leftId = leftId;
+        if (o.rightId === gone.id) o.rightId = rightId;
       });
       state.mullions.splice(s.index, 1);
     } else if (s.type === 'horizontalMullion') {
       const gone = state.horizontalMullions[s.index];
+      const sorted = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
+      const at = sorted.findIndex(m => m.id === gone.id);
+      const topId = at > 0 ? sorted[at - 1].id : null;
+      const bottomId = at >= 0 && at < sorted.length - 1 ? sorted[at + 1].id : null;
+      state.mullions.forEach(m => {
+        if (m.topId === gone.id) m.topId = topId;
+        if (m.bottomId === gone.id) m.bottomId = bottomId;
+      });
       state.openings.forEach(o => {
-        if (o.topId === gone.id) o.topId = null;
-        if (o.bottomId === gone.id) o.bottomId = null;
+        if (o.topId === gone.id) o.topId = topId;
+        if (o.bottomId === gone.id) o.bottomId = bottomId;
       });
       state.horizontalMullions.splice(s.index, 1);
     } else if (s.type === 'opening') {
@@ -1996,13 +2528,24 @@
       $('status').textContent = 'ابتدا پنجره را انتخاب کنید.';
       return;
     }
+
     const opening = state.openings[s.index];
     if (!opening || opening.french) {
       $('status').textContent = 'فقط پنجره‌های معمولی قابل برعکس شدن هستند.';
       return;
     }
+
     saveHistory();
-    opening.direction = opening.direction === 'right' ? 'left' : 'right';
+
+    const reverseDirections = {
+      right: 'left',
+      left: 'right',
+      top: 'bottom',
+      bottom: 'top'
+    };
+
+    opening.direction = reverseDirections[opening.direction] || 'right';
+
     draw();
     $('status').textContent = 'جهت بازشوی پنجره برعکس شد.';
   });
@@ -2047,30 +2590,13 @@
   });
   $('undoBtn').addEventListener('click', undo);
   $('redoBtn').addEventListener('click', redo);
-  function zoom(f) {
-    state.zoom = Math.max(.35, Math.min(3, state.zoom * f));
-    draw();
-  }
-  ['zoomInBtn', 'canvasZoomIn'].forEach(id =>
+  ['zoomInBtn'].forEach(id =>
     $(id).addEventListener('click', () => zoom(1.15))
   );
-  ['zoomOutBtn', 'canvasZoomOut'].forEach(id =>
+  ['zoomOutBtn'].forEach(id =>
     $(id).addEventListener('click', () => zoom(1 / 1.15))
   );
-  function reset() {
-    state.zoom = 1;
-    state.panX = 0;
-    state.panY = 0;
-    state.selected = null;
-    state.selectedPart = null;
-    state.tool = 'select';
-    state.drag = null;
-    canvas.style.cursor = 'default';
-    renderSettings();
-    draw();
-  }
   $('resetBtn').addEventListener('click', reset);
-  $('canvasReset').addEventListener('click', reset);
   $('addSideFrameBtn').addEventListener('click', () => {
     if (state.sideFrames.length) {
       $('status').textContent = 'فقط یک فریم کناری می‌توانید داشته باشید.';
@@ -2113,4 +2639,61 @@
   window.addEventListener('resize', resizeCanvas);
   renderSettings();
   resizeCanvas();
+  document.querySelectorAll('.tool-dialog .modal-tool:not(:disabled)').forEach(button => {
+    button.addEventListener('click', () => {
+      button.closest('dialog').close();
+    });
+  });
+  const rightMenu = document.querySelector('.right-panel');
+  const leftMenu = document.querySelector('.left-panel');
+  const menuBackdrop = document.getElementById('mobileMenuBackdrop');
+  function closeMobileMenus() {
+    rightMenu.classList.remove('mobile-open');
+    leftMenu.classList.remove('mobile-open');
+    menuBackdrop.classList.remove('mobile-visible');
+  }
+  document.getElementById('openRightMenuBtn').addEventListener('click', () => {
+    closeMobileMenus();
+    rightMenu.classList.add('mobile-open');
+    menuBackdrop.classList.add('mobile-visible');
+  });
+  document.getElementById('openLeftMenuBtn').addEventListener('click', () => {
+    closeMobileMenus();
+    leftMenu.classList.add('mobile-open');
+    menuBackdrop.classList.add('mobile-visible');
+  });
+  menuBackdrop.addEventListener('click', closeMobileMenus);
+  document.querySelectorAll('[data-modal]').forEach(button => {
+    button.addEventListener('click', () => {
+      const modal = document.getElementById(button.dataset.modal);
+      if (modal) {
+        modal.showModal();
+      } else {
+        showMessage('پنجره موردنظر پیدا نشد.', 'error');
+      }
+    });
+  });
+  document.querySelectorAll('[data-close]').forEach(button => {
+    button.addEventListener('click', () => {
+      button.closest('dialog')?.close();
+      showMessage('پنجره بسته شد.', 'info');
+    });
+  });
+  document.querySelectorAll('dialog').forEach(dialog => {
+    dialog.addEventListener('click', event => {
+      if (event.target === dialog) {
+        dialog.close();
+      }
+    });
+  });
+  const messages = {
+    calculationsBtn: ['بخش محاسبات به‌زودی فعال می‌شود.', 'info'],
+    saveBtn: ['قابلیت ذخیره طرح هنوز پیاده‌سازی نشده است.', 'warning'],
+    settingsBtn: ['بخش تنظیمات به‌زودی فعال می‌شود.', 'info']
+  };
+  Object.entries(messages).forEach(([id, [message, type]]) => {
+    document.getElementById(id)?.addEventListener('click', () => {
+      showMessage(message, type);
+    });
+  });
 })();
