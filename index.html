@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>طراحی درب و پنجره</title>
+  <title>عایق فیروز | طراحی درب و پنجره</title>
+  <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg" />
   <link rel="stylesheet" href="https://cdn.lineicons.com/4.0/lineicons.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css" />
   <link rel="stylesheet" href="./css/style.css">
 </head>
-
 <body>
   <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
   <main class="layout">
@@ -27,12 +26,15 @@
       <div class="panel-divider"></div>
       <div class="side-actions">
         <button class="side-action" id="calculationsBtn">
+          <i class="ti ti-calculator"></i>
           <span><strong>محاسبات</strong></span>
         </button>
         <button class="side-action" id="saveBtn">
+          <i class="ti ti-device-floppy"></i>
           <span><strong>ذخیره پروژه</strong></span>
         </button>
         <button class="side-action" id="settingsBtn">
+          <i class="ti ti-settings"></i>
           <span><strong>تنظیمات</strong></span>
         </button>
       </div>
@@ -41,13 +43,6 @@
         <button id="polygonBtn" class="primary">غیرمستطیل</button>
       </div>
       <div class="panel-divider"></div>
-      <section class="card">
-        <h3>قسمت انتخاب‌شده</h3>
-        <div id="partSettings">
-          <p class="hint">برای تنظیم فریم یا شیشه، روی آن کلیک کنید.</p>
-        </div>
-        <button id="selectBtn" class="wide">حالت انتخاب</button>
-      </section>
     </aside>
     <!-- بوم طراحی -->
     <section class="workspace">
@@ -69,8 +64,7 @@
           <button id="resetBtn" title="بازنشانی"><i class="ti ti-arrows-maximize"></i></button>
           <button id="zoomOutBtn" title="کوچک‌نمایی"><i class="ti ti-minus"></i></button>
           <button id="zoomInBtn" title="بزرگ‌نمایی"><i class="ti ti-plus"></i></button>
-          <button id="" type="button" title="نمایش سه‌بعدی"><i class="ti ti-box"></i></button>
-          <!-- <button id="view3DButton" type="button" aria-label="نمایش سه‌بعدی"><i class="ti ti-box"></i></button> -->
+          <button id="view3DButton" type="button" title="نمایش سه‌بعدی"><i class="ti ti-box"></i></button>
         </div>
       </div>
     </section>
@@ -107,19 +101,26 @@
         <span><strong>سایر</strong></span>
       </button>
       <div class="panel-divider"></div>
-      <div class="help-card">
+      <section class="card">
+        <div id="partSettings">
+          <p class="hint">برای تنظیم فریم یا شیشه، روی آن کلیک کنید.</p>
+        </div>
+        <button id="selectBtn" class="wide">حالت انتخاب</button>
+      </section>
+      <!-- <div class="help-card">
         <div>
           <strong>راهنمای طراحی</strong>
           <p>یک ابزار انتخاب کنید و سپس روی قسمت موردنظر در بوم کلیک کنید.</p>
         </div>
-      </div>
+      </div> -->
     </aside>
   </main>
+  <!-- انواع مولین -->
   <dialog id="mullionDialog" class="tool-dialog">
     <div class="dialog-header">
       <div>
         <h2>ابزارهای مولین</h2>
-        <p>نوع تقسیم‌بندی موردنظر را انتخاب کنید.</p>
+        <p class="modal-hint">یک ابزار انتخاب کنید و روی شیشه بزنید.</p>
       </div>
       <button class="close-dialog" data-close aria-label="بستن">×</button>
     </div>
@@ -157,53 +158,201 @@
         مولین افقی سراسر فریم
       </button>
     </div>
-    <p class="modal-hint">ابزار را انتخاب کنید، سپس روی شیشه کلیک کنید.</p>
   </dialog>
+  <!-- انواع پنجره -->
   <dialog id="windowDialog" class="tool-dialog">
     <div class="dialog-header">
       <div>
         <h2>ابزارهای پنجره</h2>
-        <p>جهت بازشو را انتخاب کنید.</p>
+        <p class="modal-hint">یک ابزار انتخاب کنید و روی شیشه بزنید.</p>
       </div>
       <button class="close-dialog" data-close aria-label="بستن">×</button>
     </div>
+    <!-- پنجره تک حالته -->
+    <div class="window-section-title">
+      <strong>پنجره تک حالته</strong>
+      <span></span>
+    </div>
     <div class="modal-grid">
-      <button class="modal-tool" id="leftOpenBtn"><span>⇦</span>پنجره چپ‌بازشو</button>
-      <button class="modal-tool" id="rightOpenBtn"><span>⇨</span>پنجره راست‌بازشو</button>
-      <button class="modal-tool" id="topOpenBtn"><span>⇧</span>پنجره بالا‌بازشو</button>
-      <button class="modal-tool" id="bottomOpenBtn"><span>⇩</span>پنجره پایین‌بازشو</button>
-      <button class="modal-tool" id="frenchWindowBtn"><span>⇔</span>پنجره فرانسوی دو لنگه</button>
-      <button class="modal-tool" id="addSideFrameBtn"><span>⊞</span>افزودن فریم کناری</button>
+      <button class="modal-tool" id="leftOpenBtn">
+        <img src="icons/svg/window/window-simple-right.svg" alt="چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="rightOpenBtn">
+        <img src="icons/svg/window/window-simple-left.svg" alt="راست بازشو" />
+        راست بازشو
+      </button>
+      <button class="modal-tool" id="topOpenBtn">
+        <img src="icons/svg/window/window-simple-top.svg" alt="بالا بازشو" />
+        بالا بازشو
+      </button>
+      <button class="modal-tool" id="bottomOpenBtn">
+        <img src="icons/svg/window/window-simple-bottom.svg" alt="پایین بازشو" />
+        پایین بازشو
+      </button>
+    </div>
+    <!-- پنجره دو حالته -->
+    <div class="window-section-title">
+      <strong>پنجره دو حالته</strong>
+      <span></span>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="dualRightBtn">
+        <img src="icons/svg/window/window-dual-right.svg" alt="چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="dualLeftBtn">
+        <img src="icons/svg/window/window-dual-left.svg" alt="راست بازشو" />
+        راست بازشو
+      </button>
+      <button class="modal-tool" id="dualSimpleBtn">
+        <img src="icons/svg/window/window-simple.svg" alt="پنجره ساده" />
+        ساده
+      </button>
+    </div>
+    <!-- پنجره محوری -->
+    <div class="window-section-title">
+      <strong>پنجره محوری</strong>
+      <span></span>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="radialLeftBtn">
+        <img src="icons/svg/window/window-radial-left.svg" alt="چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="radialRightBtn">
+        <img src="icons/svg/window/window-radial-right.svg" alt="راست بازشو" />
+        راست بازشو
+      </button>
+      <button class="modal-tool" id="radialTopBtn">
+        <img src="icons/svg/window/window-radial-top.svg" alt="بالا بازشو" />
+        بالا بازشو
+      </button>
+      <button class="modal-tool" id="radialBottomBtn">
+        <img src="icons/svg/window/window-radial-bottom.svg" alt="پایین بازشو" />
+        پایین بازشو
+      </button>
+    </div>
+    <!-- پنجره فولکس واگنی -->
+    <div class="window-section-title">
+      <strong>پنجره فولکس واگنی</strong>
+      <span></span>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="volkswagenRightBtn">
+        <img src="icons/svg/window/window-volkswagen-right.svg" alt="چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="volkswagenLeftBtn">
+        <img src="icons/svg/window/window-volkswagen-left.svg" alt="راست بازشو" />
+        راست بازشو
+      </button>
+    </div>
+    <!-- پنجره فرانسوی -->
+    <div class="window-section-title">
+      <strong>پنجره فرانسوی</strong>
+      <span></span>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="frenchSimpleLeftBtn">
+        <img src="icons/svg/window/window-french-simple-left.svg" alt="ساده چپ بازشو" />
+        ساده چپ بازشو
+      </button>
+      <button class="modal-tool" id="frenchSimpleRightBtn">
+        <img src="icons/svg/window/window-french-simple-right.svg" alt="ساده راست بازشو" />
+        ساده راست بازشو
+      </button>
+      <button class="modal-tool" id="frenchDualLeftBtn">
+        <img src="icons/svg/window/window-french-dual-left.svg" alt="دوحالته چپ بازشو" />
+        دوحالته چپ بازشو
+      </button>
+      <button class="modal-tool" id="frenchDualRightBtn">
+        <img src="icons/svg/window/window-french-dual-right.svg" alt="دوحالته راست بازشو" />
+        دوحالته راست بازشو
+      </button>
     </div>
   </dialog>
+  <!-- انواع در -->
   <dialog id="doorDialog" class="tool-dialog">
     <div class="dialog-header">
       <div>
-        <h2>ابزارهای در</h2>
-        <p>ابزارهای درب در این بخش اضافه می‌شوند.</p>
+        <h2>ابزارهای درب</h2>
+        <p class="modal-hint">یک ابزار انتخاب کنید و روی شیشه بزنید.</p>
       </div>
       <button class="close-dialog" data-close aria-label="بستن">×</button>
     </div>
-    <div class="modal-grid">
-      <button class="modal-tool placeholder-tool" disabled>＋ درب تک‌لنگه</button>
-      <button class="modal-tool placeholder-tool" disabled>＋ درب دولنگه</button>
-      <button class="modal-tool placeholder-tool" disabled>＋ درب کشویی</button>
+    <div class="window-section-title">
+      <strong>درب تک حالته</strong>
+      <span></span>
     </div>
-    <p class="modal-hint">این ابزارها فعلاً نمایشی هستند.</p>
+    <div class="modal-grid">
+      <button class="modal-tool" id="doorSingleLeftBtn">
+        <img src="icons/svg/door/door-simple-right.svg" alt="در تک حالته چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="doorSingleRightBtn">
+        <img src="icons/svg/door/door-simple-left.svg" alt="در تک حالته راست بازشو" />
+        راست بازشو
+      </button>
+    </div>
+    <div class="window-section-title">
+      <strong>درب دو حالته</strong>
+      <span></span>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="doorDualLeftBtn">
+        <img src="icons/svg/door/door-dual-left.svg" alt="در دو حالته چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="doorDualRightBtn">
+        <img src="icons/svg/door/door-dual-right.svg" alt="در دو حالته چپ بازشو" />
+        راست بازشو
+      </button>
+    </div>
+    <div class="window-section-title">
+      <strong>درب فرانسوی</strong>
+      <span></span>
+    </div>
+    <div class="modal-grid">
+      <button class="modal-tool" id="frenchDoorSingleLeftBtn">
+        <img src="icons/svg/door/door-french-simple-left.svg" alt="در فرانسوی تک حالته چپ بازشو" />
+        چپ بازشو
+      </button>
+      <button class="modal-tool" id="frenchDoorSingleRightBtn">
+        <img src="icons/svg/door/door-french-simple-right.svg" alt="در فرانسوی تک حالته راست بازشو" />
+        راست بازشو
+      </button>
+      <button class="modal-tool" id="frenchDoorDualLeftBtn">
+        <img src="icons/svg/door/door-french-dual-left.svg" alt="در فرانسوی دو حالته چپ بازشو" />
+        دوحالته چپ بازشو
+      </button>
+      <button class="modal-tool" id="frenchDoorDualRightBtn">
+        <img src="icons/svg/door/door-french-dual-right.svg" alt="در فرانسوی دو حالته راست بازشو" />
+        دو حالته راست بازشو
+      </button>
+    </div>
   </dialog>
+  <!-- انواع پنل -->
   <dialog id="panelDialog" class="tool-dialog">
     <div class="dialog-header">
       <div>
         <h2>ابزارهای پنل</h2>
-        <p>ابزارهای پنل را در این بخش اضافه می‌کنیم.</p>
+        <p>نوع پنل را انتخاب کنید و روی شیشه فریم اصلی کلیک کنید.</p>
       </div>
       <button class="close-dialog" data-close aria-label="بستن">×</button>
     </div>
     <div class="modal-grid">
-      <button class="modal-tool placeholder-tool" disabled>＋ پنل ساده</button>
-      <button class="modal-tool placeholder-tool" disabled>＋ پنل طرح‌دار</button>
+      <button type="button" class="modal-tool" id="verticalPanelBtn">
+        <i class="ti ti-layout-columns"></i>
+        پنل عمودی
+      </button>
+      <button type="button" class="modal-tool" id="horizontalPanelBtn">
+        <i class="ti ti-layout-rows"></i>
+        پنل افقی
+      </button>
     </div>
   </dialog>
+  <!-- سایر -->
   <dialog id="otherDialog" class="tool-dialog">
     <div class="dialog-header">
       <div>
@@ -213,9 +362,13 @@
       <button class="close-dialog" data-close aria-label="بستن">×</button>
     </div>
     <div class="modal-grid">
+      <button class="modal-tool" id="addSideFrameBtn"><span>⊞</span>افزودن فریم کناری</button>
+    </div>
+    <div class="modal-grid">
       <button class="modal-tool placeholder-tool" disabled>＋ ابزارهای بیشتر</button>
     </div>
   </dialog>
+  <!-- فرم مستطیل -->
   <dialog id="newDialog" class="tool-dialog">
     <form id="newForm">
       <div class="dialog-header">
@@ -336,262 +489,7 @@
       </div>
     </form>
   </dialog>
-  <style>
-    .shape-preview-box {
-      position: relative;
-      width: 100%;
-      height: 260px;
-      min-height: 260px;
-      max-height: 260px;
-      box-sizing: border-box;
-      display: block;
-      overflow: visible;
-    }
-
-    .shape-preview-image {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 210px;
-      height: 210px;
-      transform: translate(-50%, -50%);
-      display: block;
-      object-fit: contain;
-      object-position: center center;
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    .shape-preview-box::before {
-      content: "";
-      position: absolute;
-      top: calc(50% - 95px);
-      bottom: calc(50% - 95px);
-      left: calc(50% - 145px);
-      width: 2px;
-      background: #000000;
-    }
-
-    .shape-preview-box::after {
-      content: "";
-      position: absolute;
-      left: calc(50% - 95px);
-      right: calc(50% - 95px);
-      top: calc(50% + 144px);
-      height: 2px;
-      background: #000000;
-    }
-
-    .shape-preview-box .height-line-top,
-    .shape-preview-box .height-line-bottom,
-    .shape-preview-box .width-line-left,
-    .shape-preview-box .width-line-right {
-      position: absolute;
-      background: #000000;
-    }
-
-    .shape-dimension-input {
-      position: absolute;
-      z-index: 10;
-      width: 70px;
-      height: 28px;
-      box-sizing: border-box;
-      padding: 2px 5px;
-      border: 1px solid #e5e7eb;
-      border-radius: 5px;
-      background: #ffffff;
-      color: #374151;
-      font-size: 11px;
-      font-family: inherit;
-      text-align: center;
-      outline: none;
-      margin: 0;
-    }
-
-    .shape-preview-box #newHeight {
-      top: 50%;
-      left: calc(50% - 145px);
-      transform: translate(-50%, -50%) rotate(-90deg);
-    }
-
-    .shape-preview-box #newWidth {
-      top: auto;
-      left: 50%;
-      bottom: 5px;
-      transform: translate(-50%, 50%);
-    }
-
-    .height-line-top,
-    .height-line-bottom {
-      position: absolute;
-      width: 12px;
-      height: 2px;
-      left: calc(50% - 151px);
-      background: #000000;
-    }
-
-    .shape-preview-box .height-line-top,
-    .shape-preview-box .height-line-bottom {
-      position: absolute;
-      width: 12px;
-      height: 2px;
-      left: calc(50% - 150px);
-      background: #000000;
-    }
-
-    .shape-preview-box .height-line-top {
-      top: calc(50% - 95px);
-    }
-
-    .shape-preview-box .height-line-bottom {
-      top: calc(50% + 95px);
-    }
-
-    .shape-preview-box .width-line-left,
-    .shape-preview-box .width-line-right {
-      position: absolute;
-      width: 1px;
-      height: 12px;
-      top: calc(50% + 139px);
-      background: #000000;
-    }
-
-    .shape-preview-box .width-line-left {
-      left: calc(50% - 95px);
-    }
-
-    .shape-preview-box .width-line-right {
-      left: calc(50% + 95px);
-    }
-
-    .height-line-top {
-      position: absolute;
-      width: 12px;
-      height: 2px;
-      left: calc(50% - 151px);
-      top: calc(50% - 120px);
-      background: #000000;
-    }
-
-    .height-line-bottom {
-      position: absolute;
-      width: 12px;
-      height: 2px;
-      left: calc(50% - 151px);
-      top: calc(50% + 120px);
-      background: #000000;
-    }
-
-    .width-line-left {
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      left: calc(50% - 120px);
-      top: calc(50% + 139px);
-      background: #000000;
-    }
-
-    .width-line-right {
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      left: calc(50% + 120px);
-      top: calc(50% + 139px);
-      background: #000000;
-    }
-
-    .shape-preview-box .height-line-bottom {
-      bottom: 25px;
-    }
-
-    .shape-preview-box .width-line-left,
-    .shape-preview-box .width-line-right {
-      position: absolute;
-      width: 2px;
-      height: 12px;
-      top: calc(50% + 139px);
-      background: #000000;
-    }
-
-    .shape-preview-box .width-line-left {
-      left: calc(50% - 95px);
-    }
-
-    .shape-preview-box .width-line-right {
-      left: calc(50% + 95px);
-    }
-
-    .shape-dimension-input:focus {
-      border-color: #2563eb;
-    }
-
-    .shape-corner-input {
-      position: absolute;
-      z-index: 11;
-      width: 50px;
-      height: 26px;
-      box-sizing: border-box;
-      padding: 2px 5px;
-      border: 1px solid #e5e7eb;
-      border-radius: 5px;
-      background: #ffffff;
-      color: #374151;
-      font-size: 11px;
-      font-family: inherit;
-      text-align: center;
-      outline: none;
-      margin: 0;
-    }
-
-    .shape-preview-box #a,
-    .shape-preview-box #b,
-    .shape-preview-box #c,
-    .shape-preview-box #d {
-      position: absolute;
-    }
-
-    #newDialog .wd-nonrect-layout {
-      width: 100%;
-      margin: 35px 0 45px;
-      padding: 10px 0;
-      display: flex;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-
-    #newDialog .shape-preview-box {
-      width: 100%;
-      max-width: 420px;
-      height: 300px;
-      min-height: 300px;
-      margin: 0 auto;
-    }
-
-    #newDialog .shape-preview-image {
-      max-width: 210px;
-      max-height: 210px;
-    }
-
-    #newDialog .dialog-actions {
-      margin-top: 20px;
-    }
-
-    @media (max-width: 520px) {
-      #newDialog .wd-nonrect-layout {
-        margin: 30px 0 40px;
-      }
-
-      #newDialog .shape-preview-box {
-        height: 300px;
-        min-height: 300px;
-      }
-
-      #newDialog .dialog-actions {
-        margin-top: 15px;
-      }
-    }
-  </style>
+  <!-- فرم غیرمستطیل -->
   <dialog id="polygonDialog" class="tool-dialog">
     <form id="polygonForm">
       <div class="dialog-header">
@@ -717,6 +615,7 @@
       </div>
     </form>
   </dialog>
+  <!-- فرم افزودن فریم کناره -->
   <dialog id="sideFrameDialog" class="tool-dialog">
     <form id="sideFrameForm">
       <div class="dialog-header">
@@ -733,7 +632,41 @@
           class="primary">افزودن</button></div>
     </form>
   </dialog>
+  <!-- مدال سه بعدی -->
+  <div id="myModal" class="modal" aria-hidden="true">
+    <div class="modal-content wd-3d-modal-content">
+      <div class="wd-3d-modal-actions">
+        <button type="button" class="wd-3d-close-btn close" title="بستن">
+          <i class="ti ti-x"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DPreviewButton" title="پیش‌نمایش">
+          <i class="ti ti-video"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DRotateRightButton" title="چرخش راست ۱۸۰ درجه">
+          <i class="ti ti-rotate-clockwise-2"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DRotateLeftButton" title="چرخش چپ ۱۸۰ درجه">
+          <i class="ti ti-rotate-2"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DRotateUpButton" title="چرخش بالا ۹۰ درجه">
+          <i class="ti ti-arrow-up"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DRotateDownButton" title="چرخش پایین ۹۰ درجه">
+          <i class="ti ti-arrow-down"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DZoomInButton" title="زوم نزدیک">
+          <i class="ti ti-zoom-in"></i>
+        </button>
+        <button type="button" class="wd-3d-preview-btn" id="wd3DZoomOutButton" title="زوم دور">
+          <i class="ti ti-zoom-out"></i>
+        </button>
+      </div>
+      <div class="wd-3d-modal-body">
+        <div id="3d" class="wd-3d-view"></div>
+      </div>
+    </div>
+  </div>
   <script src="./js/app.js"></script>
+  <script type="module" src="./js/lib/3d.js"></script>
 </body>
-
 </html>

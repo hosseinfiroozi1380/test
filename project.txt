@@ -1,0 +1,29 @@
+js/
+├── app.js
+├── config/
+│   └── state.js
+├── core/
+│   ├── history.js
+│   ├── geometry.js
+│   └── helpers.js
+├── drawing/
+│   ├── draw.js
+│   ├── window.js
+│   ├── mullions.js
+│   ├── openings.js
+│   ├── panels.js
+│   └── dimensions.js
+├── interaction/
+│   ├── pointer.js
+│   ├── hit-test.js
+│   ├── drag.js
+│   └── tools.js
+├── ui/
+│   ├── dialogs.js
+│   ├── settings.js
+│   ├── menus.js
+│   └── messages.js
+└── events/
+    └── listeners.js
+
+    خب ببین میتونی ماژولار کد بنویسی هر پوشه هر فایل درست کنی تو فایل هر تابع کامل بذاری
