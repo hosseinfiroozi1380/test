@@ -334,8 +334,11 @@
   function geom() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
-    const padX = Math.min(160, w * .25);
-    const padY = Math.min(130, h * .22);
+    // در موبایل فضای کم‌تری برای حاشیه می‌گیریم تا فریم بزرگ‌تر دیده شود؛
+    // در عین حال برای اعداد اندازه‌گذاری در چپ و پایین بوم جا نگه می‌داریم.
+    const isMobile = w <= 600;
+    const padX = isMobile ? 58 : Math.min(160, w * .25);
+    const padY = isMobile ? 62 : Math.min(130, h * .22);
     const side = state.sideFrames[0] || null;
     const gap = side ? 70 : 0;
     const totalWidth = side
@@ -349,9 +352,9 @@
         : Math.max(state.height, side.height)
       : state.height;
     const scale = Math.max(.01, Math.min(
-      (w - padX * 2) / (totalWidth + 30),
-      (h - padY * 2) / (totalHeight + 30)
-    ) * state.zoom);
+      (w - padX * 2) / (totalWidth + (isMobile ? 0 : 30)),
+      (h - padY * 2) / (totalHeight + (isMobile ? 0 : 30))
+    ) * state.zoom * (isMobile ? 0.88 : 1));
     const fw = state.width * scale;
     const fh = state.height * scale;
     const groupX = (w - totalWidth * scale) / 2 + (state.panX || 0);
@@ -2480,6 +2483,9 @@
     };
     const color = state.dimensionColor;
     const size = Math.max(10, Math.min(14, inner.w * 0.035));
+    const isMobile = g.w <= 600;
+    const widthOffset = isMobile ? 48 : 60;
+    const heightOffset = isMobile ? 48 : 60;
     const widthGap = 22.5;
     const heightGap = 22.5;
     ctx.save();
@@ -2514,18 +2520,18 @@
     }
     // فریم اصلی
     if (side && side.direction === 'bottom') {
-      drawWidth(x, x + fw, y - 60, state.width);
+      drawWidth(x, x + fw, y - widthOffset, state.width);
     } else {
-      drawWidth(x, x + fw, y + fh + 60, state.width);
+      drawWidth(x, x + fw, y + fh + widthOffset, state.width);
     }
-    drawHeight(y, y + fh, side?.direction === 'right' ? x - 60 : x - 60, state.height);
+    drawHeight(y, y + fh, x - heightOffset, state.height);
     // فریم جدید
     if (side) {
       const s = side;
       const sideWidth = state.sideFrames[0].width;
       const sideHeight = state.sideFrames[0].height;
-      drawWidth(s.x, s.x + s.fw, s.y + s.fh + 60, sideWidth);
-      drawHeight(s.y, s.y + s.fh, s.x + s.fw + 40, sideHeight);
+      drawWidth(s.x, s.x + s.fw, s.y + s.fh + widthOffset, sideWidth);
+      drawHeight(s.y, s.y + s.fh, s.x + s.fw + (isMobile ? 24 : 40), sideHeight);
     }
     // موقعیت مولین‌های داخل شیشه لنگه بازشو را به همان اندازه‌گذاری بیرونی اضافه می‌کنیم.
     // خط اندازه‌گیری جدید رسم نمی‌شود؛ همه موقعیت‌ها روی خط موجود ادغام می‌شوند.
@@ -2573,7 +2579,7 @@
       .sort((a, b) => a - b)
       .filter((v, i, arr) => i === 0 || Math.abs(v - arr[i - 1]) > 0.002);
     if (verticalBounds.length > 2) {
-      const columnY = side?.direction === 'bottom' ? y - 30 : y + fh + 30;
+      const columnY = side?.direction === 'bottom' ? y - (isMobile ? 22 : 30) : y + fh + (isMobile ? 22 : 30);
       verticalBounds.slice(0, -1).forEach((b, i) => {
         const r = verticalBounds[i + 1];
         const sx = x + b * fw;
@@ -2592,7 +2598,7 @@
       .sort((a, b) => a - b)
       .filter((v, i, arr) => i === 0 || Math.abs(v - arr[i - 1]) > 0.002);
     if (horizontalBounds.length > 2) {
-      const rowX = x - (side?.direction === 'bottom' ? 15 : 30);
+      const rowX = x - (isMobile ? 22 : (side?.direction === 'bottom' ? 15 : 30));
       horizontalBounds.slice(0, -1).forEach((b, i) => {
         const next = horizontalBounds[i + 1];
         const sy = y + b * fh;

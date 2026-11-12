@@ -535,10 +535,46 @@ button.primary:hover {
   font-size: 23px
 }
 
+/* خط جداکننده کامل پنل */
 .panel-divider {
+  display: block;
+  width: 100%;
+  max-width: 100%;
   height: 1px;
+  min-height: 1px;
+  padding: 0;
+  margin: 3px 0;
   background: var(--line);
-  margin: 3px -14px;
+  border: 0;
+  box-sizing: border-box;
+  flex: 0 0 1px;
+}
+
+.left-panel > .panel-divider {
+  display: block !important;
+  grid-column: 1 / -1 !important;
+  width: calc(100% + 28px) !important;
+  max-width: none !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: 3px -14px 8px !important;
+  padding: 0 !important;
+  background: var(--line) !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.right-panel > .panel-divider {
+  display: block !important;
+  width: calc(100% + 28px) !important;
+  max-width: none !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: 3px -14px 8px !important;
+  padding: 0 !important;
+  background: var(--line) !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
   flex-shrink: 0;
 }
 
@@ -1839,13 +1875,6 @@ dialog.tool-dialog::backdrop {
   color: var(--muted);
 }
 
-.right-panel .panel-divider {
-  flex-shrink: 0;
-  width: 100%;
-  height: 1px;
-  margin: 2px 0;
-  background: var(--line);
-}
 
 .right-panel .side-actions {
   display: grid;
@@ -3222,4 +3251,304 @@ dialog.tool-dialog::backdrop {
   opacity: 0.35;
   cursor: not-allowed;
   filter: grayscale(100%);
+}
+
+/* نوار ابزار اختصاصی موبایل؛ دسکتاپ و لپ‌تاپ بدون تغییر می‌مانند */
+.mobile-category-tools {
+  display: none;
+}
+
+@media (max-width: 520px) {
+  /* دسته‌بندی‌ها از منوی کشویی چپ مخفی و روی بوم نمایش داده می‌شوند */
+  .left-panel > .category-button {
+    display: none !important;
+  }
+
+  .mobile-category-tools {
+    position: absolute;
+    z-index: 8;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+    direction: rtl;
+    padding: 5px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 2px 8px rgba(24, 43, 69, .08);
+  }
+
+  .mobile-category-button {
+    min-width: 0;
+    min-height: 43px;
+    padding: 3px 1px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .mobile-category-button img {
+    display: block;
+    width: 19px;
+    height: 19px;
+    object-fit: contain;
+  }
+
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    border-color: var(--blue);
+    background: #edf4ff;
+    color: var(--blue);
+  }
+
+  /* ردیف دوم: ابزارهای عملیاتی بوم، مستقل از منوی دسته‌بندی */
+  .canvas-wrap > .canvas-tools {
+    top: 62px !important;
+    right: 8px !important;
+    left: 8px !important;
+    bottom: auto !important;
+    max-width: none !important;
+    max-height: 46px !important;
+    height: 44px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    padding: 3px 0 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    direction: rtl;
+  }
+
+  .canvas-wrap > .canvas-tools::-webkit-scrollbar {
+    display: none;
+  }
+
+  .canvas-wrap > .canvas-tools button {
+    flex: 0 0 35px !important;
+    width: 35px !important;
+    min-width: 35px !important;
+    height: 35px !important;
+    padding: 0 !important;
+    font-size: 17px !important;
+  }
+
+  .canvas-wrap > .canvas-tools button i {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-category-tools {
+    left: 5px;
+    right: 5px;
+    gap: 2px;
+  }
+
+  .mobile-category-button {
+    font-size: 9px;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 59px !important;
+    gap: 3px;
+  }
+
+  .canvas-wrap > .canvas-tools button {
+    flex-basis: 33px !important;
+    width: 33px !important;
+    min-width: 33px !important;
+    height: 33px !important;
+  }
+}
+
+/* اصلاح چیدمان نوارهای موبایل - فقط موبایل */
+@media (max-width: 520px) {
+  /* نوار دسته‌بندی بدون قاب و سایه */
+  .mobile-category-tools {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    gap: 4px !important;
+  }
+
+  .mobile-category-button {
+    box-shadow: none !important;
+    outline: none;
+    /* پس‌زمینه خود دکمه‌ها حفظ شود؛ فقط سایه حذف است */
+    background: #ffffff !important;
+    border: 1px solid var(--line) !important;
+  }
+
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    background: #edf4ff !important;
+    border-color: var(--blue) !important;
+  }
+
+  /* ۱۰ ابزار در ردیف بالا و ۳ ابزار در ردیف پایین */
+  .canvas-wrap > .canvas-tools {
+    top: 70px !important;
+    height: 88px !important;
+    max-height: 88px !important;
+    display: grid !important;
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: 36px 36px;
+    column-gap: 2px !important;
+    row-gap: 9px !important;
+    align-items: center;
+    justify-items: center;
+    padding: 0 2px !important;
+    overflow: visible !important;
+    direction: ltr;
+  }
+
+  .canvas-wrap > .canvas-tools button {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 34px;
+    height: 34px !important;
+    flex: none !important;
+    margin: 0 !important;
+  }
+
+  /* منوی چپ در ابتدای ردیف و منوی راست در انتهای ردیف */
+  #openLeftMenuBtn { grid-column: 1; grid-row: 1; }
+  #sortVerticalMullionsBtn { grid-column: 2; grid-row: 1; }
+  #sortHorizontalMullionsBtn { grid-column: 3; grid-row: 1; }
+  #reverseOpeningBtn { grid-column: 4; grid-row: 1; }
+  #copyBtn { grid-column: 5; grid-row: 1; }
+  #deleteBtn { grid-column: 6; grid-row: 1; }
+  #undoBtn { grid-column: 7; grid-row: 1; }
+  #redoBtn { grid-column: 8; grid-row: 1; }
+  #resetBtn { grid-column: 9; grid-row: 1; }
+  #openRightMenuBtn { grid-column: 10; grid-row: 1; }
+
+  #zoomOutBtn { grid-column: 4 / span 1; grid-row: 2; }
+  #zoomInBtn { grid-column: 5 / span 1; grid-row: 2; }
+  #view3DButton { grid-column: 6 / span 1; grid-row: 2; }
+}
+
+@media (max-width: 360px) {
+  .canvas-wrap > .canvas-tools {
+    top: 68px !important;
+    column-gap: 1px !important;
+    row-gap: 10px !important;
+  }
+}
+
+/* نوار یکپارچه دسته‌بندی در لبه بالایی صفحه موبایل */
+@media (max-width: 520px) {
+  .mobile-category-tools {
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    padding: 5px 7px !important;
+    gap: 4px !important;
+  }
+
+  .mobile-category-button {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    background: #edf4ff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+}
+
+
+/* جداکننده عمودی تمام‌قد بین دکمه‌های سطر اول موبایل */
+@media (max-width: 520px) {
+  .mobile-category-tools {
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    min-height: 54px;
+    align-items: stretch !important;
+  }
+
+  .mobile-category-button {
+    height: 54px !important;
+    min-height: 54px !important;
+    box-sizing: border-box !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    border: 0 !important;
+    border-left: 1px solid #dedede !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-category-button:last-child {
+    border-left: 0 !important;
+  }
+
+  .mobile-category-button:hover,
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    background: #edf4ff !important;
+    color: var(--blue) !important;
+    outline: none !important;
+  }
+}
+
+/* اصلاحات نهایی درخواستی - فقط موبایل */
+@media (max-width: 520px) {
+  /* هاور سطر اول: پس‌زمینه آبی و آیکون/متن سفید */
+  .mobile-category-button:hover,
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    background: var(--blue) !important;
+    color: #fff !important;
+    border-color: var(--blue) !important;
+  }
+
+  /* تصویر/عکس داخل دکمه‌های سطر اول بدون فیلتر و با ظاهر اصلی باقی بماند */
+
+  /* سه دکمه سطر دوم به‌صورت یک گروه مستقل در مرکز ردیف قرار بگیرند */
+  /* سه دکمه سطر دوم کنار هم و به‌صورت یک گروه در مرکز */
+  #zoomOutBtn { grid-column: 5 !important; grid-row: 2 !important; }
+  #zoomInBtn { grid-column: 6 !important; grid-row: 2 !important; }
+  #view3DButton { grid-column: 7 !important; grid-row: 2 !important; }
+
+  /* دکمه‌های منوی چپ و راست با زمینه آبی و آیکون سفید */
+  #openLeftMenuBtn,
+  #openRightMenuBtn {
+    background: var(--blue) !important;
+    color: #fff !important;
+    border-color: var(--blue) !important;
+  }
+  #openLeftMenuBtn i,
+  #openRightMenuBtn i {
+    color: #fff !important;
+  }
 }
