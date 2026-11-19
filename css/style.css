@@ -3552,3 +3552,476 @@ dialog.tool-dialog::backdrop {
     color: #fff !important;
   }
 }
+
+/* اصلاح قطعی نوار دسته‌بندی موبایل: تمام‌عرضِ صفحه و چیدمان راست‌به‌چپ */
+@media (max-width: 520px) {
+  .mobile-category-tools {
+    display: grid !important;
+    position: fixed !important;
+    z-index: 10000 !important;
+    top: env(safe-area-inset-top, 0px) !important;
+    right: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-height: 64px !important;
+    padding: 5px 8px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    direction: rtl !important;
+    align-items: center !important;
+    justify-items: center !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    border-radius: 0 !important;
+    box-shadow: 0 2px 8px rgba(24, 43, 69, .08) !important;
+  }
+
+  .mobile-category-button {
+    display: flex !important;
+    width: 100% !important;
+    max-width: 58px !important;
+    aspect-ratio: 1 / 1 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 4px 2px !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    color: var(--ink) !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-category-button img {
+    display: block !important;
+    width: 22px !important;
+    height: 22px !important;
+    object-fit: contain !important;
+  }
+
+  .mobile-category-button:hover,
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    background: var(--blue) !important;
+    border-color: var(--blue) !important;
+    color: #fff !important;
+    outline: none !important;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 72px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-category-tools {
+    min-height: 60px !important;
+    padding: 4px 5px !important;
+    gap: 3px !important;
+  }
+
+  .mobile-category-button {
+    max-width: 54px !important;
+    border-radius: 9px !important;
+    font-size: 9px !important;
+  }
+
+  .mobile-category-button img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 68px !important;
+  }
+}
+
+
+/* بازتنظیم نوار موبایل: بدون پس‌زمینه و بدون پخش‌شدن دکمه‌ها */
+@media (max-width: 520px) {
+  .mobile-category-tools {
+    position: fixed !important;
+    z-index: 10000 !important;
+    top: env(safe-area-inset-top, 0px) !important;
+    right: 8px !important;
+    left: auto !important;
+    width: max-content !important;
+    max-width: calc(100vw - 16px) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    direction: rtl !important;
+    gap: 3px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-category-button {
+    flex: 0 0 52px !important;
+    width: 52px !important;
+    min-width: 52px !important;
+    max-width: 52px !important;
+    height: 52px !important;
+    min-height: 52px !important;
+    aspect-ratio: 1 / 1 !important;
+    padding: 3px 1px !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 9px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--ink) !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+  }
+
+  .mobile-category-button img {
+    width: 21px !important;
+    height: 21px !important;
+    object-fit: contain !important;
+  }
+
+  .mobile-category-button:hover,
+  .mobile-category-button:active,
+  .mobile-category-button:focus-visible {
+    background: rgba(22, 114, 249, .10) !important;
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    outline: none !important;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 62px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-category-tools {
+    right: 5px !important;
+    gap: 2px !important;
+  }
+
+  .mobile-category-button {
+    flex-basis: 48px !important;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+    font-size: 9px !important;
+  }
+
+  .mobile-category-button img {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 58px !important;
+  }
+}
+
+
+/* چیدمان نهایی: پنج دکمه سفیدِ مربعی در تمام عرض بالای موبایل */
+@media (max-width: 520px) {
+  .mobile-category-tools {
+    position: fixed !important;
+    z-index: 10000 !important;
+    top: env(safe-area-inset-top, 0px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 60px !important;
+    min-height: 60px !important;
+    box-sizing: border-box !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-auto-flow: row !important;
+    direction: rtl !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    gap: 4px !important;
+    padding: 2px 4px !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .mobile-category-tools .mobile-category-button {
+    display: flex !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    aspect-ratio: 1 / 1 !important;
+    box-sizing: border-box !important;
+    padding: 3px 1px !important;
+    margin: 0 !important;
+    flex: initial !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 9px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+    color: var(--ink) !important;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+  }
+
+  .mobile-category-tools .mobile-category-button img {
+    display: block !important;
+    width: 21px !important;
+    height: 21px !important;
+    object-fit: contain !important;
+  }
+
+  .mobile-category-tools .mobile-category-button:hover,
+  .mobile-category-tools .mobile-category-button:active,
+  .mobile-category-tools .mobile-category-button:focus-visible {
+    background: #fff !important;
+    border-color: var(--blue) !important;
+    color: var(--blue) !important;
+    outline: none !important;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 66px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-category-tools {
+    height: 56px !important;
+    min-height: 56px !important;
+    gap: 3px !important;
+    padding: 2px 3px !important;
+  }
+
+  .mobile-category-tools .mobile-category-button {
+    height: 50px !important;
+    min-height: 50px !important;
+    border-radius: 8px !important;
+    font-size: 9px !important;
+  }
+
+  .mobile-category-tools .mobile-category-button img {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .canvas-wrap > .canvas-tools {
+    top: 62px !important;
+  }
+}
+
+/* هاور دکمه‌های دسته‌بندی بالای موبایل؛ تصویرها بدون تغییر می‌مانند */
+@media (max-width: 520px) {
+  .mobile-category-tools .mobile-category-button:hover,
+  .mobile-category-tools .mobile-category-button:active,
+  .mobile-category-tools .mobile-category-button:focus-visible {
+    background: var(--blue) !important;
+    border-color: var(--blue) !important;
+    color: #fff !important;
+    outline: none !important;
+  }
+
+  .mobile-category-tools .mobile-category-button:hover svg,
+  .mobile-category-tools .mobile-category-button:active svg,
+  .mobile-category-tools .mobile-category-button:focus-visible svg {
+    color: #fff !important;
+    fill: currentColor !important;
+    stroke: currentColor !important;
+  }
+
+  /* تصاویر آیکون عمداً دست‌نخورده‌اند؛ بدون filter یا تغییر رنگ */
+  .mobile-category-tools .mobile-category-button img {
+    filter: none !important;
+  }
+}
+
+/* انتقال دکمه‌های منوی یونیت و دسته‌بندی به پایین صفحه در موبایل */
+@media (max-width: 520px) {
+  .canvas-wrap > .canvas-tools button#openRightMenuBtn {
+    position: fixed !important;
+    right: 12px !important;
+    left: auto !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    top: auto !important;
+    z-index: 30 !important;
+  }
+
+  .canvas-wrap > .canvas-tools button#openLeftMenuBtn {
+    position: fixed !important;
+    left: 12px !important;
+    right: auto !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    top: auto !important;
+    z-index: 30 !important;
+  }
+}
+
+
+/* انتقال بازنشانی و زوم به مرکز پایین؛ بزرگ‌تر کردن فقط همین کنترل‌ها */
+@media (max-width: 520px) {
+  .canvas-wrap > .canvas-tools button#zoomOutBtn,
+  .canvas-wrap > .canvas-tools button#zoomInBtn,
+  .canvas-wrap > .canvas-tools button#resetBtn {
+    position: fixed !important;
+    top: auto !important;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    z-index: 31 !important;
+    border-radius: 11px !important;
+    font-size: 21px !important;
+  }
+
+  .canvas-wrap > .canvas-tools button#zoomOutBtn {
+    left: calc(50% - 76px) !important;
+    right: auto !important;
+  }
+
+  .canvas-wrap > .canvas-tools button#zoomInBtn {
+    left: calc(50% - 23px) !important;
+    right: auto !important;
+  }
+
+  .canvas-wrap > .canvas-tools button#resetBtn {
+    left: calc(50% + 30px) !important;
+    right: auto !important;
+  }
+}
+
+
+/* کمی بزرگ‌تر کردن سایر دکمه‌های ابزار موبایل؛ دکمه‌های بالای دسته‌بندی و کنترل‌های پایین مستثنا هستند */
+@media (max-width: 520px) {
+  .canvas-wrap > .canvas-tools button:not(#openLeftMenuBtn):not(#openRightMenuBtn):not(#zoomOutBtn):not(#zoomInBtn):not(#resetBtn) {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    font-size: 19px !important;
+    border-radius: 9px !important;
+  }
+
+  .canvas-wrap > .canvas-tools button:not(#openLeftMenuBtn):not(#openRightMenuBtn):not(#zoomOutBtn):not(#zoomInBtn):not(#resetBtn) i,
+  .canvas-wrap > .canvas-tools button:not(#openLeftMenuBtn):not(#openRightMenuBtn):not(#zoomOutBtn):not(#zoomInBtn):not(#resetBtn) svg {
+    font-size: 19px !important;
+    width: 19px !important;
+    height: 19px !important;
+  }
+}
+
+
+/* یکسان‌سازی اندازه تمام دکمه‌های ابزار موبایل با سه دکمه پایین وسط */
+@media (max-width: 520px) {
+  .canvas-wrap > .canvas-tools button {
+    box-sizing: border-box !important;
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    padding: 0 !important;
+    border-radius: 11px !important;
+    font-size: 21px !important;
+  }
+
+  .canvas-wrap > .canvas-tools button i,
+  .canvas-wrap > .canvas-tools button svg {
+    font-size: 21px !important;
+    width: 21px !important;
+    height: 21px !important;
+  }
+
+  /* یونیت پایین راست و دسته‌بندی پایین چپ؛ هم‌اندازه کنترل‌های وسط */
+  .canvas-wrap > .canvas-tools button#openRightMenuBtn,
+  .canvas-wrap > .canvas-tools button#openLeftMenuBtn {
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+    padding: 0 !important;
+    border-radius: 11px !important;
+    font-size: 21px !important;
+  }
+}
+
+/* در موبایل خیلی کوچک نیز اندازه دکمه‌ها یکسان باقی بماند */
+@media (max-width: 360px) {
+  .canvas-wrap > .canvas-tools button,
+  .canvas-wrap > .canvas-tools button#openRightMenuBtn,
+  .canvas-wrap > .canvas-tools button#openLeftMenuBtn {
+    width: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+  }
+}
+
+
+/* اصلاح چیدمان موبایل بدون تغییر کنترل‌های پایین صفحه */
+@media (max-width: 520px) {
+  /* انتقال سه‌بعدی کنار بازگشت و انجام مجدد در سطر اول */
+  .canvas-wrap > .canvas-tools button#view3DButton {
+    grid-column: 9 !important;
+    grid-row: 1 !important;
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    z-index: 6 !important;
+  }
+
+  /* فاصله بیشتر بین دکمه‌های باقی‌مانده در سطر دوم */
+  .canvas-wrap > .canvas-tools button#zoomOutBtn {
+    grid-column: 4 !important;
+    grid-row: 2 !important;
+  }
+
+  .canvas-wrap > .canvas-tools button#zoomInBtn {
+    grid-column: 7 !important;
+    grid-row: 2 !important;
+  }
+}

@@ -252,16 +252,77 @@
     syncInputs();
     draw();
   }
+  function updateHistoryButtons() {
+    const undoBtn = $('undoBtn');
+    const redoBtn = $('redoBtn');
+    if (undoBtn) {
+      undoBtn.disabled = state.history.length === 0;
+    }
+    if (redoBtn) {
+      redoBtn.disabled = state.future.length === 0;
+    }
+  }
+  function saveHistory() {
+    state.history.push(snapshot());
+    if (state.history.length > 80) {
+      state.history.shift();
+    }
+    state.future = [];
+    updateHistoryButtons();
+  }
+  function restore(s) {
+    Object.assign(state, clone(s));
+    state.drag = null;
+    renderSettings();
+    syncInputs();
+    draw();
+    updateHistoryButtons();
+  }
+  function updateHistoryButtons() {
+    const undoBtn = $('undoBtn');
+    const redoBtn = $('redoBtn');
+    if (undoBtn) {
+      undoBtn.disabled = false;
+      undoBtn.classList.toggle(
+        'history-disabled',
+        state.history.length === 0
+      );
+    }
+    if (redoBtn) {
+      redoBtn.disabled = false;
+      redoBtn.classList.toggle(
+        'history-disabled',
+        state.future.length === 0
+      );
+    }
+  }
   function undo() {
-    if (!state.history.length) return;
+    if (state.history.length === 0) {
+      showMessage(
+        'امکانی برای بازگشت به مرحله قبل وجود ندارد.',
+        'warning'
+      );
+      return;
+    }
     state.future.push(snapshot());
     restore(state.history.pop());
+    updateHistoryButtons();
   }
   function redo() {
-    if (!state.future.length) return;
+    if (state.future.length === 0) {
+      showMessage(
+        'مرحله‌ای برای انجام مجدد وجود ندارد.',
+        'warning'
+      );
+      return;
+    }
     state.history.push(snapshot());
     restore(state.future.pop());
+    updateHistoryButtons();
   }
+  $('undoBtn').addEventListener('click', undo);
+  $('redoBtn').addEventListener('click', redo);
+  updateHistoryButtons();
   function resizeCanvas() {
     const r = canvas.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
@@ -273,8 +334,11 @@
   function geom() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
-    const padX = Math.min(160, w * .25);
-    const padY = Math.min(130, h * .22);
+    // در موبایل فضای کم‌تری برای حاشیه می‌گیریم تا فریم بزرگ‌تر دیده شود؛
+    // در عین حال برای اعداد اندازه‌گذاری در چپ و پایین بوم جا نگه می‌داریم.
+    const isMobile = w <= 600;
+    const padX = isMobile ? 58 : Math.min(160, w * .25);
+    const padY = isMobile ? 62 : Math.min(130, h * .22);
     const side = state.sideFrames[0] || null;
     const gap = side ? 70 : 0;
     const totalWidth = side
@@ -288,9 +352,9 @@
         : Math.max(state.height, side.height)
       : state.height;
     const scale = Math.max(.01, Math.min(
-      (w - padX * 2) / (totalWidth + 30),
-      (h - padY * 2) / (totalHeight + 30)
-    ) * state.zoom);
+      (w - padX * 2) / (totalWidth + (isMobile ? 0 : 30)),
+      (h - padY * 2) / (totalHeight + (isMobile ? 0 : 30))
+    ) * state.zoom * (isMobile ? 0.88 : 1));
     const fw = state.width * scale;
     const fh = state.height * scale;
     const groupX = (w - totalWidth * scale) / 2 + (state.panX || 0);
@@ -453,7 +517,7 @@
     for (let i = state.openings.length - 1; i >= 0; i--) {
       const o = state.openings[i];
       const b = getOpeningBounds(o, inner);
-      const ft = Math.max(1, state.sashFrame * scale);
+      const ft = Math.max(1, state.sashFrame * (o.isDoor ? 1.45 : 1) * scale);
       const gb = Math.max(1, state.glassBorder * scale);
       const overlap = Math.min(3, ft * 0.15);
       const ox = b.x - (!b.leftM ? overlap : 0);
@@ -1194,8 +1258,29 @@
         ctx.fillStyle = 'rgba(22,114,249,.18)';
         ctx.fillRect(mx - mw / 2, y1, mw, y2 - y1);
         ctx.strokeRect(mx - mw / 2, y1, mw, y2 - y1);
+        const guideY = (y1 + y2) / 2;
+        ctx.beginPath();
+        ctx.moveTo(x, guideY);
+        ctx.lineTo(x + fw, guideY);
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0066ff';
+        ctx.fillText(
+          String(Math.round((d.previewPos - range.first) * state.width)),
+          (inner.x + range.first * inner.w + mx) / 2,
+          guideY - 10
+        );
+        ctx.fillText(
+          String(Math.round((range.last - d.previewPos) * state.width)),
+          (mx + inner.x + range.last * inner.w) / 2,
+          guideY - 10
+        );
       } else if (d.type === 'horizontalMullion' && Number.isFinite(d.previewPos)) {
-        const range = getMullionRange(state.horizontalMullions[d.index], 'horizontal');
+        const range = getMullionRange(
+          state.horizontalMullions[d.index],
+          'horizontal'
+        );
         const my = inner.y + d.previewPos * inner.h;
         const x1 = inner.x + range.first * inner.w;
         const x2 = inner.x + range.last * inner.w;
@@ -1203,6 +1288,26 @@
         ctx.fillStyle = 'rgba(22,114,249,.18)';
         ctx.fillRect(x1, my - mh / 2, x2 - x1, mh);
         ctx.strokeRect(x1, my - mh / 2, x2 - x1, mh);
+        const guideX = (x1 + x2) / 2;
+        ctx.beginPath();
+        ctx.moveTo(guideX, y);
+        ctx.lineTo(guideX, y + fh);
+        ctx.stroke();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#0066ff';
+        ctx.font = `${state.dimensionFontWeight} ${fontSize}px ${state.dimensionFontFamily}`;
+        ctx.globalAlpha = 1;
+        ctx.fillText(
+          String(Math.round((d.previewPos - range.first) * state.height)),
+          guideX + 12,
+          (inner.y + range.first * inner.h + my) / 2
+        );
+        ctx.fillText(
+          String(Math.round((range.last - d.previewPos) * state.height)),
+          guideX + 12,
+          (my + inner.y + range.last * inner.h) / 2
+        );
       } else if (d.type === 'opening' && d.current) {
         const gp = glassAt(d.current);
         if (gp) {
@@ -1280,10 +1385,7 @@
   }
   function drawMullions(g, inner, mullions = state.mullions, horizontalMullions = state.horizontalMullions, nested = false) {
     const scale = g.scale || 1;
-    // عرض مولین در هر دو ناحیه دقیقاً از مقدار اصلی گرفته می‌شود.
     const mw = Math.max(3, state.mullionWidth * scale);
-    // در شیشهٔ داخل فریم پنجره، خانه‌های شیشه با همان منطق فریم اصلی رسم می‌شوند.
-    // این بخش عمداً داخل drawMullions است تا تابع جداگانه‌ای برای مولین تو‌در‌تو وجود نداشته باشد.
     if (nested && (mullions.length || horizontalMullions.length)) {
       const glassBorder = Math.max(1, state.glassBorder * scale);
       const vertical = [...mullions].sort((a, b) => a.pos - b.pos);
@@ -1318,9 +1420,6 @@
           const topLast = topRight ? topRight.pos : (topMullion?.x2 ?? 1);
           const bottomFirst = bottomLeft ? bottomLeft.pos : (bottomMullion?.x1 ?? 0);
           const bottomLast = bottomRight ? bottomRight.pos : (bottomMullion?.x2 ?? 1);
-          // فقط لبه‌هایی که واقعاً به مولین وصل هستند نوار سفید و نیم‌ساز می‌گیرند.
-          // مرز بیرونی شیشهٔ فریم پنجره از قبل توسط قاب بازشو رسم شده؛
-          // بنابراین در اینجا نباید نوار یا نیم‌ساز دیگری داخل شیشه ساخته شود.
           const edges = {
             left: !!leftMullion && rowMiddle >= Math.min(leftFirst, leftLast) - 0.0001 && rowMiddle <= Math.max(leftFirst, leftLast) + 0.0001,
             right: !!rightMullion && rowMiddle >= Math.min(rightFirst, rightLast) - 0.0001 && rowMiddle <= Math.max(rightFirst, rightLast) + 0.0001,
@@ -1332,7 +1431,6 @@
           const top = inner.y + rowTop * inner.h + (r > 0 && edges.top ? mw / 2 : 0);
           const bottom = inner.y + rowBottom * inner.h - (r < horizontal.length && edges.bottom ? mw / 2 : 0);
           if (right <= left || bottom <= top) continue;
-          // نوار سفید اطراف شیشه و مرزهای آن، مشابه فریم اصلی
           ctx.fillStyle = '#fff';
           ctx.fillRect(left, top, right - left, bottom - top);
           ctx.strokeStyle = '#111';
@@ -1343,7 +1441,6 @@
           if (edges.top) { ctx.moveTo(left, top); ctx.lineTo(right, top); }
           if (edges.bottom) { ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); }
           ctx.stroke();
-          // چهار نیم‌ساز ۴۵ درجه در گوشه‌های نوار شیشه
           ctx.beginPath();
           if (edges.left && edges.top) { ctx.moveTo(left, top); ctx.lineTo(left + glassBorder, top + glassBorder); }
           if (edges.right && edges.top) { ctx.moveTo(right, top); ctx.lineTo(right - glassBorder, top + glassBorder); }
@@ -1509,13 +1606,11 @@
     ctx.lineJoin = 'miter';
     ctx.lineCap = 'butt';
     if (isRectangle) {
-      // فریم اصلی
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 1;
       ctx.fillRect(x, y, fw, fh);
       ctx.strokeRect(x, y, fw, fh);
-      // نیم‌سازهای فریم
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(x + t, y + t);
@@ -1526,12 +1621,10 @@
       ctx.moveTo(x + fw, y + fh);
       ctx.lineTo(x + fw - t, y + fh - t);
       ctx.stroke();
-      // نوار داخلی شیشه
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#111';
       ctx.fillRect(inner.x, inner.y, inner.w, inner.h);
       ctx.strokeRect(inner.x, inner.y, inner.w, inner.h);
-      // نیم‌سازهای نوار شیشه
       ctx.beginPath();
       ctx.moveTo(inner.x, inner.y);
       ctx.lineTo(inner.x + glassBorder, inner.y + glassBorder);
@@ -1542,7 +1635,6 @@
       ctx.moveTo(inner.x + inner.w, inner.y + inner.h);
       ctx.lineTo(inner.x + inner.w - glassBorder, inner.y + inner.h - glassBorder);
       ctx.stroke();
-      // شیشه هر خانه؛ فقط مولین‌هایی که از همان خانه عبور می‌کنند مرز می‌سازند
       const vertical = [...state.mullions].sort((a, b) => a.pos - b.pos);
       const horizontal = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
       const boundsX = [0, ...vertical.map(m => m.pos), 1];
@@ -1612,7 +1704,6 @@
           }
         }
       }
-      // انتخاب شیشه
       if (state.selectedPart === 'glass') {
         ctx.strokeStyle = '#1672f9';
         ctx.lineWidth = 3;
@@ -1640,23 +1731,19 @@
         ctx.strokeRect(inner.x + 1, inner.y + 1, inner.w - 2, inner.h - 2);
       }
     } else {
-      // فریم اصلی شکل هندسی
       traceShape(type, x, y, fw, fh);
       ctx.fillStyle = '#fff';
       ctx.fill();
       ctx.strokeStyle = state.selectedPart === 'frame' ? '#1672f9' : '#111';
       ctx.lineWidth = state.selectedPart === 'frame' ? 2 : 1;
       ctx.stroke();
-      // مرز داخلی فریم
       traceShape(type, x, y, fw, fh, t);
       ctx.fillStyle = '#fff';
       ctx.fill();
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      // شیشه و نوار هر قسمت
       drawCustomGlass(g, inner, glassBorder, mullionWidth);
-      // نیم‌سازهای گوشه‌های فریم و شیشه
       if (type !== 'circle' && type !== 'ellipse') {
         const outer = shapePoints(type, x, y, fw, fh, 0);
         const frameInner = getInsetPoints(outer, t);
@@ -1689,7 +1776,6 @@
     }
     drawMullions(g, inner);
     drawPanels(g, inner);
-    // بازشوها
     state.openings.forEach((o, i) => {
       const b = getOpeningBounds(o, inner);
       const isDragging = state.drag?.type === 'opening' &&
@@ -1698,7 +1784,7 @@
       let oy = b.y;
       let ow = b.w;
       let oh = b.h;
-      const ft = Math.max(1, state.sashFrame * scale);
+      const ft = Math.max(1, state.sashFrame * (o.isDoor ? 1.45 : 1) * scale);
       const overlap = Math.min(3, ft * 0.15);
       if (!b.leftM) {
         ox -= overlap;
@@ -1712,7 +1798,6 @@
       if (!b.bottomM) oh += overlap;
       ctx.save();
       if (isDragging) ctx.globalAlpha = 0.85;
-      // فریم بازشو
       ctx.fillStyle = '#fff';
       ctx.strokeStyle = '#111';
       ctx.lineWidth = 1;
@@ -1728,7 +1813,6 @@
       ctx.moveTo(ox + ow, oy + oh);
       ctx.lineTo(ox + ow - ft, oy + oh - ft);
       ctx.stroke();
-      // نوار و شیشه بازشو
       const glassX = ox + ft;
       const glassY = oy + ft;
       const glassW = Math.max(0, ow - ft * 2);
@@ -1766,17 +1850,14 @@
       }
       if (state.selectedPart === 'openingFrame' &&
         state.selected?.index === i && state.selected.type === 'opening') {
-        // آبی شدن شیشه بازشو
         ctx.fillStyle = 'rgba(22,114,249,.22)';
         ctx.fillRect(gx, gy, gw, gh);
-        // کادر آبی فریم
         ctx.strokeStyle = '#1672f9';
         ctx.lineWidth = 3;
         ctx.fillStyle = 'rgba(22,114,249,.12)';
         ctx.fillRect(ox + 1, oy + 1, ow - 2, oh - 2);
         ctx.strokeRect(ox + 1, oy + 1, ow - 2, oh - 2);
         ctx.strokeRect(glassX + 1, glassY + 1, glassW - 2, glassH - 2);
-        // چهار نیم‌ساز گوشه‌ها
         ctx.beginPath();
         ctx.moveTo(ox + 1, oy + 1);
         ctx.lineTo(ox + ft, oy + ft);
@@ -1797,14 +1878,16 @@
           ox, oy, ow, oh, ft,
           o.openingType === 'french-simple'
             ? 'single'
-            : (o.openingType || 'single')
+            : (o.openingType || 'single'),
+          !!o.isDoor
         );
       }
       drawOpeningHardware(
         ox, oy, ow, oh, ft, scale,
         o.direction, gy, gh, o.fixed,
-        o.openingType || 'single'
-      );      // رسم اجزای تو‌در‌توی داخل شیشه پنجره
+        o.openingType || 'single',
+        !!o.isDoor
+      );
       if (gw > 0 && gh > 0 && o.children) {
         drawNestedContents(o.children, gx, gy, gw, gh, scale, 0);
       }
@@ -1820,7 +1903,6 @@
     const panels = children.panels || [];
     const openings = children.openings || [];
     const gb = Math.max(2, state.glassBorder * scale * 0.65);
-    // مولین‌های شیشهٔ داخل فریم پنجره نیز با همان تابع اصلی رسم می‌شوند.
     drawMullions({ scale }, { x, y, w, h }, mullions, horizontal, true);
     panels.forEach(panel => {
       const leftM = mullions.find(m => m.id === panel.leftId);
@@ -1874,7 +1956,7 @@
   }
   function drawFrontOpeningGuides(g, inner) {
     const scale = g.scale || 1;
-    function drawGuide(ox, oy, ow, oh, direction, ft, localScale, openingType) {
+    function drawGuide(ox, oy, ow, oh, direction, ft, localScale, openingType, isDoor = false) {
       drawOpeningLines(
         ox + ft,
         oy + ft,
@@ -1883,7 +1965,8 @@
         'normal',
         direction,
         ox, oy, ow, oh, ft,
-        openingType || 'single'
+        openingType || 'single',
+        isDoor
       );
     }
     function drawNestedGuides(children, x, y, w, h, localScale, depth) {
@@ -1917,14 +2000,14 @@
     // ابتدا خطوط بازشوهای اصلی؛ سپس خطوط بازشوهای تو‌در‌تو، همگی در لایهٔ جلو.
     for (const o of state.openings) {
       const b = getOpeningBounds(o, inner);
-      const ft = Math.max(1, state.sashFrame * scale);
+      const ft = Math.max(1, state.sashFrame * (o.isDoor ? 1.45 : 1) * scale);
       const overlap = Math.min(3, ft * 0.15);
       let ox = b.x, oy = b.y, ow = b.w, oh = b.h;
       if (!b.leftM) { ox -= overlap; ow += overlap; }
       if (!b.rightM) ow += overlap;
       if (!b.topM) { oy -= overlap; oh += overlap; }
       if (!b.bottomM) oh += overlap;
-      if (!o.fixed) drawGuide(ox, oy, ow, oh, o.direction, ft, scale, o.openingType || 'single');
+      if (!o.fixed) drawGuide(ox, oy, ow, oh, o.direction, ft, scale, o.openingType || 'single', !!o.isDoor);
       const gx = ox + ft + Math.max(1, state.glassBorder * scale);
       const gy = oy + ft + Math.max(1, state.glassBorder * scale);
       const gw = Math.max(0, ow - 2 * (ft + Math.max(1, state.glassBorder * scale)));
@@ -1935,42 +2018,37 @@
   // خطوط ابی رو شیشه فریم پنجره
   function drawOpeningLines(
     gx, gy, gw, gh, olType, direction,
-    ox, oy, ow, oh, ft, openingType = 'single'
+    ox, oy, ow, oh, ft, openingType = 'single', isDoor = false
   ) {
     const scale = geom().scale || 1;
     const cx = ox + ow / 2;
     const cy = oy + oh / 2;
-    const pad = ft;
+    const pad = isDoor ? Math.max(1, ft * 0.70) : ft;
     ctx.save();
     ctx.strokeStyle = state.openingLineColor || '#1672f9';
     ctx.lineWidth = Math.max(2, 5 * scale);
     ctx.lineCap = 'butt';
     ctx.lineJoin = 'miter';
     ctx.setLineDash([]);
-    // تابع رسم V شکل
     function drawV(dir) {
       ctx.beginPath();
       switch (dir) {
         case 'left':
-          // چپ‌بازشو: رأس علامت به سمت چپ
           ctx.moveTo(ox, oy + pad);
-          ctx.lineTo(ox + ow - pad / 2, cy);
+          ctx.lineTo(ox + ow - pad / 1.5, cy);
           ctx.lineTo(ox, oy + oh - pad);
           break;
         case 'right':
-          // راست‌بازشو: رأس علامت به سمت راست
           ctx.moveTo(ox + ow, oy + pad);
           ctx.lineTo(ox + pad / 2, cy);
           ctx.lineTo(ox + ow, oy + oh - pad);
           break;
         case 'top':
-          // بالا‌بازشو: رأس علامت به سمت بالا
           ctx.moveTo(ox + pad, oy + oh - scale);
           ctx.lineTo(cx, oy + pad / 2);
           ctx.lineTo(ox + ow - pad, oy + oh - scale);
           break;
         case 'bottom':
-          // پایین‌بازشو: رأس علامت به سمت پایین
           ctx.moveTo(ox + pad, oy + scale);
           ctx.lineTo(cx, oy + oh - pad / 2);
           ctx.lineTo(ox + ow - pad, oy + scale);
@@ -2086,7 +2164,7 @@
   function drawOpeningHardware(
     ox, oy, ow, oh, ft, scale,
     direction, gy, gh, fixed = false,
-    openingType = 'single'
+    openingType = 'single', isDoor = false
   ) {
     const vertical = direction === 'top' || direction === 'bottom';
     const cx = ox + ow / 2;
@@ -2128,6 +2206,59 @@
         );
       }
     }
+    if (isDoor) {
+      if (!fixed) {
+        if (vertical) {
+          const hingeY = direction === 'top' ? oy + oh : oy;
+          [ox + ow * 0.15, ox + ow * 0.85].forEach(x => {
+            drawHinge(x, hingeY, true);
+          });
+        } else {
+          const hingeX = direction === 'left' ? ox : ox + ow;
+          [
+            oy + oh * 0.15,
+            oy + oh * 0.50,
+            oy + oh * 0.85
+          ].forEach(y => {
+            drawHinge(hingeX, y);
+          });
+        }
+        const handleX = vertical
+          ? cx
+          : (direction === 'left' ? ox + ow - ft / 2 : ox + ft / 2);
+        const handleY = vertical
+          ? (direction === 'top' ? oy + ft / 2 : oy + oh - ft / 2)
+          : cy;
+        hardwareRect(
+          handleX,
+          handleY,
+          handleW * 1.3,
+          handleH * 1.7
+        );
+        ctx.save();
+        ctx.translate(
+          handleX + (direction === 'left' ? 8 * scale : -8 * scale),
+          handleY
+        );
+        const angle = direction === 'left'
+          ? Math.PI / 2
+          : -Math.PI / 2;
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.roundRect(
+          -8 * 1.3 * scale,
+          0,
+          16 * 1.3 * scale,
+          handleH,
+          6 * scale
+        );
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.restore();
+      return;
+    }
     function drawHinge(x, y, isVertical = false) {
       if (isVertical) {
         hardwareRect(x - 17.5 * scale, y, 35 * scale, 20 * scale);
@@ -2137,12 +2268,16 @@
         hardwareRect(x, y + 17.5 * scale, 20 * scale, 35 * scale);
       }
     }
-    if (fixed) {
+    // لنگه ثابت، به‌جز پنجره فرانسوی
+    if (
+      fixed &&
+      openingType !== 'french-simple' &&
+      openingType !== 'dual'
+    ) {
       ctx.restore();
       return;
     }
     // محوری: یراق در مرکز محور
-    // محوری: پایه و دستگیره در سمت بازشو
     if (openingType === 'radial') {
       if (direction === 'left') {
         // لولا سمت چپ، دستگیره سمت راست
@@ -2179,13 +2314,22 @@
       return;
     }
     // فرانسوی: دو دستگیره و دو مجموعه لولا
+    // فرانسوی: دو دستگیره و چهار لولا
+    // فرانسوی: دو دستگیره و لولاهای مستقل برای هر لنگه
     if (openingType === 'french') {
       const half = ow / 2;
+      // دستگیره‌ها کنار مولین وسط
       drawHandle(ox + half - ft, cy);
       drawHandle(ox + half + ft, cy);
+      // لولای سمت چپ، دقیقاً مثل پنجره معمولی
+      const leftHingeX = ox;
       [oy + oh * 0.15, oy + oh * 0.85].forEach(y => {
-        drawHinge(ox + ft / 2, y);
-        drawHinge(ox + ow - ft / 2, y);
+        drawHinge(leftHingeX, y);
+      });
+      // لولای سمت راست، دقیقاً مثل پنجره معمولی
+      const rightHingeX = ox + ow;
+      [oy + oh * 0.15, oy + oh * 0.85].forEach(y => {
+        drawHinge(rightHingeX, y);
       });
       ctx.restore();
       return;
@@ -2339,6 +2483,9 @@
     };
     const color = state.dimensionColor;
     const size = Math.max(10, Math.min(14, inner.w * 0.035));
+    const isMobile = g.w <= 600;
+    const widthOffset = isMobile ? 48 : 60;
+    const heightOffset = isMobile ? 48 : 60;
     const widthGap = 22.5;
     const heightGap = 22.5;
     ctx.save();
@@ -2373,18 +2520,18 @@
     }
     // فریم اصلی
     if (side && side.direction === 'bottom') {
-      drawWidth(x, x + fw, y - 60, state.width);
+      drawWidth(x, x + fw, y - widthOffset, state.width);
     } else {
-      drawWidth(x, x + fw, y + fh + 60, state.width);
+      drawWidth(x, x + fw, y + fh + widthOffset, state.width);
     }
-    drawHeight(y, y + fh, side?.direction === 'right' ? x - 60 : x - 60, state.height);
+    drawHeight(y, y + fh, x - heightOffset, state.height);
     // فریم جدید
     if (side) {
       const s = side;
       const sideWidth = state.sideFrames[0].width;
       const sideHeight = state.sideFrames[0].height;
-      drawWidth(s.x, s.x + s.fw, s.y + s.fh + 60, sideWidth);
-      drawHeight(s.y, s.y + s.fh, s.x + s.fw + 40, sideHeight);
+      drawWidth(s.x, s.x + s.fw, s.y + s.fh + widthOffset, sideWidth);
+      drawHeight(s.y, s.y + s.fh, s.x + s.fw + (isMobile ? 24 : 40), sideHeight);
     }
     // موقعیت مولین‌های داخل شیشه لنگه بازشو را به همان اندازه‌گذاری بیرونی اضافه می‌کنیم.
     // خط اندازه‌گیری جدید رسم نمی‌شود؛ همه موقعیت‌ها روی خط موجود ادغام می‌شوند.
@@ -2432,7 +2579,7 @@
       .sort((a, b) => a - b)
       .filter((v, i, arr) => i === 0 || Math.abs(v - arr[i - 1]) > 0.002);
     if (verticalBounds.length > 2) {
-      const columnY = side?.direction === 'bottom' ? y - 30 : y + fh + 30;
+      const columnY = side?.direction === 'bottom' ? y - (isMobile ? 22 : 30) : y + fh + (isMobile ? 22 : 30);
       verticalBounds.slice(0, -1).forEach((b, i) => {
         const r = verticalBounds[i + 1];
         const sx = x + b * fw;
@@ -2451,7 +2598,7 @@
       .sort((a, b) => a - b)
       .filter((v, i, arr) => i === 0 || Math.abs(v - arr[i - 1]) > 0.002);
     if (horizontalBounds.length > 2) {
-      const rowX = x - (side?.direction === 'bottom' ? 15 : 30);
+      const rowX = x - (isMobile ? 22 : (side?.direction === 'bottom' ? 15 : 30));
       horizontalBounds.slice(0, -1).forEach((b, i) => {
         const next = horizontalBounds[i + 1];
         const sy = y + b * fh;
@@ -2622,7 +2769,7 @@
     for (let i = state.openings.length - 1; i >= 0; i--) {
       const b = getOpeningBounds(state.openings[i], inner);
       const scale = g.scale || 1;
-      const ft = Math.max(1, state.sashFrame * scale);
+      const ft = Math.max(1, state.sashFrame * (state.openings[i].isDoor ? 1.45 : 1) * scale);
       const gb = Math.max(1, state.glassBorder * scale);
       const overlap = Math.min(3, ft * 0.15);
       const ox = b.x - (!b.leftM ? overlap : 0);
@@ -2712,14 +2859,82 @@
     if (activePointers.size < 2) pinchStart = null;
     if (!activePointers.size) panStart = null;
   }
+  // جلوگیری از برخورد نوار مولین‌ها با یکدیگر
+  function canMoveMullionWithoutCrossing(
+    list,
+    id,
+    nextPos,
+    axis = 'vertical',
+    clearGap = 40
+  ) {
+    if (!Array.isArray(list) || list.length <= 1) return true;
+    const current = list.find(item => item.id === id);
+    if (!current) return false;
+    // ضخامت مولین + فاصله خالی موردنیاز
+    const totalGap = state.mullionWidth + clearGap;
+    // تبدیل فاصله واقعی به موقعیت نرمال‌شده
+    const dimension = axis === 'horizontal'
+      ? state.height
+      : state.width;
+    const minGap = totalGap / dimension;
+    const others = list
+      .filter(item => item.id !== id)
+      .sort((a, b) => a.pos - b.pos);
+    const previous = others
+      .filter(item => item.pos < current.pos)
+      .pop();
+    const next = others.find(item => item.pos > current.pos);
+    const lower = previous
+      ? previous.pos + minGap
+      : minGap;
+    const upper = next
+      ? next.pos - minGap
+      : 1 - minGap;
+    return nextPos >= lower && nextPos <= upper;
+  }
   function endDrag(e) {
     pendingOpeningDrag = null;
     if (!state.drag) return;
     const drag = state.drag;
     if (drag.type === 'mullion' && Number.isFinite(drag.previewPos)) {
-      state.mullions[drag.index].pos = drag.previewPos;
-    } else if (drag.type === 'horizontalMullion' && Number.isFinite(drag.previewPos)) {
-      state.horizontalMullions[drag.index].pos = drag.previewPos;
+      const item = state.mullions[drag.index];
+      if (
+        item &&
+        canMoveMullionWithoutCrossing(
+          state.mullions,
+          item.id,
+          drag.previewPos
+        )
+      ) {
+        item.pos = drag.previewPos;
+      } else {
+        showMessage(
+          'آیتم موردنظر معتبر نیست؛ مولین نمی‌تواند از مولین مجاور عبور کند.',
+          'error'
+        );
+        state.history.pop();
+      }
+    } else if (
+      drag.type === 'horizontalMullion' &&
+      Number.isFinite(drag.previewPos)
+    ) {
+      const item = state.horizontalMullions[drag.index];
+      if (
+        item &&
+        canMoveMullionWithoutCrossing(
+          state.horizontalMullions,
+          item.id,
+          drag.previewPos
+        )
+      ) {
+        item.pos = drag.previewPos;
+      } else {
+        showMessage(
+          'آیتم موردنظر معتبر نیست؛ مولین نمی‌تواند از مولین مجاور عبور کند.',
+          'error'
+        );
+        state.history.pop();
+      }
     } else if (drag.type === 'opening' && e) {
       const gp = glassAt(point(e));
       if (gp) {
@@ -2729,14 +2944,42 @@
         );
         if (!occupied) Object.assign(state.openings[drag.index], cell);
       }
-    } else if (drag.type === 'nestedMullion' && Number.isFinite(drag.previewPos)) {
+    } else if (
+      drag.type === 'nestedMullion' &&
+      Number.isFinite(drag.previewPos)
+    ) {
       const list = ensureNestedChildren(drag.nestedParent).mullions;
       const item = list.find(m => m.id === drag.nestedId);
-      if (item) item.pos = drag.previewPos;
-    } else if (drag.type === 'nestedHorizontalMullion' && Number.isFinite(drag.previewPos)) {
+      if (
+        item &&
+        canMoveMullionWithoutCrossing(list, item.id, drag.previewPos)
+      ) {
+        item.pos = drag.previewPos;
+      } else {
+        showMessage(
+          'آیتم موردنظر معتبر نیست؛ مولین نمی‌تواند از مولین مجاور عبور کند.',
+          'error'
+        );
+        state.history.pop();
+      }
+    } else if (
+      drag.type === 'nestedHorizontalMullion' &&
+      Number.isFinite(drag.previewPos)
+    ) {
       const list = ensureNestedChildren(drag.nestedParent).horizontalMullions;
       const item = list.find(m => m.id === drag.nestedId);
-      if (item) item.pos = drag.previewPos;
+      if (
+        item &&
+        canMoveMullionWithoutCrossing(list, item.id, drag.previewPos)
+      ) {
+        item.pos = drag.previewPos;
+      } else {
+        showMessage(
+          'آیتم موردنظر معتبر نیست؛ مولین نمی‌تواند از مولین مجاور عبور کند.',
+          'error'
+        );
+        state.history.pop();
+      }
     } else if (drag.type === 'nestedOpening' && e) {
       const children = ensureNestedChildren(drag.nestedParent);
       const item = children.openings.find(o => o.id === drag.nestedId);
@@ -3024,9 +3267,10 @@
         });
       }
       state.mullions.sort((a, b) => a.pos - b.pos);
-      state.selected = { type: 'mullion', index: state.mullions.findIndex(m => m.id === lastId) };
+      state.selected = null;
+      state.selectedPart = null;
       state.tool = 'select';
-      canvas.style.cursor = 'grab';
+      canvas.style.cursor = 'default';
       draw();
       return;
     }
@@ -3053,16 +3297,14 @@
         });
       }
       state.horizontalMullions.sort((a, b) => a.pos - b.pos);
-      state.selected = {
-        type: 'horizontalMullion',
-        index: state.horizontalMullions.findIndex(m => m.id === lastId)
-      };
+      state.selected = null;
+      state.selectedPart = null;
       state.tool = 'select';
-      canvas.style.cursor = 'grab';
+      canvas.style.cursor = 'default';
       draw();
       return;
     }
-    if (state.tool === 'frenchWindow') {
+    if (state.tool === 'frenchWindow' || state.tool === 'frenchDoor') {
       const gp = glassAt(p);
       if (!gp) return;
       const cell = getCellAt(gp);
@@ -3101,6 +3343,7 @@
           direction: 'left',
           openingType: isLeftOpen ? 'single' : 'french-simple',
           french: true,
+          isDoor: state.tool === 'frenchDoor',
           fixed: !isLeftOpen,
           children: emptyChildren()
         };
@@ -3111,6 +3354,7 @@
           direction: 'right',
           openingType: isLeftOpen ? 'french-simple' : 'single',
           french: true,
+          isDoor: state.tool === 'frenchDoor',
           fixed: isLeftOpen,
           children: emptyChildren()
         };
@@ -3129,6 +3373,7 @@
           direction: 'left',
           openingType: 'dual',
           french: true,
+          isDoor: state.tool === 'frenchDoor',
           fixed: !isLeftOpen,
           children: emptyChildren()
         };
@@ -3139,11 +3384,41 @@
           direction: 'right',
           openingType: 'dual',
           french: true,
+          isDoor: state.tool === 'frenchDoor',
           fixed: isLeftOpen,
           children: emptyChildren()
         };
+        const frenchWindow = isLeftOpen ? rightWindow : leftWindow;
+        frenchWindow.mullions = [...(cell.mullions || [])];
+        frenchWindow.horizontalMullions = [
+          ...(cell.horizontalMullions || [])
+        ];
         state.openings.push(leftWindow, rightWindow);
       }
+      state.tool = 'select';
+      canvas.style.cursor = 'default';
+      draw();
+      return;
+    }
+    if (state.tool === 'doorOpening') {
+      const gp = glassAt(p);
+      if (!gp) return;
+      const cell = getCellAt(gp);
+      if (state.openings.some(o => sameCell(o, cell))) {
+        $('status').textContent = 'این قسمت قبلاً بازشو دارد.';
+        return;
+      }
+      saveHistory();
+      state.openings.push({
+        ...cell,
+        id: state.nextId++,
+        direction: state.openDirection || 'left',
+        openingType: state.openingType || 'single',
+        fixed: false,
+        isDoor: true,
+        children: { mullions: [], horizontalMullions: [], openings: [], panels: [] }
+      });
+      state.selected = { type: 'opening', index: state.openings.length - 1 };
       state.tool = 'select';
       canvas.style.cursor = 'default';
       draw();
@@ -3325,14 +3600,21 @@
     $('mullion' + n).addEventListener('click', () => {
       state.tool = 'mullion';
       state.toolCount = n;
+      state.selected = null;
+      state.selectedPart = null;
       canvas.style.cursor = 'crosshair';
       $('status').textContent = `مولین عمودی ${fa(n)}: روی شیشه کلیک کنید`;
+      draw();
     });
     $('horizontalMullion' + n).addEventListener('click', () => {
       state.tool = 'horizontalMullion';
       state.toolCount = n;
+      // حذف انتخاب قبلی و رنگ آبی
+      state.selected = null;
+      state.selectedPart = null;
       canvas.style.cursor = 'crosshair';
       $('status').textContent = `مولین افقی ${fa(n)}: روی شیشه کلیک کنید`;
+      draw();
     });
   });
   // پنجره تک حالته
@@ -3436,89 +3718,172 @@
     state.openDirection = 'left';
     state.openingType = 'simple';
     canvas.style.cursor = 'crosshair';
-    $('status').textContent = 'پنجره فرانسوی ساده چپ‌بازشو: روی خانه شیشه کلیک کنید';
+    $('status').textContent = 'درب فرانسوی تک‌حالته چپ‌بازشو: روی خانه شیشه کلیک کنید';
   });
   $('frenchSimpleRightBtn').addEventListener('click', () => {
     state.tool = 'frenchWindow';
     state.openDirection = 'right';
     state.openingType = 'simple';
     canvas.style.cursor = 'crosshair';
-    $('status').textContent = 'پنجره فرانسوی ساده راست‌بازشو: روی خانه شیشه کلیک کنید';
+    $('status').textContent = 'درب فرانسوی تک‌حالته راست‌بازشو: روی خانه شیشه کلیک کنید';
   });
   $('frenchDualLeftBtn').addEventListener('click', () => {
     state.tool = 'frenchWindow';
     state.openDirection = 'left';
     state.openingType = 'dual';
     canvas.style.cursor = 'crosshair';
-    $('status').textContent = 'پنجره فرانسوی دوحالته چپ‌بازشو: روی خانه شیشه کلیک کنید';
+    $('status').textContent = 'درب فرانسوی دوحالته چپ‌بازشو: روی خانه شیشه کلیک کنید';
   });
   $('frenchDualRightBtn').addEventListener('click', () => {
     state.tool = 'frenchWindow';
     state.openDirection = 'right';
     state.openingType = 'dual';
     canvas.style.cursor = 'crosshair';
-    $('status').textContent = 'پنجره فرانسوی دوحالته راست‌بازشو: روی خانه شیشه کلیک کنید';
+    $('status').textContent = 'درب فرانسوی دوحالته راست‌بازشو: روی خانه شیشه کلیک کنید';
   });
+  // درب تک‌حالته و دوحالته
+  function selectDoorTool(direction, openingType, label) {
+    state.tool = 'doorOpening';
+    state.openDirection = direction;
+    state.openingType = openingType;
+    state.selected = null;
+    state.selectedPart = null;
+    canvas.style.cursor = 'crosshair';
+    $('status').textContent = `${label}: روی خانه شیشه کلیک کنید`;
+  }
+  $('doorSingleLeftBtn').addEventListener('click', () =>
+    selectDoorTool('left', 'single', 'درب تک‌حالته چپ‌بازشو'));
+  $('doorSingleRightBtn').addEventListener('click', () =>
+    selectDoorTool('right', 'single', 'درب تک‌حالته راست‌بازشو'));
+  $('doorDualLeftBtn').addEventListener('click', () =>
+    selectDoorTool('left', 'dual', 'درب دوحالته چپ‌بازشو'));
+  $('doorDualRightBtn').addEventListener('click', () =>
+    selectDoorTool('right', 'dual', 'درب دوحالته راست‌بازشو'));
+  // درب فرانسوی؛ دو لنگه و مولین وسط مشابه پنجره فرانسوی
+  function selectFrenchDoorTool(direction, openingType, label) {
+    state.tool = 'frenchDoor';
+    state.openDirection = direction;
+    state.openingType = openingType;
+    state.selected = null;
+    state.selectedPart = null;
+    canvas.style.cursor = 'crosshair';
+    $('status').textContent = `${label}: روی خانه شیشه کلیک کنید`;
+  }
+  $('frenchDoorSingleLeftBtn').addEventListener('click', () =>
+    selectFrenchDoorTool('left', 'simple', 'درب فرانسوی تک‌حالته چپ‌بازشو'));
+  $('frenchDoorSingleRightBtn').addEventListener('click', () =>
+    selectFrenchDoorTool('right', 'simple', 'درب فرانسوی تک‌حالته راست‌بازشو'));
+  $('frenchDoorDualLeftBtn').addEventListener('click', () =>
+    selectFrenchDoorTool('left', 'dual', 'درب فرانسوی دوحالته چپ‌بازشو'));
+  $('frenchDoorDualRightBtn').addEventListener('click', () =>
+    selectFrenchDoorTool('right', 'dual', 'درب فرانسوی دوحالته راست‌بازشو'));
   $('selectBtn').addEventListener('click', () => {
     state.tool = 'select';
     canvas.style.cursor = 'default';
   });
+  // حذف مولین و تمام اجزایی که به مرز آن وابسته هستند
+  function removeMullionWithDependents(container, axis, id) {
+    const removed = new Set([id]);
+    const keys = ['mullions', 'horizontalMullions', 'openings', 'panels'];
+    const bounds = ['leftId', 'rightId', 'topId', 'bottomId'];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const key of keys) {
+        const list = container[key] || [];
+        const kept = [];
+        for (const item of list) {
+          const dependsOnRemoved = bounds.some(
+            bound => removed.has(item[bound])
+          );
+          const isTarget =
+            key === (axis === 'vertical' ? 'mullions' : 'horizontalMullions') &&
+            item.id === id;
+          if (isTarget || dependsOnRemoved) {
+            if (!removed.has(item.id)) {
+              removed.add(item.id);
+              changed = true;
+            }
+            if (isTarget) changed = true;
+          } else {
+            kept.push(item);
+          }
+        }
+        container[key] = kept;
+      }
+    }
+  }
   $('deleteBtn').addEventListener('click', () => {
-    if (state.selected && ['nestedMullion', 'nestedHorizontalMullion', 'nestedOpening', 'nestedPanel'].includes(state.selected.type)) {
+    // حذف مولین، پنجره یا پنل داخل پنجره تو در تو
+    if (
+      state.selected &&
+      [
+        'nestedMullion',
+        'nestedHorizontalMullion',
+        'nestedOpening',
+        'nestedPanel'
+      ].includes(state.selected.type)
+    ) {
       const selected = state.selected;
       const children = ensureNestedChildren(selected.nestedParent);
-      const key = selected.type === 'nestedMullion' ? 'mullions' :
-        selected.type === 'nestedHorizontalMullion' ? 'horizontalMullions' :
-          selected.type === 'nestedOpening' ? 'openings' : 'panels';
       saveHistory();
-      const list = children[key];
-      const at = list.findIndex(item => item.id === selected.nestedId);
-      if (at >= 0) list.splice(at, 1);
+      if (
+        selected.type === 'nestedMullion' ||
+        selected.type === 'nestedHorizontalMullion'
+      ) {
+        const axis =
+          selected.type === 'nestedMullion' ? 'vertical' : 'horizontal';
+        removeMullionWithDependents(
+          children,
+          axis,
+          selected.nestedId
+        );
+      } else {
+        const key =
+          selected.type === 'nestedOpening' ? 'openings' : 'panels';
+        const at = children[key].findIndex(
+          item => item.id === selected.nestedId
+        );
+        if (at >= 0) children[key].splice(at, 1);
+      }
       state.selected = null;
       state.drag = null;
       draw();
       return;
     }
-    if (state.selected?.type === 'panel') {
+    if (!state.selected) return;
+    const s = state.selected;
+    // حذف پنل اصلی
+    if (s.type === 'panel') {
       saveHistory();
-      state.panels.splice(state.selected.index, 1);
+      state.panels.splice(s.index, 1);
       state.selected = null;
       draw();
       return;
     }
-    if (!state.selected) return;
+    if (
+      !['mullion', 'horizontalMullion', 'opening'].includes(s.type)
+    ) return;
     saveHistory();
-    const s = state.selected;
+    // حذف مولین عمودی و اجزای وابسته به آن
     if (s.type === 'mullion') {
       const gone = state.mullions[s.index];
-      const sorted = [...state.mullions].sort((a, b) => a.pos - b.pos);
-      const at = sorted.findIndex(m => m.id === gone.id);
-      const leftId = at > 0 ? sorted[at - 1].id : null;
-      const rightId = at >= 0 && at < sorted.length - 1 ? sorted[at + 1].id : null;
-      state.horizontalMullions.forEach(m => {
-        if (m.leftId === gone.id) m.leftId = leftId;
-        if (m.rightId === gone.id) m.rightId = rightId;
-      });
-      state.openings.forEach(o => {
-        if (o.leftId === gone.id) o.leftId = leftId;
-        if (o.rightId === gone.id) o.rightId = rightId;
-      });
-      state.mullions.splice(s.index, 1);
+      if (gone) {
+        removeMullionWithDependents(
+          state,
+          'vertical',
+          gone.id
+        );
+      }
     } else if (s.type === 'horizontalMullion') {
       const gone = state.horizontalMullions[s.index];
-      const sorted = [...state.horizontalMullions].sort((a, b) => a.pos - b.pos);
-      const at = sorted.findIndex(m => m.id === gone.id);
-      const topId = at > 0 ? sorted[at - 1].id : null;
-      const bottomId = at >= 0 && at < sorted.length - 1 ? sorted[at + 1].id : null;
-      state.mullions.forEach(m => {
-        if (m.topId === gone.id) m.topId = topId;
-        if (m.bottomId === gone.id) m.bottomId = bottomId;
-      });
-      state.openings.forEach(o => {
-        if (o.topId === gone.id) o.topId = topId;
-        if (o.bottomId === gone.id) o.bottomId = bottomId;
-      });
-      state.horizontalMullions.splice(s.index, 1);
+      if (gone) {
+        removeMullionWithDependents(
+          state,
+          'horizontal',
+          gone.id
+        );
+      }
     } else if (s.type === 'opening') {
       state.openings.splice(s.index, 1);
     }
@@ -3587,8 +3952,6 @@
     state.selected = null;
     draw();
   });
-  $('undoBtn').addEventListener('click', undo);
-  $('redoBtn').addEventListener('click', redo);
   ['zoomInBtn'].forEach(id =>
     $(id).addEventListener('click', () => zoom(1.15))
   );
@@ -3700,5 +4063,316 @@
   });
   $('horizontalPanelBtn').addEventListener('click', () => {
     state.tool = 'horizontalPanel';
+  });
+  // مدیریت باز و بسته شدن مدال سه‌بعدی
+  document.addEventListener('DOMContentLoaded', () => {
+    const openButton = document.getElementById('view3DButton');
+    const modal = document.getElementById('myModal');
+    const closeButton = modal?.querySelector('.wd-3d-close-btn');
+    if (!openButton || !modal || !closeButton) {
+      console.error('دکمه یا مدال سه‌بعدی پیدا نشد.');
+      return;
+    }
+    function build3DSvgFromCanvasState() {
+      const width = Math.max(1, Number(state.width) || 1000);
+      const height = Math.max(1, Number(state.height) || 1000);
+      const frame = Math.max(8, Math.min(Number(state.frame) || 60, Math.min(width, height) / 3));
+      const sashFrame = Math.max(8, Math.min(Number(state.sashFrame) || 70, Math.min(width, height) / 4));
+      const glassBorder = Math.max(2, Number(state.glassBorder) || 15);
+      const mullionWidth = Math.max(4, Number(state.mullionWidth) || 40);
+      const glassColor = state.glassColor || '#8bd9f7';
+      const NS = 'http://www.w3.org/2000/svg';
+      const svg = document.createElementNS(NS, 'svg');
+      svg.setAttribute('xmlns', NS);
+      svg.setAttribute('width', String(width));
+      svg.setAttribute('height', String(height));
+      svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      svg.setAttribute('version', '1.1');
+      const addRect = (parent, id, x, y, w, h, fill) => {
+        x = Number(x); y = Number(y); w = Number(w); h = Number(h);
+        if (![x, y, w, h].every(Number.isFinite) || w <= 0 || h <= 0) return;
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('id', id);
+        path.setAttribute('d', `M ${x} ${y} h ${w} v ${h} h ${-w} Z`);
+        path.setAttribute('fill', fill || '#ffffff');
+        path.setAttribute('stroke', 'none');
+        parent.appendChild(path);
+      };
+      const addFrameRing = (parent, id, x, y, w, h, t) => {
+        t = Math.max(1, Math.min(t, w / 2, h / 2));
+        const addMiterPiece = (points) => {
+          const path = document.createElementNS(NS, 'path');
+          path.setAttribute('id', id);
+          path.setAttribute(
+            'd',
+            points.map((p, i) =>
+              `${i === 0 ? 'M' : 'L'} ${p[0]} ${p[1]}`
+            ).join(' ') + ' Z'
+          );
+          path.setAttribute('fill', '#ffffff');
+          path.setAttribute('stroke', 'none');
+
+          parent.appendChild(path);
+        };
+        addMiterPiece([
+          [x, y],
+          [x + w, y],
+          [x + w - t, y + t],
+          [x + t, y + t]
+        ]);
+        addMiterPiece([
+          [x + w, y],
+          [x + w, y + h],
+          [x + w - t, y + h - t],
+          [x + w - t, y + t]
+        ]);
+        addMiterPiece([
+          [x + w, y + h],
+          [x, y + h],
+          [x + t, y + h - t],
+          [x + w - t, y + h - t]
+        ]);
+        addMiterPiece([
+          [x, y + h],
+          [x, y],
+          [x + t, y + t],
+          [x + t, y + h - t]
+        ]);
+      };
+      const addMiterLines = (
+        parent, x, y, w, h, inset,
+        id = 'vmullian',
+        color = '#ffffff'
+      ) => {
+        const thick = Math.max(1.5, Math.min(3, mullionWidth * 0.06));
+        const addLine = (x1, y1, x2, y2) => {
+          const dx = x2 - x1, dy = y2 - y1;
+          const len = Math.hypot(dx, dy) || 1;
+          const ox = -dy / len * thick / 2, oy = dx / len * thick / 2;
+          const path = document.createElementNS(NS, 'path');
+          path.setAttribute('id', id);
+          path.setAttribute('d', `M ${x1 + ox} ${y1 + oy} L ${x2 + ox} ${y2 + oy} L ${x2 - ox} ${y2 - oy} L ${x1 - ox} ${y1 - oy} Z`);
+          path.setAttribute('fill', color);
+          parent.appendChild(path);
+        };
+        addLine(x, y, x + inset, y + inset);
+        addLine(x + w, y, x + w - inset, y + inset);
+        addLine(x, y + h, x + inset, y + h - inset);
+        addLine(x + w, y + h, x + w - inset, y + h - inset);
+      };
+
+      // فریم اصلی و فضای داخلی
+      addFrameRing(svg, 'mainFrame', 0, 0, width, height, frame);
+      const inner = { x: frame, y: frame, w: Math.max(1, width - 2 * frame), h: Math.max(1, height - 2 * frame) };
+      const vertical = [...(state.mullions || [])].sort((a, b) => a.pos - b.pos);
+      const horizontal = [...(state.horizontalMullions || [])].sort((a, b) => a.pos - b.pos);
+      const xs = [0, ...vertical.map(m => Math.max(0, Math.min(1, Number(m.pos) || 0))), 1];
+      const ys = [0, ...horizontal.map(m => Math.max(0, Math.min(1, Number(m.pos) || 0))), 1];
+
+      // شیشه‌های هر خانه؛ فریم‌های بازشو بعداً روی همین ناحیه قرار می‌گیرند.
+
+      // شیشه‌ها همراه با نوار قاب سفید دور شیشه
+      for (let r = 0; r < ys.length - 1; r++) {
+        for (let c = 0; c < xs.length - 1; c++) {
+          const left = inner.x + xs[c] * inner.w + (c ? mullionWidth / 2 : 0);
+          const right = inner.x + xs[c + 1] * inner.w - (c < vertical.length ? mullionWidth / 2 : 0);
+          const top = inner.y + ys[r] * inner.h + (r ? mullionWidth / 2 : 0);
+          const bottom = inner.y + ys[r + 1] * inner.h - (r < horizontal.length ? mullionWidth / 2 : 0);
+
+          if (right <= left || bottom <= top) continue;
+
+          const cell = {
+            x: left,
+            y: top,
+            w: right - left,
+            h: bottom - top
+          };
+
+          const opening = (state.openings || []).find(o =>
+            (o.leftId ?? null) === (c ? vertical[c - 1]?.id ?? null : null) &&
+            (o.rightId ?? null) === (c < vertical.length ? vertical[c]?.id ?? null : null) &&
+            (o.topId ?? null) === (r ? horizontal[r - 1]?.id ?? null : null) &&
+            (o.bottomId ?? null) === (r < horizontal.length ? horizontal[r]?.id ?? null : null)
+          );
+
+          if (!opening) {
+            // نوار دور شیشه؛ دقیقاً با شناسه فریم اصلی
+            addFrameRing(
+              svg,
+              'mainFrame',
+              left,
+              top,
+              cell.w,
+              cell.h,
+              glassBorder
+            );
+
+            // سطح شیشه داخل نوار
+            addRect(
+              svg,
+              'flat',
+              left + glassBorder,
+              top + glassBorder,
+              cell.w - 2 * glassBorder,
+              cell.h - 2 * glassBorder,
+              glassColor
+            );
+
+            addMiterLines(
+              svg,
+              left,
+              top,
+              cell.w,
+              cell.h,
+              glassBorder
+            );
+          }
+        }
+      }
+
+
+      // مولین‌های اصلی
+      vertical.forEach(m => {
+        const x = inner.x + m.pos * inner.w - mullionWidth / 2;
+        addRect(svg, 'vmullian', x, inner.y, mullionWidth, inner.h, '#ffffff');
+      });
+      horizontal.forEach(m => {
+        const y = inner.y + m.pos * inner.h - mullionWidth / 2;
+        addRect(svg, 'vmullian', inner.x, y, inner.w, mullionWidth, '#ffffff');
+      });
+
+      // پنل‌های تزئینی
+      (state.panels || []).forEach(panel => {
+        const lm = vertical.find(m => m.id === panel.leftId);
+        const rm = vertical.find(m => m.id === panel.rightId);
+        const tm = horizontal.find(m => m.id === panel.topId);
+        const bm = horizontal.find(m => m.id === panel.bottomId);
+        const x = inner.x + (lm?.pos || 0) * inner.w + (lm ? mullionWidth / 2 : 0) + glassBorder;
+        const y = inner.y + (tm?.pos || 0) * inner.h + (tm ? mullionWidth / 2 : 0) + glassBorder;
+        const w = inner.x + (rm?.pos ?? 1) * inner.w - (rm ? mullionWidth / 2 : 0) - glassBorder - x;
+        const h = inner.y + (bm?.pos ?? 1) * inner.h - (bm ? mullionWidth / 2 : 0) - glassBorder - y;
+        addRect(svg, 'panelitem', x, y, w, h, '#f8fafc');
+      });
+
+      // لنگه‌های بازشو، شیشه، دستگیره و لولا؛ هر لنگه داخل گروه شناسه‌دار قرار می‌گیرد.
+      (state.openings || []).forEach((o, index) => {
+        const lm = vertical.find(m => m.id === o.leftId);
+        const rm = vertical.find(m => m.id === o.rightId);
+        const tm = horizontal.find(m => m.id === o.topId);
+        const bm = horizontal.find(m => m.id === o.bottomId);
+        const x = lm ? inner.x + lm.pos * inner.w + mullionWidth * 0.3 : frame * 0.98;
+        const y = tm ? inner.y + tm.pos * inner.h + mullionWidth * 0.3 : frame * 0.98;
+        const right = rm ? inner.x + rm.pos * inner.w - mullionWidth * 0.3 : width - frame * 0.98;
+        const bottom = bm ? inner.y + bm.pos * inner.h - mullionWidth * 0.3 : height - frame * 0.98;
+        const ow = Math.max(1, right - x), oh = Math.max(1, bottom - y);
+        const direction = o.direction || 'left';
+        const isDoor = !!o.isDoor;
+        const groupId = isDoor
+          ? (direction === 'right' ? 'doorSingleRightBtn' : 'doorSingleLeftBtn')
+          : (direction === 'right' ? 'rightOpenBtn' : direction === 'top' ? 'topOpenBtn' : direction === 'bottom' ? 'bottomOpenBtn' : 'leftOpenBtn');
+        const group = document.createElementNS(NS, 'g');
+        group.setAttribute('id', groupId);
+        group.setAttribute('data-opening-index', String(index));
+        svg.appendChild(group);
+        const inset = Math.min(sashFrame, ow * 0.22, oh * 0.22);
+        const frameId = isDoor ? 'doorFrame' : 'windowFrame';
+
+        // فریم اصلی لنگه
+        addFrameRing(group, frameId, x, y, ow, oh, inset);
+
+        // نوار سفید دور شیشه داخل فریم پنجره یا در
+        addFrameRing(
+          group,
+          frameId,
+          x + inset,
+          y + inset,
+          ow - 2 * inset,
+          oh - 2 * inset,
+          glassBorder
+        );
+
+        // سطح شیشه
+        addRect(
+          group,
+          'flat',
+          x + inset + glassBorder,
+          y + inset + glassBorder,
+          ow - 2 * (inset + glassBorder),
+          oh - 2 * (inset + glassBorder),
+          glassColor
+        );        // دستگیره ساده و قابل مشاهده
+        const handleW = Math.max(12, Math.min(24, ow * 0.035));
+        const handleH = Math.max(36, Math.min(70, oh * 0.18));
+        const hx = direction === 'left' ? x + ow - inset / 2 : direction === 'right' ? x + inset / 2 : x + ow / 2;
+        const hy = direction === 'top' ? y + oh - inset / 2 : direction === 'bottom' ? y + inset / 2 : y + oh / 2;
+        addRect(group, 'handle', hx - handleW / 2, hy - handleH / 2, handleW, handleH, '#aeb7c2');
+        const hingeX = direction === 'left' ? x + inset / 2 : direction === 'right' ? x + ow - inset / 2 : x + ow / 2;
+        const hingeY1 = y + oh * 0.18, hingeY2 = y + oh * 0.82;
+        addRect(group, 'hinge', hingeX - 5, hingeY1 - 12, 10, 24, '#858d98');
+        addRect(group, 'hinge', hingeX - 5, hingeY2 - 12, 10, 24, '#858d98');
+        addMiterLines(
+          group,
+          x + inset,
+          y + inset,
+          ow - 2 * inset,
+          oh - 2 * inset,
+          glassBorder,
+          frameId,
+          '#ffffff'
+        );
+      });
+
+      return new XMLSerializer().serializeToString(svg);
+    }
+
+    async function set3D() {
+      try {
+        const svgString = build3DSvgFromCanvasState();
+        if (!svgString) throw new Error('ساخت SVG از طرح Canvas ناموفق بود');
+        if (typeof window.init3D !== 'function' || typeof window.update3DModel !== 'function') {
+          throw new Error('توابع Three.js در دسترس نیستند؛ بارگذاری lib/3d.js را بررسی کنید.');
+        }
+        const initialized = window.init3D('3d');
+        if (!initialized) throw new Error('راه‌اندازی صحنه سه‌بعدی ناموفق بود');
+        const modelId = `${state.width}x${state.height}-${state.nextId}-${(state.openings || []).length}-${(state.mullions || []).length}-${(state.horizontalMullions || []).length}`;
+        const result = await window.update3DModel(svgString, modelId);
+        requestAnimationFrame(() => window.resize3D?.());
+        if (!result) console.error('مدل‌ساز سه‌بعدی نتوانست SVG طرح را بسازد.');
+        return !!result;
+      } catch (error) {
+        console.error('خطا در set3D:', error);
+        return false;
+      }
+    }
+
+    function open3DModal() {
+      modal.style.display = 'flex';
+      modal.style.position = 'fixed';
+      modal.style.inset = '0';
+      modal.style.zIndex = '99999';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modal.setAttribute('aria-hidden', 'false');
+      requestAnimationFrame(async () => {
+        await set3D();
+        if (window.resize3D) window.resize3D();
+      });
+    }
+    function close3DModal() {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+    }
+    openButton.addEventListener('click', open3DModal);
+    closeButton.addEventListener('click', close3DModal);
+    modal.addEventListener('click', event => {
+      if (event.target === modal) {
+        close3DModal();
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && modal.style.display !== 'none') {
+        close3DModal();
+      }
+    });
   });
 })();

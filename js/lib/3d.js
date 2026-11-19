@@ -203,7 +203,7 @@ export function init3D(containerId = "3d") {
     logarithmicDepthBuffer: true,
   });
   renderer.setPixelRatio(
-    Math.min(window.devicePixelRatio, 1.25)
+    Math.min(window.devicePixelRatio || 1, 2)
   );
   renderer.setSize(
     width,
@@ -327,6 +327,9 @@ function clearPreviousModel() {
 }
 function getPathType(id) {
   const value = String(id || "").toLowerCase();
+  if (typeof APP_OPENING_ID_SET !== "undefined" && APP_OPENING_ID_SET.has(value)) {
+    return "opening";
+  }
   if (value.includes("flat")) {
     return "glass";
   }
@@ -352,54 +355,62 @@ function getPathType(id) {
   if (value === "panelitem") {
     return "panel";
   }
+  if (value === "panelmullionline") {
+    return "panelLine";
+  }
   return "other";
 }
+// شناسه‌های بازشو مطابق دکمه‌های واقعی app.js هستند.
+// جهت چپ/راست عمداً با نام‌های قدیمی مدل سه‌بعدی تطبیق داده شده است؛
+// چون در مدل SVG، نام قدیمی right متناظر با دکمه چپ‌بازشو است.
+const APP_OPENING_IDS = {
+  leftOpenBtn: "window_simple_right",
+  rightOpenBtn: "window_simple_left",
+  topOpenBtn: "window_simple_top",
+  bottomOpenBtn: "window_simple_bottom",
+  dualRightBtn: "window_dual_right",
+  dualLeftBtn: "window_dual_left",
+  dualSimpleBtn: "window_simple",
+  radialLeftBtn: "window_radial_right",
+  radialRightBtn: "window_radial_left",
+  radialTopBtn: "window_radial_top",
+  radialBottomBtn: "window_radial_bottom",
+  volkswagenRightBtn: "window_volkswagen_right",
+  volkswagenLeftBtn: "window_volkswagen_left",
+  frenchSimpleLeftBtn: "window_french_simple_right",
+  frenchSimpleRightBtn: "window_french_simple_left",
+  frenchDualLeftBtn: "window_french_dual_right",
+  frenchDualRightBtn: "window_french_dual_left",
+  doorSingleLeftBtn: "door_simple_right",
+  doorSingleRightBtn: "door_simple_left",
+  doorDualLeftBtn: "door_dual_right",
+  doorDualRightBtn: "door_dual_left",
+  frenchDoorSingleLeftBtn: "door_french_simple_right",
+  frenchDoorSingleRightBtn: "door_french_simple_left",
+  frenchDoorDualLeftBtn: "door_french_dual_right",
+  frenchDoorDualRightBtn: "door_french_dual_left"
+};
+const APP_OPENING_ID_SET = new Set(
+  Object.keys(APP_OPENING_IDS).map(id => id.toLowerCase())
+);
+
 function getOpeningInfo(path) {
-  let node =
-    path.userData?.node || null;
+  let node = path.userData?.node || null;
   while (node) {
-    const id =
-      String(node.id || "").toLowerCase();
-    if (
-      id === "window_simple_right_nohandle" ||
-      id === "window_simple_left_nohandle" ||
-      id === "window_simple_right" ||
-      id === "window_simple_left" ||
-      id === "window_simple_top" ||
-      id === "window_simple_bottom" ||
-      id === "window_dual_right" ||
-      id === "window_dual_left" ||
-      id === "window_simple" ||
-      id === "window_radial_right" ||
-      id === "window_radial_left" ||
-      id === "window_radial_top" ||
-      id === "window_radial_bottom" ||
-      id === "window_volkswagen_right" ||
-      id === "window_volkswagen_left" ||
-      id === "window_french_simple_left" ||
-      id === "window_french_simple_right" ||
-      id === "window_french_dual_left" ||
-      id === "window_french_dual_right" ||
-      id === "door_simple_right_nohandle" ||
-      id === "door_simple_left_nohandle" ||
-      id === "door_simple_right" ||
-      id === "door_simple_left" ||
-      id === "door_dual_right" ||
-      id === "door_dual_left" ||
-      id === "door_french_simple_left" ||
-      id === "door_french_simple_right" ||
-      id === "door_french_dual_left" ||
-      id === "door_french_dual_right"
-    ) {
-      return {
-        type: id,
-        node: node
-      };
+    const id = String(node.id || "").trim();
+    const normalizedId = id.toLowerCase();
+    const appId = Object.keys(APP_OPENING_IDS).find(
+      key => key.toLowerCase() === normalizedId
+    );
+    const semanticType = appId ? APP_OPENING_IDS[appId] : null;
+    if (semanticType) {
+      return { type: semanticType, node };
     }
     node = node.parentNode;
   }
   return null;
 }
+
 function setupOpeningPivot(
   mainGroup,
   sashGroup
@@ -848,23 +859,45 @@ async function build3DFromSVG(
         zOffset = 0;
       }
       else if (type === "panel") {
-        if (svgColor) {
-          material = new THREE.MeshStandardMaterial({
-            color: svgColor,
-            roughness: 0.28,
-            metalness: 0.12,
-          });
-        }
+        material = new THREE.MeshStandardMaterial({
+          color: svgColor || 0xf8fafc,
+          roughness: 0.28,
+          metalness: 0.12,
+          side: THREE.DoubleSide,
+        });
         depth = 28;
         zOffset = 10;
       }
       const shapes =
         SVGLoader.createShapes(path);
+      // خطوط پنل به‌صورت سطح تخت روی جلوی پنل رسم می‌شوند؛ اکسترود ندارند.
+      if (type === "panelLine") {
+        const panelLineMaterial = new THREE.MeshBasicMaterial({
+          color: 0x9ca3af,
+          transparent: true,
+          opacity: 0.32,
+          depthTest: true,
+          depthWrite: false,
+          side: THREE.DoubleSide,
+        });
+        for (const shape of shapes) {
+          const lineGeometry = new THREE.ShapeGeometry(shape);
+          const lineMesh = new THREE.Mesh(lineGeometry, panelLineMaterial);
+          lineMesh.position.z = 24.25;
+          lineMesh.renderOrder = 12;
+          lineMesh.userData.svgId = origId;
+          group.add(lineMesh);
+        }
+        continue;
+      }
       for (const shape of shapes) {
         const extrudeSettings = {
           steps: 1,
           depth: depth,
-          bevelEnabled: false,
+          bevelEnabled: type === "frame",
+          bevelSegments: 3,
+          bevelSize: 1,
+          bevelThickness: 1
         };
         const geometry =
           new THREE.ExtrudeGeometry(
@@ -901,28 +934,6 @@ async function build3DFromSVG(
             sourceNode: path.userData?.node
           });
         }
-        if (type === "panel") {
-          const panelEdgeGeometry = new THREE.EdgesGeometry(
-            geometry,
-            1
-          );
-          const panelEdgeMaterial =
-            new THREE.LineBasicMaterial({
-              color: 0x9ca3af,
-              transparent: true,
-              opacity: 0.30,
-              depthTest: true,
-              depthWrite: false
-            });
-          const panelEdgeLines =
-            new THREE.LineSegments(
-              panelEdgeGeometry,
-              panelEdgeMaterial
-            );
-          panelEdgeLines.renderOrder = 20;
-          panelEdgeLines.position.z = 0.5;
-          mesh.add(panelEdgeLines);
-        }
         if (type === "frame") {
           const pathId =
             String(origId).toLowerCase();
@@ -930,10 +941,10 @@ async function build3DFromSVG(
             pathId === "mainframe";
           const isWindowFrame =
             pathId === "windowframe";
-          const edgeGeometry =
+            const edgeGeometry =
             new THREE.EdgesGeometry(
               geometry,
-              25
+              35
             );
           const positions =
             edgeGeometry.attributes.position.array;
