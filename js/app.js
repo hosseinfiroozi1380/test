@@ -2,6 +2,28 @@
   const canvas = document.getElementById('designCanvas');
   const ctx = canvas.getContext('2d');
   const $ = id => document.getElementById(id);
+
+  // فونت یکسان برنامه و نوشته‌های روی شیشه
+  if (!document.getElementById('iranSansWebFontStyle')) {
+    const fontStyle = document.createElement('style');
+    fontStyle.id = 'iranSansWebFontStyle';
+    fontStyle.textContent = `
+      @font-face {
+        font-family: "IRANSansWeb";
+        src: url("../fonts/IRANSansWeb-Medium.ttf") format("truetype");
+        font-weight: 500;
+        font-style: normal;
+        font-display: swap;
+      }
+      body {
+        font-family: "IRANSansWeb", Tahoma, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        font-size: 13px;
+      }
+    `;
+    document.head.appendChild(fontStyle);
+  }
   canvas.style.touchAction = 'none';
   const state = {
     width: 1000, height: 1000, count: 1, shape: 'rectangle', zoom: 1, sideFrames: [],
@@ -11,6 +33,9 @@
     history: [], future: [], drag: null,
     frame: 60, sashFrame: 70, mullionWidth: 40, glassBorder: 15,
     frameType: 'فریم معمولی',
+    frameRekoub: 'خیر',
+    mullionType: 'مولین اصلی',
+    panelType: 'پنل معمولی',
     glassType: '۴ + ۱۲ + ۴ ساده',
     glassColor: '#8bd9f7',
     meshType: 'بدون توری',
@@ -44,6 +69,13 @@
   ];
   const meshOptions = ['بدون توری', 'توری پلیسه', 'توری ثابت'];
   const beadOptions = ['زهوار تک‌حالته', 'زهوار دوحالته', 'زهوار سه‌حالته'];
+  const rekoubOptions = ['خیر', 'رکوب 40', 'رکوب 60'];
+  const sashOptions = ['سش پنجره', 'سش در'];
+  const hardwareOptions = ['یراق معمولی', 'یراق دوحالته', 'یراق کشویی', 'یراق فولکس واگنی', 'یراق فرانسوی'];
+  const hardwareTypeOptions = ['استاندارد', 'سنگین', 'مخفی'];
+  const lockOptions = ['نرمال', 'سرویسی', 'سرویسی یا توپی', 'قفل پنجره‌ای دوطرفه', 'قفل پنجره روی درب بیرون بازشو', 'قفل پنجره روی درب داخل بازشو'];
+  const mullionOptions = ['مولین اصلی', 'مولین متحرک'];
+  const panelTypeOptions = ['پنل معمولی', 'پنل دکوراتیو', 'پنل ساندویچی'];
   const shapeNames = {
     triangle: 'مثلث', 'triangle-inverted': 'مثلث وارونه',
     circle: 'دایره', ellipse: 'بیضی', trapezoid: 'ذوزنقه',
@@ -231,13 +263,25 @@
       selected: clone(state.selected),
       nextId: state.nextId,
       frame: state.frame,
+      mullionWidth: state.mullionWidth,
       frameType: state.frameType,
+      frameRekoub: state.frameRekoub,
+      mullionType: state.mullionType,
+      panelType: state.panelType,
       glassType: state.glassType,
       glassColor: state.glassColor,
       meshType: state.meshType,
       beadType: state.beadType,
       selectedPart: state.selectedPart,
       sideFrames: clone(state.sideFrames),
+      zoom: state.zoom,
+      panX: state.panX,
+      panY: state.panY,
+      sashFrame: state.sashFrame,
+      glassBorder: state.glassBorder,
+      openingType: state.openingType,
+      openDirection: state.openDirection,
+      toolCount: state.toolCount,
       panels: clone(state.panels),
     };
   }
@@ -341,7 +385,7 @@
     const padX = isMobile ? 58 : Math.min(160, w * .25);
     const padY = isMobile ? 62 : Math.min(130, h * .22);
     const side = state.sideFrames[0] || null;
-    const gap = side ? 70 : 0;
+    const gap = side ? 0 : 0;
     const totalWidth = side
       ? side.direction === 'right'
         ? state.width + gap + side.width
@@ -407,6 +451,24 @@
     ctx.textAlign = align;
     ctx.textBaseline = 'middle';
     ctx.fillText(s, x, y);
+  }
+
+  // شکستن متن طولانی به چند سطر، بدون کوچک‌کردن اندازه فونت
+  function wrapCanvasText(value, maxWidth) {
+    const words = String(value).trim().split(/\s+/);
+    const lines = [];
+    let line = '';
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (line && ctx.measureText(candidate).width > maxWidth) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = candidate;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
   }
   function getInner() {
     const g = geom();
@@ -703,6 +765,55 @@
       return { x: X + W / 2 + Math.cos(a) * W * .48, y: Y + H / 2 + Math.sin(a) * H * .48 };
     });
   }
+  function getShapeOutlinePoints(type, x, y, w, h, inset = 0) {
+    if (type === 'circle' || type === 'ellipse') {
+      const points = [];
+      for (let i = 0; i < 180; i++) {
+        const angle = i * Math.PI * 2 / 180;
+        const rx = type === 'circle' ? Math.min(w, h) / 2 : w / 2;
+        const ry = type === 'circle' ? Math.min(w, h) / 2 : h / 2;
+        points.push({
+          x: x + w / 2 + Math.cos(angle) * rx,
+          y: y + h / 2 + Math.sin(angle) * ry
+        });
+      }
+      return inset ? getInsetPoints(points, inset) : points;
+    }
+    const points = shapePoints(type, x, y, w, h, 0);
+    return inset ? getInsetPoints(points, inset) : points;
+  }
+  function clipPolygonToRect(points, left, top, right, bottom) {
+    const edges = [
+      { inside: p => p.x >= left, intersect: (a, b) => ({ x: left, y: a.y + (b.y - a.y) * (left - a.x) / (b.x - a.x) }) },
+      { inside: p => p.x <= right, intersect: (a, b) => ({ x: right, y: a.y + (b.y - a.y) * (right - a.x) / (b.x - a.x) }) },
+      { inside: p => p.y >= top, intersect: (a, b) => ({ x: a.x + (b.x - a.x) * (top - a.y) / (b.y - a.y), y: top }) },
+      { inside: p => p.y <= bottom, intersect: (a, b) => ({ x: a.x + (b.x - a.x) * (bottom - a.y) / (b.y - a.y), y: bottom }) }
+    ];
+    let result = points;
+    for (const edge of edges) {
+      const input = result;
+      result = [];
+      if (!input.length) break;
+      let previous = input[input.length - 1];
+      for (const current of input) {
+        if (edge.inside(current)) {
+          if (!edge.inside(previous)) result.push(edge.intersect(previous, current));
+          result.push(current);
+        } else if (edge.inside(previous)) result.push(edge.intersect(previous, current));
+        previous = current;
+      }
+    }
+    return result;
+  }
+  function canvasPolygonPath(points) {
+    if (!points || points.length < 3) return false;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+    return true;
+  }
+
   function getInsetPoints(points, inset) {
     if (!inset) return points.map(p => ({ ...p }));
     const n = points.length;
@@ -1374,6 +1485,14 @@
     }
     ctx.restore();
     drawDimensions(g);
+
+    // خطوط راهنمای بازشو و یراق‌آلات هم باید داخل مرز هندسی فریم بمانند.
+    // این مرز مستقل از فریم اصلی است؛ فقط محتوای داخل شکل را محدود می‌کند.
+    ctx.save();
+    if ((state.shape || 'rectangle') !== 'rectangle') {
+      traceShape(state.shape, x, y, fw, fh, t);
+      ctx.clip();
+    }
     drawFrontOpeningGuides(g, inner);
     const hardwareScale = g.scale || 1;
     state.openings.forEach((o) => {
@@ -1412,6 +1531,7 @@
         !!o.isDoor
       );
     });
+    ctx.restore();
     // $('status').textContent =
     //   `عرض: ${fa(state.width)} | ارتفاع: ${fa(state.height)} | تعداد: ${fa(state.count)} | مولین عمودی: ${fa(state.mullions.length)} | مولین افقی: ${fa(state.horizontalMullions.length)}`;
   }
@@ -1486,8 +1606,8 @@
           if (gw <= 0 || gh <= 0) continue;
           ctx.fillStyle = state.glassColor || '#8bd9f7';
           ctx.fillRect(gx, gy, gw, gh);
-          ctx.strokeStyle = state.selectedPart === 'glass' ? '#1672f9' : '#111';
-          ctx.lineWidth = state.selectedPart === 'glass' ? 2 : 0.7;
+          ctx.strokeStyle = (state.selectedPart === 'glass' && state.selected?.type !== 'opening') ? '#1672f9' : '#111';
+          ctx.lineWidth = (state.selectedPart === 'glass' && state.selected?.type !== 'opening') ? 2 : 0.7;
           ctx.beginPath();
           if (edges.left) { ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + gh); }
           if (edges.right) { ctx.moveTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + gh); }
@@ -1738,15 +1858,15 @@
           if (gw <= 0 || gh <= 0) continue;
           ctx.fillStyle = state.glassColor || '#8bd9f7';
           ctx.fillRect(gx, gy, gw, gh);
-          ctx.strokeStyle = state.selectedPart === 'glass' ? '#1672f9' : '#111';
-          ctx.lineWidth = state.selectedPart === 'glass' ? 2 : 0.7;
+          ctx.strokeStyle = (state.selectedPart === 'glass' && state.selected?.type !== 'opening') ? '#1672f9' : '#111';
+          ctx.lineWidth = (state.selectedPart === 'glass' && state.selected?.type !== 'opening') ? 2 : 0.7;
           ctx.beginPath();
           if (edges.left) { ctx.moveTo(gx, gy); ctx.lineTo(gx, gy + gh); }
           if (edges.right) { ctx.moveTo(gx + gw, gy); ctx.lineTo(gx + gw, gy + gh); }
           if (edges.top) { ctx.moveTo(gx, gy); ctx.lineTo(gx + gw, gy); }
           if (edges.bottom) { ctx.moveTo(gx, gy + gh); ctx.lineTo(gx + gw, gy + gh); }
           ctx.stroke();
-          if (state.selectedPart === 'glass') {
+          if (state.selectedPart === 'glass' && state.selected?.type !== 'opening') {
             ctx.fillStyle = 'rgba(22,114,249,.22)';
             ctx.fillRect(gx, gy, gw, gh);
             ctx.strokeStyle = '#1672f9';
@@ -1761,7 +1881,7 @@
           }
         }
       }
-      if (state.selectedPart === 'glass') {
+      if (state.selectedPart === 'glass' && state.selected?.type !== 'opening') {
         ctx.save();
         const gx = inner.x + glassBorder;
         const gy = inner.y + glassBorder;
@@ -1838,6 +1958,8 @@
         ctx.stroke();
       }
     }
+    // فقط مولین و پنل داخل مرز شکل هندسی محدود می‌شوند؛
+    // فریم لنگه باید بعد از شیشه و بدون کلیپ، در لایه جلو رسم شود.
     if (!isRectangle) {
       ctx.save();
       traceShape(type, x, y, fw, fh, t);
@@ -1845,6 +1967,114 @@
     }
     drawMullions(g, inner);
     drawPanels(g, inner);
+    if (!isRectangle) ctx.restore();
+    function drawShapedOpening(o, i, ox, oy, ow, oh, ft, isDragging) {
+      // لبه بیرونی لنگه کمی از خط داخلی فریم اصلی عبور می‌کند تا
+      // قاب بازشو روی فریم اصلی بنشیند و به آن نچسبد.
+      const sashOverlap = Math.max(2.5, ft * 0.22);
+      const outerShape = getShapeOutlinePoints(type, x, y, fw, fh, t - sashOverlap);
+      const outer = clipPolygonToRect(outerShape, ox, oy, ox + ow, oy + oh);
+      if (outer.length < 3) return;
+      const sashInner = getInsetPoints(outer, ft);
+      if (sashInner.length < 3) return;
+      const glassPoly = getInsetPoints(sashInner, glassBorder);
+      if (glassPoly.length < 3) return;
+      const bounds = points => ({
+        x: Math.min(...points.map(p => p.x)), y: Math.min(...points.map(p => p.y)),
+        w: Math.max(...points.map(p => p.x)) - Math.min(...points.map(p => p.x)),
+        h: Math.max(...points.map(p => p.y)) - Math.min(...points.map(p => p.y))
+      });
+      const glassBounds = bounds(glassPoly);
+      ctx.save();
+      if (isDragging) ctx.globalAlpha = 0.85;
+      // قاب سش دقیقاً از تقاطع شکل هندسی و محدوده بازشو ساخته می‌شود.
+      if (canvasPolygonPath(outer)) {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        ctx.fill();
+        ctx.stroke();
+      }
+      if (canvasPolygonPath(sashInner)) {
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        ctx.fill();
+        ctx.stroke();
+      }
+      // اتصال فارسی گوشه‌ها همیشه رسم می‌شود؛ حتی اگر برش شکل هندسی
+      // تعداد رأس‌های چندضلعی را بیشتر یا کمتر از چهار کرده باشد.
+      // همین اتصال برای نوار دور شیشه نیز رسم می‌شود تا هیچ گوشه‌ای مخفی نماند.
+      function drawVisibleMiterJoints(ringOuter, ringInner) {
+        if (!ringOuter || !ringInner || ringOuter.length !== ringInner.length || ringOuter.length < 3) return;
+        ctx.save();
+        ctx.beginPath();
+        for (let corner = 0; corner < ringOuter.length; corner++) {
+          ctx.moveTo(ringOuter[corner].x, ringOuter[corner].y);
+          ctx.lineTo(ringInner[corner].x, ringInner[corner].y);
+        }
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'butt';
+        ctx.lineJoin = 'miter';
+        ctx.stroke();
+        ctx.restore();
+      }
+      drawVisibleMiterJoints(outer, sashInner);
+      drawVisibleMiterJoints(sashInner, glassPoly);
+      if (canvasPolygonPath(glassPoly)) {
+        ctx.fillStyle = state.glassColor || '#8bd9f7';
+        ctx.fill();
+        ctx.strokeStyle = '#111';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+      if (state.selectedPart === 'glass' && state.selected?.index === i && state.selected.type === 'opening') {
+        if (canvasPolygonPath(glassPoly)) {
+          ctx.fillStyle = 'rgba(22,114,249,.22)'; ctx.fill();
+          ctx.strokeStyle = '#1672f9'; ctx.lineWidth = 2; ctx.stroke();
+        }
+      }
+      if (o.lockType && o.lockType !== 'نرمال' && glassBounds.w > 0 && glassBounds.h > 0) {
+        ctx.save();
+        ctx.font = '500 13px IRANSansWeb, Tahoma, Arial, sans-serif';
+        ctx.fillStyle = '#183247'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.direction = 'rtl';
+        const lines = wrapCanvasText(o.lockType, Math.max(1, glassBounds.w - 12));
+        const lineHeight = 18;
+        const firstY = glassBounds.y + glassBounds.h / 2 - lines.length * lineHeight / 2 + lineHeight / 2;
+        // نوشته نیز داخل مرز واقعی شیشه محدود می‌ماند.
+        if (canvasPolygonPath(glassPoly)) ctx.clip();
+        lines.forEach((line, n) => ctx.fillText(line, glassBounds.x + glassBounds.w / 2, firstY + n * lineHeight));
+        ctx.restore();
+      }
+      if (state.selectedPart === 'openingFrame' && state.selected?.index === i && state.selected.type === 'opening') {
+        ctx.save();
+        if (canvasPolygonPath(outer)) { ctx.fillStyle = 'rgba(22,114,249,.18)'; ctx.fill(); }
+        if (canvasPolygonPath(outer)) { ctx.strokeStyle = '#1672f9'; ctx.lineWidth = 1.5; ctx.stroke(); }
+        if (canvasPolygonPath(sashInner)) { ctx.strokeStyle = '#1672f9'; ctx.lineWidth = 1.5; ctx.stroke(); }
+        ctx.restore();
+      }
+      if (!o.fixed || o.openingType === 'french-simple') {
+        ctx.save();
+        if (canvasPolygonPath(glassPoly)) ctx.clip();
+        drawOpeningLines(
+          glassBounds.x, glassBounds.y, glassBounds.w, glassBounds.h,
+          o.type || 'normal', o.direction,
+          ox, oy, ow, oh, ft,
+          o.openingType === 'french-simple' ? 'single' : (o.openingType || 'single'),
+          !!o.isDoor
+        );
+        ctx.restore();
+      }
+      if (glassBounds.w > 0 && glassBounds.h > 0 && o.children) {
+        ctx.save();
+        if (canvasPolygonPath(glassPoly)) ctx.clip();
+        drawNestedContents(o.children, glassBounds.x, glassBounds.y, glassBounds.w, glassBounds.h, scale, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
     state.openings.forEach((o, i) => {
       const b = getOpeningBounds(o, inner);
       const isDragging = state.drag?.type === 'opening' &&
@@ -1865,6 +2095,10 @@
         oh += overlap;
       }
       if (!b.bottomM) oh += overlap;
+      if (!isRectangle) {
+        drawShapedOpening(o, i, ox, oy, ow, oh, ft, isDragging);
+        return;
+      }
       ctx.save();
       if (isDragging) ctx.globalAlpha = 0.85;
       ctx.fillStyle = '#fff';
@@ -1908,7 +2142,7 @@
       ctx.fillRect(gx, gy, gw, gh);
       ctx.strokeStyle = '#111';
       ctx.strokeRect(gx, gy, gw, gh);
-      if (state.selectedPart === 'openingGlass' &&
+      if (state.selectedPart === 'glass' &&
         state.selected?.index === i && state.selected.type === 'opening') {
         ctx.fillStyle = 'rgba(22,114,249,.22)';
         ctx.fillRect(gx, gy, gw, gh);
@@ -1916,6 +2150,27 @@
         ctx.lineWidth = 2;
         ctx.strokeRect(gx, gy, gw, gh);
         ctx.lineWidth = 1;
+      }
+      // نام قفل انتخاب‌شده فقط روی شیشهٔ همان بازشو نمایش داده می‌شود.
+      // قفل نرمال هیچ نوشته‌ای روی شیشه ندارد.
+      if (o.lockType && o.lockType !== 'نرمال' && gw > 0 && gh > 0) {
+        ctx.save();
+        const lockLabel = o.lockType;
+        const maxTextWidth = Math.max(1, gw - 12);
+        const fontSize = 13;
+        const lineHeight = 18;
+        ctx.font = `500 ${fontSize}px IRANSansWeb, Tahoma, Arial, sans-serif`;
+        ctx.fillStyle = '#183247';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.direction = 'rtl';
+        const lines = wrapCanvasText(lockLabel, maxTextWidth);
+        const totalTextHeight = lines.length * lineHeight;
+        const firstLineY = gy + gh / 2 - totalTextHeight / 2 + lineHeight / 2;
+        lines.forEach((line, lineIndex) => {
+          ctx.fillText(line, gx + gw / 2, firstLineY + lineIndex * lineHeight);
+        });
+        ctx.restore();
       }
       if (state.selectedPart === 'openingFrame' &&
         state.selected?.index === i &&
@@ -1960,7 +2215,6 @@
       }
       ctx.restore();
     });
-    if (!isRectangle) ctx.restore();
     ctx.restore();
   }
   function drawNestedContents(children, x, y, w, h, scale, depth = 0) {
@@ -2690,88 +2944,70 @@
         <div class="setting-field">
           <div class="option-title">${title}</div>
           <div class="custom-select">
-            <button type="button" class="option-btn" data-toggle="${attr}">
-              <span>${getName(current)}</span>
-              <i class="ti ti-chevron-down"></i>
-            </button>
-            <div class="custom-select-menu">
-              ${options.map(o => {
-        const value = getName(o);
-        return `<button type="button" class="custom-option ${value === selected ? 'active' : ''}" data-value="${value}" data-type="${attr}">${value}</button>`;
-      }).join('')}
-            </div>
+            <button type="button" class="option-btn" data-toggle="${attr}"><span>${getName(current)}</span><i class="ti ti-chevron-down"></i></button>
+            <div class="custom-select-menu">${options.map(o => { const value = getName(o); return `<button type="button" class="custom-option ${value === selected ? 'active' : ''}" data-value="${value}" data-type="${attr}">${value}</button>`; }).join('')}</div>
           </div>
-        </div>
-      `;
+        </div>`;
     };
+    const opening = state.selected?.type === 'opening' ? state.openings[state.selected.index] : null;
     if (state.selectedPart === 'frame') {
-      box.innerHTML = `
-        <div class="part-heading">تنظیمات فریم</div>
+      box.innerHTML = `<div class="part-heading">تنظیمات فریم</div>
         ${selectHTML('مدل فریم', frameOptions, state.frameType, 'frame')}
-      `;
+        ${selectHTML('رکوب', rekoubOptions, state.frameRekoub, 'rekoub')}`;
+    } else if (state.selectedPart === 'openingFrame' || opening && state.selectedPart === 'openingFrame') {
+      box.innerHTML = `<div class="part-heading">${opening?.isDoor ? 'تنظیمات فریم در' : 'تنظیمات فریم پنجره'}</div>
+        ${selectHTML('نوع سش', sashOptions, opening?.sashType || (opening?.isDoor ? 'سش در' : 'سش پنجره'), 'sash')}
+        ${selectHTML('یراق', hardwareOptions, opening?.hardware || hardwareOptions[0], 'hardware')}
+        ${selectHTML('نوع یراق', hardwareTypeOptions, opening?.hardwareType || hardwareTypeOptions[0], 'hardwareType')}
+        ${selectHTML('توری', meshOptions, opening?.meshType || state.meshType, 'openingMesh')}
+        ${selectHTML('قفل', lockOptions, opening?.lockType || lockOptions[0], 'lock')}`;
     } else if (state.selected?.type === 'panel' && state.panels[state.selected.index]) {
       const panel = state.panels[state.selected.index];
       const panelOptions = panelSizeOptions.map(size => ({ name: `پنل ${size}`, size }));
       const currentSize = Number(panel.panelSize) || 120;
       const currentPanelName = (panelOptions.find(o => Math.abs(o.size - currentSize) < 0.01) || panelOptions[1]).name;
-      box.innerHTML = `
-        <div class="part-heading">تنظیمات پنل ${panel.orientation === 'vertical' ? 'عمودی' : 'افقی'}</div>
-        ${selectHTML('اندازه پنل و فاصله خطوط', panelOptions, currentPanelName, 'panelSize')}
-        <div class="hint">مستطیل‌های کامل از ابتدای پنل چیده می‌شوند و فقط در انتهای پنل، مستطیل آخر به اندازه فضای باقی‌مانده رسم می‌شود.</div>
-      `;
-    } else if (state.selectedPart === 'glass') {
-      box.innerHTML = `
-        <div class="part-heading">تنظیمات شیشه</div>
+      box.innerHTML = `<div class="part-heading">تنظیمات پنل</div>
+        ${selectHTML('پنل', panelTypeOptions, panel.panelType || state.panelType, 'panelType')}
+        ${selectHTML('اندازه پنل', panelOptions, currentPanelName, 'panelSize')}
+        ${selectHTML('زهوار', beadOptions, panel.beadType || state.beadType, 'panelBead')}`;
+    } else if (state.selectedPart === 'glass' || state.selectedPart === 'openingGlass') {
+      box.innerHTML = `<div class="part-heading">تنظیمات شیشه</div>
         ${selectHTML('ترکیب و رنگ شیشه', glassOptions, state.glassType, 'glass')}
         ${selectHTML('توری', meshOptions, state.meshType, 'mesh')}
-        ${selectHTML('زهوار', beadOptions, state.beadType, 'bead')}
-      `;
+        ${selectHTML('زهوار', beadOptions, state.beadType, 'bead')}`;
+    } else if (state.selectedPart === 'mullion' || state.selectedPart === 'horizontalMullion') {
+      box.innerHTML = `<div class="part-heading">تنظیمات مولین</div>${selectHTML('مولین', mullionOptions, state.mullionType, 'mullionType')}`;
     } else {
-      box.innerHTML = '<p class="hint">برای تنظیم فریم یا شیشه، روی آن در نقشه کلیک کنید.</p>';
+      box.innerHTML = '<p class="hint">برای تنظیم فریم، پنجره یا در، شیشه، مولین یا پنل روی همان قسمت در نقشه کلیک کنید.</p>';
       return;
     }
-    box.querySelectorAll('[data-toggle]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const menu = btn.nextElementSibling;
-        const open = menu.classList.contains('open');
-        box.querySelectorAll('.custom-select-menu').forEach(m => m.classList.remove('open'));
-        box.querySelectorAll('.option-btn').forEach(b => b.classList.remove('open'));
-        if (!open) {
-          menu.classList.add('open');
-          btn.classList.add('open');
-        }
-      });
-    });
-    box.querySelectorAll('.custom-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const value = btn.dataset.value;
-        const type = btn.dataset.type;
-        saveHistory();
-        if (type === 'frame') {
-          const option = frameOptions.find(o => o.name === value);
-          if (!option) return;
-          state.frameType = option.name;
-          state.frame = option.size;
-        } else if (type === 'panelSize') {
-          const match = value.match(/[0-9۰-۹]+(?:[.٫][0-9۰-۹]+)?/);
-          if (!match || !state.selected || state.selected.type !== 'panel') return;
-          const normalized = match[0].replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫', '.');
-          const panel = state.panels[state.selected.index];
-          if (panel) panel.panelSize = Number(normalized);
-        } else if (type === 'glass') {
-          const option = glassOptions.find(o => o.name === value);
-          if (!option) return;
-          state.glassType = option.name;
-          state.glassColor = option.color;
-        } else if (type === 'mesh') {
-          state.meshType = value;
-        } else if (type === 'bead') {
-          state.beadType = value;
-        }
-        renderSettings();
-        draw();
-      });
-    });
+    box.querySelectorAll('[data-toggle]').forEach(btn => btn.addEventListener('click', () => {
+      const menu = btn.nextElementSibling, open = menu.classList.contains('open');
+      box.querySelectorAll('.custom-select-menu').forEach(m => m.classList.remove('open'));
+      box.querySelectorAll('.option-btn').forEach(b => b.classList.remove('open'));
+      if (!open) { menu.classList.add('open'); btn.classList.add('open'); }
+    }));
+    box.querySelectorAll('.custom-option').forEach(btn => btn.addEventListener('click', () => {
+      const value = btn.dataset.value, type = btn.dataset.type;
+      saveHistory();
+      if (type === 'frame') { const option = frameOptions.find(o => o.name === value); if (option) { state.frameType = option.name; state.frame = option.size; } }
+      else if (type === 'rekoub') state.frameRekoub = value;
+      else if (type === 'mullionType') { state.mullionType = value; state.mullionWidth = value === 'مولین متحرک' ? 20 : 40; }
+      else if (type === 'panelType') { state.panelType = value; const panel = state.panels[state.selected?.index]; if (panel) panel.panelType = value; }
+      else if (type === 'panelBead') { const panel = state.panels[state.selected?.index]; if (panel) panel.beadType = value; }
+      else if (type === 'panelSize') { const match = value.match(/[0-9۰-۹]+(?:[.٫][0-9۰-۹]+)?/); if (match && state.selected?.type === 'panel') { const normalized = match[0].replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace('٫', '.'); const panel = state.panels[state.selected.index]; if (panel) panel.panelSize = Number(normalized); } }
+      else if (type === 'glass') { const option = glassOptions.find(o => o.name === value); if (option) { state.glassType = option.name; state.glassColor = option.color; } }
+      else if (type === 'mesh') state.meshType = value;
+      else if (type === 'bead') state.beadType = value;
+      else if (opening) {
+        if (type === 'sash') opening.sashType = value;
+        else if (type === 'hardware') opening.hardware = value;
+        else if (type === 'hardwareType') opening.hardwareType = value;
+        else if (type === 'openingMesh') opening.meshType = value;
+        else if (type === 'lock') opening.lockType = value;
+      }
+      renderSettings(); draw();
+    }));
   }
   function point(e) {
     const r = canvas.getBoundingClientRect();
@@ -2865,6 +3101,7 @@
       const ow = b.w + (!b.leftM ? overlap : 0) + (!b.rightM ? overlap : 0);
       const oh = b.h + (!b.topM ? overlap : 0) + (!b.bottomM ? overlap : 0);
       if (p.x < ox || p.x > ox + ow || p.y < oy || p.y > oy + oh) continue;
+      if ((state.shape || 'rectangle') !== 'rectangle' && !pointInShape(p, g.x, g.y, g.fw, g.fh, g.t)) continue;
       // لبه بیرونی برای جابه‌جایی بازشو حفظ می‌شود
       if (
         p.x <= ox + 5 || p.x >= ox + ow - 5 ||
@@ -2916,6 +3153,11 @@
       if (p.x >= left && p.x <= right && p.y >= top && p.y <= bottom) {
         return { type: 'panel', index: i };
       }
+    }
+    if (g.side) {
+      const st = g.side.t;
+      if (p.x >= g.side.x + st && p.x <= g.side.x + g.side.fw - st && p.y >= g.side.y + st && p.y <= g.side.y + g.side.fh - st) return { type: 'glass' };
+      if (p.x >= g.side.x && p.x <= g.side.x + g.side.fw && p.y >= g.side.y && p.y <= g.side.y + g.side.fh) return { type: 'frame' };
     }
     if (pointInShape(p, g.x, g.y, g.fw, g.fh, g.t)) return { type: 'glass' };
     if (pointInShape(p, g.x, g.y, g.fw, g.fh)) return { type: 'frame' };
@@ -3048,6 +3290,20 @@
           i !== drag.index && sameCell(o, cell)
         );
         if (!occupied) Object.assign(state.openings[drag.index], cell);
+      }
+    } else if (drag.type === 'panel' && e) {
+      const gp = glassAt(point(e));
+      if (gp) {
+        const cell = getCellAt(gp);
+        const occupied = cell && state.panels.some((panel, i) =>
+          i !== drag.index && sameCell(panel, cell)
+        );
+        if (cell && !occupied) {
+          Object.assign(state.panels[drag.index], cell);
+        } else if (occupied) {
+          showMessage('این قسمت قبلاً پنل دارد.', 'error');
+          state.history.pop();
+        }
       }
     } else if (
       drag.type === 'nestedMullion' &&
@@ -3363,7 +3619,7 @@
         ...cell,
         id: state.nextId++,
         orientation: state.tool === 'verticalPanel' ? 'vertical' : 'horizontal',
-        panelSize: 120
+        panelSize: 120, panelType: state.panelType, beadType: state.beadType
       };
       state.panels.push(panel);
       // پنل ساخته می‌شود؛ تنظیمات فقط پس از انتخاب خود پنل نمایش داده می‌شود.
@@ -3586,7 +3842,7 @@
       found?.type === 'frame' || found?.type === 'glass' ||
       found?.type === 'openingFrame' || found?.type === 'openingGlass'
     ) {
-      state.selectedPart = found.type;
+      state.selectedPart = found.type === 'openingGlass' ? 'glass' : found.type;
       state.panelNeedsClick = false;
       state.selected = found.type.startsWith('opening')
         ? { type: 'opening', index: found.index }
@@ -3604,6 +3860,14 @@
       state.selectedPart = null;
       state.tool = 'select';
       renderSettings();
+      saveHistory();
+      state.drag = {
+        type: 'panel', index: found.index,
+        start: p, current: p,
+        original: clone(state.panels[found.index])
+      };
+      if (canvas.setPointerCapture) canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
       draw();
       return;
     }
@@ -3630,7 +3894,7 @@
       return;
     }
     if (found?.type === 'mullion' || found?.type === 'horizontalMullion') {
-      state.selectedPart = null;
+      state.selectedPart = found.type;
       renderSettings();
       draw();
     }
@@ -3702,7 +3966,7 @@
       return;
     }
     const g = geom();
-    if (state.drag.type === 'opening') {
+    if (state.drag.type === 'opening' || state.drag.type === 'panel') {
       state.drag.current = p;
     } else if (state.drag.type === 'mullion') {
       state.drag.previewPos = Math.max(.04, Math.min(.96,
@@ -3725,6 +3989,201 @@
     }
     draw();
   });
+  // ------------------------------------------------------------
+  // مدیریت آیتم‌ها (نسخه سازگار با همین برنامه Canvas؛ بدون import/export)
+  // ------------------------------------------------------------
+  state.tempDesigns = Array.isArray(state.tempDesigns) ? state.tempDesigns : [];
+  state.currentDesignID = state.currentDesignID || null;
+  let nextTempDesignId = Date.now();
+
+  function ensureLayerList() {
+    let list = document.getElementById('layerlist');
+    if (list) return list;
+    const section = document.createElement('section');
+    section.className = 'wd-section-block';
+    section.innerHTML = '<div class="wd-items-stack" id="layerlist"></div>';
+    // لیست در صفحه موجود نبود؛ بخش ITEMS به‌صورت امن به انتهای بدنه اضافه می‌شود.
+    document.body.appendChild(section);
+    list = section.querySelector('#layerlist');
+    return list;
+  }
+
+  function escapeLayerText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, char => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[char]);
+  }
+
+  function updateLayerPreview() {
+    const preview = canvas.toDataURL('image/png');
+    document.querySelectorAll('.wd-item-card').forEach(card => {
+      const thumb = card.querySelector('.svgThumb');
+      if (thumb && card.id === `layer_${state.currentDesignID}`) {
+        thumb.innerHTML = `<img src="${preview}" alt="پیش‌نمایش طرح" />`;
+      }
+    });
+  }
+
+  function saveCurrentTempDesign() {
+    if (!state.currentDesignID) return;
+    const current = state.tempDesigns.find(item => String(item.id) === String(state.currentDesignID));
+    if (!current) return;
+    current.data = snapshot();
+    current.width = state.width;
+    current.height = state.height;
+    current.count = state.count;
+    current.preview = canvas.toDataURL('image/png');
+    renderTempLayerCards();
+  }
+
+  function renderTempLayerCards() {
+    const list = ensureLayerList();
+    list.innerHTML = state.tempDesigns.map(item => {
+      const active = String(item.id) === String(state.currentDesignID);
+      const title = item.name || `طراحی ${item.id}`;
+      const preview = item.preview
+        ? `<img src="${item.preview}" alt="پیش‌نمایش ${escapeLayerText(title)}">`
+        : '';
+      return `
+        <div class="wd-item-card${active ? ' is-active' : ''}" id="layer_${escapeLayerText(item.id)}" data-id="${escapeLayerText(item.id)}">
+          <div class="wd-item-symbol svgThumb">${preview}</div>
+          <div class="wd-item-details">
+            <span class="wd-item-title">${escapeLayerText(title)}</span>
+            <span class="wd-item-size itemDimetions">${escapeLayerText(item.width)} × ${escapeLayerText(item.height)}
+              <span class="wd-item-quantity"> | تعداد: ${escapeLayerText(item.count || 1)}</span>
+            </span>
+            <div class="wd-item-bottom">
+              <button type="button" class="wd-item-select-btn" data-action="select" data-id="${escapeLayerText(item.id)}">${escapeLayerText(item.system || 'UPVC')}</button>
+              <button type="button" class="wd-item-edit" data-action="rename" data-id="${escapeLayerText(item.id)}" title="تغییر نام" aria-label="تغییر نام">✎</button>
+              <button type="button" class="wd-item-delete layerDelete" data-action="delete" data-id="${escapeLayerText(item.id)}" title="حذف" aria-label="حذف">×</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    updateLayerPreview();
+  }
+
+  // معادل createTempLayerCard قبلی، اما با state و Canvas همین پروژه.
+  function createTempLayerCard(createNew = false) {
+    if (!createNew && state.currentDesignID) {
+      saveCurrentTempDesign();
+      return;
+    }
+    const id = ++nextTempDesignId;
+    const item = {
+      id,
+      name: `طراحی ${state.tempDesigns.length + 1}`,
+      width: state.width,
+      height: state.height,
+      count: state.count || 1,
+      system: 'UPVC',
+      data: snapshot(),
+      preview: canvas.toDataURL('image/png')
+    };
+    state.tempDesigns.unshift(item);
+    state.currentDesignID = id;
+    renderTempLayerCards();
+  }
+
+  function changeTempLayerById(id) {
+    const item = state.tempDesigns.find(entry => String(entry.id) === String(id));
+    if (!item) return;
+    saveCurrentTempDesign();
+    // ذخیره‌ی طرح مقصد پیش از جابه‌جایی، تا آخرین تغییرات آن حفظ شود.
+    const target = state.tempDesigns.find(entry => String(entry.id) === String(id));
+    if (!target || !target.data) return;
+    state.currentDesignID = target.id;
+    Object.assign(state, clone(target.data));
+    state.drag = null;
+    state.previewMullion = null;
+    state.selected = null;
+    state.selectedPart = null;
+    state.history = [];
+    state.future = [];
+    renderSettings();
+    syncInputs();
+    draw();
+    renderTempLayerCards();
+    updateHistoryButtons();
+  }
+
+  ensureLayerList();
+  const layerStyle = document.createElement('style');
+  layerStyle.textContent = `
+    #layerlist{display:flex;flex-direction:column;gap:8px}
+    #layerlist .wd-item-card{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border,#ddd);border-radius:10px;background:var(--card,#fff)}
+    #layerlist .wd-item-card.is-active{border-color:var(--primary,#2878d0);box-shadow:0 0 0 1px var(--primary,#2878d0)}
+    #layerlist .wd-item-symbol{width:64px;height:54px;flex:0 0 64px;display:grid;place-items:center;overflow:hidden;background:#f3f5f7;border-radius:6px}
+    #layerlist .wd-item-symbol img{width:100%;height:100%;object-fit:contain}
+    #layerlist .wd-item-details{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+    #layerlist .wd-item-title{font-weight:700;overflow-wrap:anywhere}
+    #layerlist .wd-item-size{font-size:12px;color:var(--muted,#666)}
+    #layerlist .wd-item-bottom{display:flex;align-items:center;gap:6px}
+    #layerlist button{cursor:pointer}
+    #layerlist .wd-item-select-btn{margin-inline-end:auto}
+  `;
+  document.head.appendChild(layerStyle);
+
+  ensureLayerList().addEventListener('click', event => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const id = button.dataset.id;
+    const action = button.dataset.action;
+    if (action === 'select') {
+      if (String(id) !== String(state.currentDesignID)) changeTempLayerById(id);
+      return;
+    }
+    if (action === 'rename') {
+      const item = state.tempDesigns.find(entry => String(entry.id) === String(id));
+      if (!item) return;
+      const name = window.prompt('نام آیتم را وارد کنید:', item.name || '');
+      if (name && name.trim()) {
+        item.name = name.trim();
+        renderTempLayerCards();
+      }
+      return;
+    }
+    if (action === 'delete') {
+      const item = state.tempDesigns.find(entry => String(entry.id) === String(id));
+      if (!item || !window.confirm(`آیا از حذف «${item.name}» اطمینان دارید؟`)) return;
+      const wasActive = String(id) === String(state.currentDesignID);
+      state.tempDesigns = state.tempDesigns.filter(entry => String(entry.id) !== String(id));
+      if (wasActive) {
+        state.currentDesignID = null;
+        if (state.tempDesigns.length) {
+          const next = state.tempDesigns[0];
+          state.currentDesignID = next.id;
+          Object.assign(state, clone(next.data));
+          state.drag = null;
+          state.selected = null;
+          state.selectedPart = null;
+          state.history = [];
+          state.future = [];
+        } else {
+          state.width = 1000; state.height = 1000; state.count = 1;
+          state.mullions = []; state.horizontalMullions = [];
+          state.openings = []; state.panels = []; state.sideFrames = [];
+          state.selected = null; state.selectedPart = null;
+          state.history = []; state.future = [];
+        }
+        renderSettings(); syncInputs(); draw(); updateHistoryButtons();
+      }
+      renderTempLayerCards();
+      showMessage('آیتم با موفقیت حذف شد.', 'success');
+    }
+  });
+
+  // اولین طرح فعلی نیز به‌عنوان یک آیتم در لیست ثبت می‌شود.
+  if (!state.tempDesigns.length) createTempLayerCard(true);
+  else {
+    if (!state.currentDesignID || !state.tempDesigns.some(item => String(item.id) === String(state.currentDesignID))) {
+      state.currentDesignID = state.tempDesigns[0].id;
+    }
+    renderTempLayerCards();
+  }
+
   $('newBtn').addEventListener('click', () => {
     $('newWidth').value = state.width;
     $('newHeight').value = state.height;
@@ -3737,7 +4196,10 @@
     e.preventDefault();
     const w = Number($('newWidth').value) - Number($('newWidthClearance').value || 0);
     const h = Number($('newHeight').value) - Number($('newHeightClearance').value || 0);
+    // قبل از شروع طرح تازه، آخرین وضعیت طرح فعال ذخیره می‌شود.
+    saveCurrentTempDesign();
     if (applyDims(w, h, $('newCount').value)) {
+      createTempLayerCard(true);
       $('newDialog').close();
     }
   });

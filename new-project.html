@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>پروژه جدید | عایق فیروز</title>
+ <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg">
+ <link rel="stylesheet" href="./css/style1.css">
+</head>
+<body>
+ <!-- پس زمینه دقیقاً مشابه لاگین -->
+ <main class="page show">
+  <div class="window-pattern" aria-hidden="true">
+   <img src="./icons/site/bay-windows-svgfind-com.svg" class="window-mark m1" alt="">
+   <img src="./icons/site/window-svgfind-com.svg" class="window-mark m2" alt="">
+   <img src="./icons/site/door-svgfind-com.svg" class="window-mark m3" alt="">
+   <img src="./icons/site/window-panes-svgfind-com.svg" class="window-mark m4" alt="">
+   <img src="./icons/site/windows-10-svgfind-com.svg" class="window-mark m5" alt="">
+   <img src="./icons/site/round-window-svgfind-com.svg" class="window-mark m6" alt="">
+   <img src="./icons/site/large-windows-svgfind-com.svg" class="window-mark m7" alt="">
+   <img src="./icons/site/window-sash-svgfind-com.svg" class="window-mark m8" alt="">
+   <img src="./icons/site/bay-windows-svgfind-com.svg" class="window-mark m9" alt="">
+  </div>
+  <!-- کارت مشابه صفحه ورود -->
+  <section class="login-card">
+   <div class="mini-brand">
+    <div class="brand-icon" aria-hidden="true">
+     <img src="./icons/favicon.svg" alt="">
+    </div>
+    <div class="brand-copy">
+     <strong>عایق فیروز</strong>
+     <div class="brand-sub">طراحی درب و پنجره دوجداره</div>
+    </div>
+   </div>
+   <h1>ایجاد پروژه جدید</h1>
+   <p class="description">
+    اطلاعات پروژه را برای شروع طراحی وارد کنید.
+   </p>
+   <form id="projectForm" novalidate>
+    <div class="project-form-grid">
+     <div class="project-field">
+      <label for="projectName">
+       نام پروژه <span class="required">*</span>
+      </label>
+      <input id="projectName" name="projectName" placeholder="نام پروژه" required>
+     </div>
+     <div class="project-field">
+      <label for="projectCode">
+       کد پروژه <span class="required">*</span>
+      </label>
+      <input id="projectCode" name="projectCode" placeholder="کد پروژه" required>
+     </div>
+     <div class="project-field">
+      <label for="phone">
+       شماره تلفن <span class="required">*</span>
+      </label>
+      <input id="phone" name="phone" type="tel" inputmode="tel" placeholder="09123456789" required>
+     </div>
+     <div class="project-field">
+      <label for="customerGroup">گروه مشتری</label>
+      <select id="customerGroup" name="customerGroup">
+       <option value="متفرقه">متفرقه</option>
+       <option value="همکاران یک">همکاران یک</option>
+       <option value="همکاران دو">همکاران دو</option>
+      </select>
+     </div>
+     <div class="project-field">
+      <label for="installationCost">هزینه نصب</label>
+      <input id="installationCost" name="installationCost" type="number" min="0" placeholder="مبلغ به تومان">
+     </div>
+     <div class="project-field">
+      <label for="materialCost">هزینه مواد مصرفی</label>
+      <input id="materialCost" name="materialCost" type="number" min="0" placeholder="مبلغ به تومان">
+     </div>
+     <div class="project-field full">
+      <label for="address">آدرس</label>
+      <textarea id="address" name="address" placeholder="آدرس محل پروژه"></textarea>
+     </div>
+     <div class="project-field full">
+      <label for="description">توضیحات</label>
+      <textarea id="description" name="description" placeholder="توضیحات تکمیلی پروژه"></textarea>
+     </div>
+    </div>
+    <div class="project-actions">
+     <button type="submit" class="project-submit">
+      تأیید و شروع طراحی
+     </button>
+     <button type="button" class="project-back" onclick="window.location.href='./dashboard.html'">
+      بازگشت
+     </button>
+    </div>
+    <div id="projectMessage" class="project-message" aria-live="polite"></div>
+   </form>
+  </section>
+ </main>
+ <script>
+  // تم ذخیره شده
+  if (localStorage.getItem("dashboard-theme") === "dark") {
+ document.body.classList.add("dark-theme");
+}
+  // شماره تلفن کاربر
+  const savedPhone = sessionStorage.getItem("userPhone");
+  if (savedPhone) {
+   document.getElementById("phone").value = savedPhone;
+  }
+  // ثبت پروژه
+  document.getElementById("projectForm")
+   .addEventListener("submit", function (event) {
+    event.preventDefault();
+    const message = document.getElementById("projectMessage");
+    const project = {
+     id: Date.now(),
+     projectName: document.getElementById("projectName").value.trim(),
+     projectCode: document.getElementById("projectCode").value.trim(),
+     phone: document.getElementById("phone").value.trim(),
+     customerGroup: document.getElementById("customerGroup").value,
+     installationCost: document.getElementById("installationCost").value,
+     materialCost: document.getElementById("materialCost").value,
+     address: document.getElementById("address").value.trim(),
+     description: document.getElementById("description").value.trim()
+    };
+    if (!project.projectName || !project.projectCode ||
+     !/^09\d{9}$/.test(project.phone)) {
+     message.className = "project-message error show";
+     message.textContent =
+      "نام پروژه، کد پروژه و شماره موبایل معتبر الزامی هستند.";
+     return;
+    }
+    const projects = JSON.parse(
+     localStorage.getItem("firouz-projects") || "[]"
+    );
+    if (projects.some(p => p.projectCode === project.projectCode)) {
+     message.className = "project-message error show";
+     message.textContent = "این کد پروژه قبلاً ثبت شده است.";
+     return;
+    }
+    projects.push(project);
+    localStorage.setItem(
+     "firouz-projects",
+     JSON.stringify(projects)
+    );
+    sessionStorage.setItem(
+     "activeProject",
+     JSON.stringify(project)
+    );
+    message.className = "project-message success show";
+    message.textContent =
+     "پروژه با موفقیت ثبت شد.";
+   });
+ </script>
+</body>
+</html>

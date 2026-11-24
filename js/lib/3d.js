@@ -941,7 +941,7 @@ async function build3DFromSVG(
             pathId === "mainframe";
           const isWindowFrame =
             pathId === "windowframe";
-            const edgeGeometry =
+          const edgeGeometry =
             new THREE.EdgesGeometry(
               geometry,
               35

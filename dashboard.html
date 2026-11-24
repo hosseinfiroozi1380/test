@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>داشبورد | عایق فیروز</title>
+ <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg" />
+ <link rel="stylesheet" href="./css/style1.css">
+ <link rel="stylesheet" href="./css/dashboard.css">
+</head>
+<body class="dashboard-body">
+ <main class="dashboard-container">
+  <!-- HEADER -->
+  <header class="dashboard-header">
+   <div class="dashboard-brand">
+    <img src="./icons/favicon.svg" alt="لوگو">
+    <div>
+     <strong>عایق فیروز</strong>
+     <small>طراحی درب و پنجره دوجداره</small>
+    </div>
+   </div>
+   <div class="dashboard-header-controls">
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="تغییر حالت تاریک و روشن"
+     aria-pressed="false">
+     <span class="theme-toggle-icon">
+      <svg class="sun-icon" viewBox="0 0 24 24">
+       <circle cx="12" cy="12" r="4" />
+       <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42
+       m11.3 11.3 1.42 1.42M2 12h2m16 0h2
+       M4.93 19.07l1.42-1.42m11.3-11.3
+       1.42-1.42" />
+      </svg>
+      <svg class="moon-icon" viewBox="0 0 24 24">
+       <path d="M20.9 13A9 9 0 0 1 11 3.1
+       9 9 0 1 0 20.9 13Z" />
+      </svg>
+     </span>
+     <span class="theme-toggle-text">حالت تاریک</span>
+    </button>
+    <div class="dashboard-header-actions">
+     <button type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+       <circle cx="12" cy="12" r="9" />
+       <path d="M9.6 9a2.5 2.5 0 1 1 4.2 1.8c-1.1 1-1.8 1.4-1.8 3" />
+       <path d="M12 17.5h.01" />
+      </svg>
+      راهنما
+     </button>
+     <button type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+       <rect x="3" y="5" width="18" height="14" rx="3" />
+       <path d="m4 7 8 6 8-6" />
+      </svg>
+      پیام‌ها
+     </button>
+    </div>
+    <button class="logout-button" type="button" onclick="sessionStorage.removeItem('userPhone'); window.location.href='./login.html';">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 17l5-5-5-5M15 12H3" />
+      <path d="M12 3h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+     </svg>
+     خروج
+    </button>
+   </div>
+  </header>
+  <!-- CUSTOMER -->
+  <section class="dashboard-customer">
+   <div class="customer-details">
+    <div class="customer-info">
+     <strong>نام مشتری</strong>
+     <span class="customer-system">مدیر سیستم</span>
+    </div>
+    <div class="customer-contact">
+     <span>استان: خراسان جنوبی</span>
+     <i>|</i>
+     <span>شهر: قاین</span>
+     <i>|</i>
+     <i class="mobile-break"></i>
+     <span>
+      شماره تلفن:
+      <span id="customerPhone">---</span>
+     </span>
+     <i>|</i>
+     <span>آدرس: ---</span>
+    </div>
+   </div>
+   <button
+   class="dashboard-new-project"
+   type="button"
+   onclick="window.location.href='./new-project.html'">
+   پروژه جدید
+ </button>
+  </section>
+  <!-- TITLE -->
+  <section class="dashboard-title">
+   <h1>پنل مدیریت و ابزارها</h1>
+  </section>
+  <!-- TOOLS -->
+  <section class="dashboard-tools">
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="6" width="18" height="14" rx="3" />
+      <path d="M7 6V4h10v2M3 11h18M10 14h4" />
+     </svg>
+    </span>
+    <span>مدیریت مالی</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+      <path d="m15 16 1.5 1.5L20 14" />
+     </svg>
+    </span>
+    <span>لیست پروژه‌ها</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 19V5M4 19h16" />
+      <path d="m7 15 4-4 3 2 6-7" />
+      <path d="M16 6h4v4" />
+     </svg>
+    </span>
+    <span>قیمت پروفیل</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <path d="M12 4v16M3 12h18" />
+      <path d="m7 8 2 2M15 15l2 2" />
+     </svg>
+    </span>
+    <span>شیشه یراق</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="6" cy="6" r="3" />
+      <circle cx="18" cy="18" r="3" />
+      <path d="m8.2 8.2 7.6 7.6M14 4l6 6M4 14l6 6" />
+     </svg>
+    </span>
+    <span>بهینه برش و پروفیل</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M3 9h18M9 3v18M15 9v12" />
+     </svg>
+    </span>
+    <span>بهینه برش شیشه</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 8 12 3l9 5-9 5-9-5Z" />
+      <path d="M3 8v9l9 5 9-5V8" />
+      <path d="M12 13v9" />
+      <path d="m7 10.5 9-5" />
+     </svg>
+    </span>
+    <span>انبارگردانی</span>
+   </button>
+   <button class="dashboard-tool" type="button">
+    <span class="dashboard-tool-icon">
+     <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z" />
+      <path
+       d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.5-2-3.5-2.4 1a7.6 7.6 0 0 0-2.6-1.5L14 2h-4l-.4 3a7.6 7.6 0 0 0-2.6 1.5l-2.4-1-2 3.5 2 1.5a7.6 7.6 0 0 0 0 3l-2 1.5 2 3.5 2.4-1a7.6 7.6 0 0 0 2.6 1.5l.4 3h4l.4-3a7.6 7.6 0 0 0 2.6-1.5l2.4 1 2-3.5-2-1.5Z" />
+     </svg>
+    </span>
+    <span>تنظیمات شیشه</span>
+   </button>
+  </section>
+ </main>
+ <script>
+  const themeToggle = document.getElementById("themeToggle");
+  const themeToggleText = themeToggle.querySelector(".theme-toggle-text");
+  // بازیابی تم ذخیره شده
+  const savedTheme = localStorage.getItem("dashboard-theme");
+  if (savedTheme === "dark") {
+   document.body.classList.add("dark-theme");
+  }
+  // بروزرسانی متن و وضعیت دکمه
+  function updateThemeButton() {
+   const isDark = document.body.classList.contains("dark-theme");
+   themeToggleText.textContent = isDark
+    ? "حالت روشن"
+    : "حالت تاریک";
+   themeToggle.setAttribute("aria-pressed", String(isDark));
+  }
+  updateThemeButton();
+  // تغییر تم
+  themeToggle.addEventListener("click", function () {
+   document.body.classList.toggle("dark-theme");
+   const isDark = document.body.classList.contains("dark-theme");
+   localStorage.setItem(
+    "dashboard-theme",
+    isDark ? "dark" : "light"
+   );
+   updateThemeButton();
+  });
+ </script>
+ <script>
+  const phone = sessionStorage.getItem('userPhone');
+  if (phone) {
+   document.getElementById('customerPhone').textContent = phone;
+  }
+ </script>
+</body>
+</html>

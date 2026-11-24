@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fa-IR" dir="rtl">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>عایق فیروز | اطلاعات پروژه</title>
+ <link rel="stylesheet" href="https://cdn.lineicons.com/4.0/lineicons.css">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css" />
+ <!-- لوگوی سایت -->
+ <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg" />
+ <!-- استایل فرم -->
+ <link rel="stylesheet" href="./css/formproject.css" />
+</head>
+<body>
+ <div class="project-info-wrapper">
+  <div class="project-info-box">
+   <!-- عنوان -->
+   <div class="project-info-header">
+    <div class="project-info-title">
+     <img src="./icons/favicon.svg" alt="عایق فیروز" class="project-info-logo">
+     <div class="project-info-title-text">
+      <h2>عایق فیروز</h2>
+      <p>طراحی درب و پنجره</p>
+     </div>
+    </div>
+   </div>
+   <!-- فرم -->
+   <form id="projectInfoForm">
+    <div class="project-info-grid">
+     <!-- نام پروژه -->
+     <div class="project-info-field">
+      <label for="projectName">
+       نام پروژه <span class="required-star">*</span>
+      </label>
+      <input type="text" id="projectName" name="projectName">
+      <div class="project-error" id="projectNameError">
+       این نام پروژه الزامی است
+      </div>
+     </div>
+     <!-- کد پروژه -->
+     <div class="project-info-field">
+      <label for="projectCode">
+       کد پروژه <span class="required-star">*</span>
+      </label>
+      <input type="text" id="projectCode" name="projectCode">
+      <div class="project-error" id="projectCodeError">
+       این کد پروژه الزامی است
+      </div>
+     </div>
+     <!-- شماره تلفن -->
+     <div class="project-info-field">
+      <label for="projectPhone">
+       شماره تلفن <span class="required-star">*</span>
+      </label>
+      <input type="tel" id="projectPhone" name="projectPhone">
+      <div class="project-error" id="projectPhoneError">
+       این شماره تلفن الزامی است
+      </div>
+     </div>
+     <!-- گروه مشتری -->
+     <div class="project-info-field">
+      <label for="customerGroup">
+       گروه مشتری
+      </label>
+      <select id="customerGroup" name="customerGroup">
+       <option value="متفرقه">
+        متفرقه
+       </option>
+       <option value="همکاران یک">
+        همکاران یک
+       </option>
+       <option value="همکاران دو">
+        همکاران دو
+       </option>
+      </select>
+      <div class="project-error" id="customerGroupError">
+       انتخاب گروه مشتری الزامی است
+      </div>
+     </div>
+     <!-- هزینه نصب -->
+     <div class="project-info-field">
+      <label for="installationCost">
+       هزینه نصب
+      </label>
+      <input type="number" id="installationCost" name="installationCost" min="0">
+     </div>
+     <!-- هزینه مواد مصرفی -->
+     <div class="project-info-field">
+      <label for="materialCost">
+       هزینه مواد مصرفی
+      </label>
+      <input type="number" id="materialCost" name="materialCost" min="0">
+     </div>
+     <!-- آدرس -->
+     <div class="project-info-field project-info-full">
+      <label for="projectAddress">
+       آدرس
+      </label>
+      <textarea id="projectAddress" name="projectAddress" rows="1"></textarea>
+     </div>
+     <!-- توضیحات -->
+     <div class="project-info-field project-info-full">
+      <label for="projectDescription">
+       توضیحات
+      </label>
+      <textarea id="projectDescription" name="projectDescription" rows="2"></textarea>
+     </div>
+    </div>
+    <!-- دکمه‌ها -->
+    <div class="project-info-buttons">
+     <button type="submit" id="saveProjectInfo" class="project-save-btn">
+      ذخیره اطلاعات
+     </button>
+     <button type="button" id="clearProjectInfo" class="project-clear-btn">
+      پاک کردن فرم
+     </button>
+    </div>
+   </form>
+  </div>
+ </div>
+ <script type="module" src="./js/projectInfo.js"></script>
+</body>
+</html>

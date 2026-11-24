@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 
@@ -5,6 +6,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>عایق فیروز | طراحی درب و پنجره</title>
+  <!-- <script>
+    if (
+      sessionStorage.getItem("projectInfoAccess") !== "true"
+    ) {
+      window.location.replace("./project-info.html");
+    }
+    sessionStorage.removeItem("projectInfoAccess");
+  </script> -->
   <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg" />
   <link rel="stylesheet" href="https://cdn.lineicons.com/4.0/lineicons.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.44.0/tabler-icons.min.css" />
@@ -35,16 +44,25 @@
           <i class="ti ti-device-floppy"></i>
           <span><strong>ذخیره پروژه</strong></span>
         </button>
-        <button class="side-action" id="settingsBtn">
+        <a href="./dashboard.html" class="side-action" id="settingsBtn">
           <i class="ti ti-settings"></i>
           <span><strong>تنظیمات</strong></span>
-        </button>
+        </a>
       </div>
       <div class="shape-buttons">
-        <button id="newBtn" class="primary">مستطیل</button>
-        <button id="polygonBtn" class="primary">غیرمستطیل</button>
+        <button id="newBtn" class="primary">
+          <img src="./icons/Rectangle.svg" alt="" />
+          مستطیل</button>
+        <button id="polygonBtn" class="primary">
+          <img src="./icons/Non_rectangular.svg" alt="" />
+          غیرمستطیل</button>
       </div>
       <div class="panel-divider"></div>
+      <!-- ITEMS -->
+      <section class="wd-section-block">
+        <div class="wd-items-stack" id="layerlist">
+        </div>
+      </section>
     </aside>
     <!-- بوم طراحی -->
     <section class="workspace">
@@ -698,6 +716,25 @@
     </div>
   </div>
   <script type="module" src="./js/main.js"></script>
+  <script>
+    const projectInfo =
+      sessionStorage.getItem("projectInfo");
+    if (projectInfo) {
+      const projectData =
+        JSON.parse(projectInfo);
+      const projectDisplayName =
+        document.getElementById(
+          "projectDisplayName"
+        );
+      if (
+        projectDisplayName &&
+        projectData.projectName
+      ) {
+        projectDisplayName.textContent =
+          projectData.projectName;
+      }
+    }
+  </script>
 </body>
 
 </html>

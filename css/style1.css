@@ -1,0 +1,894 @@
+@font-face {
+   font-family: "IRANSansWeb";
+   src: url("../fonts/IRANSansWeb-Medium.ttf") format("truetype");
+   font-weight: 500;
+   font-style: normal;
+   font-display: swap
+  }
+  
+  :root {
+   --ink: #171923;
+   --muted: #777b89;
+   --accent: #3b82f6;
+   --accent-dark: #2563eb;
+   --line: #e7e8ef
+  }
+  
+  * {
+   box-sizing: border-box
+  }
+  
+  html,
+  body {
+   width: 100%;
+   height: 100%;
+   margin: 0;
+   overflow: hidden
+  }
+  
+  body {
+   font-family: "IRANSansWeb", Tahoma, Arial, sans-serif;
+   font-size: 13px;
+   min-height: 100svh;
+   background: #fff;
+   color: var(--ink)
+  }
+  
+  .intro {
+   position: fixed;
+   inset: 0;
+   z-index: 5;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   background: #fff;
+   opacity: 1;
+   visibility: visible;
+   transition: opacity .5s ease, visibility .5s ease
+  }
+  
+  .intro.is-hidden {
+   opacity: 0;
+   visibility: hidden;
+   pointer-events: none
+  }
+  
+  .brand {
+   position: absolute;
+   top: 34%;
+   left: 50%;
+   width: max-content;
+   max-width: calc(100% - 32px);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 13px;
+   opacity: 0;
+   transform: translate(-50%, 20px);
+   transition: opacity .55s ease, transform .55s ease
+  }
+  
+  .brand.show {
+   opacity: 1;
+   transform: translate(-50%, 0)
+  }
+  
+  .brand-icon {
+   width: 58px;
+   height: 58px;
+   border-radius: 17px;
+   display: grid;
+   place-items: center;
+   color: #fff;
+   flex: 0 0 auto;
+   overflow: hidden;
+   background: #fff
+  }
+  
+  .brand-icon img {
+   display: block;
+   width: 100%;
+   height: 100%;
+   object-fit: contain
+  }
+  
+  .brand-copy {
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   gap: 4px
+  }
+  
+  .brand-name {
+   font-size: 25px;
+   font-weight: 800;
+   line-height: 1.5
+  }
+  
+  .brand-sub {
+   color: var(--muted);
+   font-size: 12px;
+   margin-top: 0;
+   line-height: 1.8
+  }
+  
+  .loader {
+   position: absolute;
+   top: 55%;
+   width: 42px;
+   height: 42px;
+   border: 4px solid #ecebff;
+   border-top-color: var(--accent);
+   border-right-color: var(--accent);
+   border-radius: 50%;
+   opacity: 0;
+   visibility: hidden;
+   transition: opacity .25s ease
+  }
+  
+  .loader.show {
+   opacity: 1;
+   visibility: visible;
+   animation: loader-spin .7s linear infinite
+  }
+  
+  @keyframes loader-spin {
+   from {
+    transform: rotate(0)
+   }
+  
+   to {
+    transform: rotate(360deg)
+   }
+  }
+  
+  .page {
+   position: relative;
+   width: 100%;
+   height: 100svh;
+   min-height: 0;
+   display: grid;
+   place-items: center;
+   padding: 12px 14px;
+   overflow: hidden;
+   opacity: 0;
+   transform: translateY(12px);
+   transition: opacity .55s ease, transform .55s ease
+  }
+  
+  .page.show {
+   opacity: 1;
+   transform: translateY(0)
+  }
+  
+  .login-card {
+   position: relative;
+   z-index: 1;
+   width: min(100%, 430px);
+   max-height: calc(100svh - 24px);
+   overflow-y: auto;
+   scrollbar-width: none;
+   padding: 27px 30px 22px;
+   border: 1px solid #ededed;
+   border-radius: 25px;
+   background: #fff
+  }
+  
+  .login-card::-webkit-scrollbar {
+   display: none
+  }
+  
+  .mini-brand {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   gap: 13px;
+   width: 100%;
+   margin: 0 auto 18px;
+   text-align: right
+  }
+  
+  .mini-brand .brand-icon {
+   width: 54px;
+   height: 54px;
+   border-radius: 14px
+  }
+  
+  .mini-brand .brand-copy {
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+   gap: 3px;
+   text-align: right
+  }
+  
+  .mini-brand strong {
+   display: block;
+   font-size: 19px;
+   line-height: 1.5
+  }
+  
+  .mini-brand .brand-sub {
+   font-size: 11px
+  }
+  
+  h1,
+  .description {
+   text-align: right
+  }
+  
+  h1 {
+   font-size: 23px;
+   margin: 0 0 10px
+  }
+  
+  .description {
+   color: var(--muted);
+   font-size: 13px;
+   line-height: 2;
+   margin: 0 0 17px
+  }
+  
+  label {
+   display: block;
+   font-size: 13px;
+   font-weight: bold;
+   margin-bottom: 10px
+  }
+  
+  input {
+   width: 100%;
+   height: 52px;
+   padding: 0 15px;
+   border: 1px solid var(--line);
+   border-radius: 12px;
+   outline: none;
+   font: inherit;
+   font-size: 14px;
+   direction: ltr;
+   text-align: left;
+   transition: border .2s, box-shadow .2s
+  }
+  
+  input:focus {
+   border-color: var(--accent);
+  }
+  
+  input::placeholder {
+   color: #b2b4bf
+  }
+  
+  .hint {
+   color: var(--muted);
+   font-size: 11px;
+   line-height: 1.8;
+   margin: 10px 0 22px
+  }
+  
+  .submit {
+   width: 100%;
+   height: 52px;
+   border: 0;
+   border-radius: 12px;
+   color: #fff;
+   background: var(--accent);
+   font: inherit;
+   font-size: 14px;
+   font-weight: bold;
+   cursor: pointer;
+  }
+  
+  .submit:hover {
+   background: var(--accent-dark);
+  }
+  
+  .message {
+   min-height: 20px;
+   margin-top: 14px;
+   color: #d34b55;
+   font-size: 12px;
+   line-height: 1.8
+  }
+  
+  .footer {
+   text-align: center;
+   color: #858896;
+   font-size: 11px;
+   margin-top: 17px
+  }
+  
+  .window-pattern {
+   position: absolute;
+   inset: 0;
+   z-index: 0;
+   overflow: hidden;
+   pointer-events: none;
+   user-select: none
+  }
+  
+  .window-mark {
+   position: absolute;
+   display: block;
+   object-fit: contain;
+   filter: brightness(0) saturate(100%) invert(48%) sepia(91%) saturate(2500%) hue-rotate(202deg) brightness(101%) contrast(101%);
+   opacity: 1;
+  }
+  
+  .window-mark.m1 {
+   width: 108px;
+   height: 108px;
+   top: 7%;
+   left: 9%;
+   transform: rotate(-13deg);
+   opacity: .34
+  }
+  
+  .window-mark.m2 {
+   width: 82px;
+   height: 82px;
+   top: 15%;
+   right: 12%;
+   transform: rotate(9deg);
+   opacity: .30
+  }
+  
+  .window-mark.m3 {
+   width: 69px;
+   height: 69px;
+   bottom: 13%;
+   left: 17%;
+   transform: rotate(17deg);
+   opacity: .32
+  }
+  
+  .window-mark.m4 {
+   width: 94px;
+   height: 94px;
+   bottom: 8%;
+   right: 8%;
+   transform: rotate(-8deg);
+   opacity: .28
+  }
+  
+  .window-mark.m5 {
+   width: 54px;
+   height: 54px;
+   top: 27%;
+   left: 27%;
+   transform: rotate(6deg);
+   opacity: .26
+  }
+  
+  .window-mark.m6 {
+   width: 43px;
+   height: 43px;
+   top: 17%;
+   left: 57%;
+   transform: rotate(-19deg);
+   opacity: .32
+  }
+  
+  .window-mark.m7 {
+   width: 61px;
+   height: 61px;
+   bottom: 25%;
+   right: 25%;
+   transform: rotate(12deg);
+   opacity: .30
+  }
+  
+  .window-mark.m8 {
+   width: 35px;
+   height: 35px;
+   bottom: 18%;
+   left: 48%;
+   transform: rotate(-5deg);
+   opacity: .32
+  }
+  
+  .window-mark.m9 {
+   width: 47px;
+   height: 47px;
+   top: 58%;
+   right: 7%;
+   transform: rotate(21deg);
+   opacity: .26
+  }
+  
+  .intro .window-pattern {
+   z-index: 0
+  }
+  
+  .intro .brand,
+  .intro .loader {
+   z-index: 1
+  }
+  
+  @media(max-width:480px) {
+   .login-card {
+    padding: 23px 19px 18px
+   }
+  
+   .brand-name {
+    font-size: 21px
+   }
+  
+   .brand-icon {
+    width: 50px;
+    height: 50px
+   }
+  
+   .mini-brand .brand-icon {
+    width: 48px;
+    height: 48px
+   }
+  
+   .window-mark.m1 {
+    width: 75px;
+    height: 75px
+   }
+  
+   .window-mark.m2 {
+    width: 59px;
+    height: 59px
+   }
+  
+   .window-mark.m3 {
+    width: 48px;
+    height: 48px
+   }
+  
+   .window-mark.m4 {
+    width: 66px;
+    height: 66px
+   }
+  }
+  
+  @media(max-height:650px) {
+   .login-card {
+    padding-top: 22px;
+    padding-bottom: 18px
+   }
+  
+   .mini-brand {
+    margin-bottom: 9px
+   }
+  
+   .description {
+    margin-bottom: 10px
+   }
+  
+   .hint {
+    margin-bottom: 10px
+   }
+  
+   .footer {
+    margin-top: 8px
+   }
+  }
+  
+  @media(prefers-reduced-motion:reduce) {
+   .loader.show {
+    animation-duration: 1.5s
+   }
+  
+   .brand,
+   .intro,
+   .page {
+    transition-duration: .01ms
+   }
+  }
+  
+  /* ==============================
+     فرم ایجاد پروژه
+     هماهنگ با ظاهر صفحه ورود
+  ================================ */
+  
+  .project-form-grid {
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 13px 12px;
+   width: 100%;
+  }
+  
+  .project-field {
+   min-width: 0;
+  }
+  
+  .project-field.full {
+   grid-column: 1 / -1;
+  }
+  
+  .project-field label {
+   display: block;
+   font-size: 12px;
+   font-weight: bold;
+   margin-bottom: 7px;
+   color: var(--ink);
+  }
+  
+  .project-field .required {
+   color: #e05260;
+  }
+  
+  .project-field input,
+  .project-field select,
+  .project-field textarea {
+   display: block;
+   width: 100%;
+   height: 42px;
+   padding: 0 11px;
+   border: 1px solid var(--line);
+   border-radius: 11px;
+   outline: none;
+   background: #fff;
+   color: var(--ink);
+   font-family: inherit;
+   font-size: 12px;
+   transition: border .2s, box-shadow .2s;
+  }
+  
+  .project-field input {
+   direction: rtl;
+   text-align: right;
+  }
+  
+  .project-field input[type="number"] {
+   direction: ltr;
+   text-align: left;
+  }
+  
+  .project-field select {
+   direction: rtl;
+   cursor: pointer;
+  }
+  
+  .project-field textarea {
+   height: 58px;
+   min-height: 58px;
+   max-height: 90px;
+   padding: 9px 11px;
+   resize: vertical;
+   direction: rtl;
+   text-align: right;
+   line-height: 1.8;
+  }
+  
+  .project-field input::placeholder,
+  .project-field textarea::placeholder {
+   color: #b2b4bf;
+  }
+  
+  .project-field input:focus,
+  .project-field select:focus,
+  .project-field textarea:focus {
+   border-color: var(--accent);
+   box-shadow: 0 0 0 3px rgba(59, 130, 246, .09);
+  }
+  
+  .project-actions {
+   display: flex;
+   gap: 9px;
+   margin-top: 16px;
+  }
+  
+  .project-submit,
+  .project-back {
+   height: 44px;
+   border: 0;
+   border-radius: 11px;
+   font-family: inherit;
+   font-size: 13px;
+   font-weight: bold;
+   cursor: pointer;
+   transition: background .2s, transform .2s;
+  }
+  
+  .project-submit {
+   flex: 1;
+   color: #fff;
+   background: var(--accent);
+  }
+  
+  .project-submit:hover {
+   background: var(--accent-dark);
+  }
+  
+  .project-back {
+   padding: 0 20px;
+   color: var(--ink);
+   background: #f0f1f5;
+  }
+  
+  .project-back:hover {
+   background: #e5e7ed;
+  }
+  
+  .project-message {
+   min-height: 20px;
+   margin-top: 10px;
+   font-size: 12px;
+   line-height: 1.8;
+  }
+  
+  .project-message.error {
+   color: #d34b55;
+  }
+  
+  .project-message.success {
+   color: #15945b;
+  }
+  
+  /* اندازه کارت پروژه */
+  .login-card:has(.project-form-grid) {
+   width: min(100%, 760px);
+   padding: 25px 28px 21px;
+  }
+  
+  /* نمایش سه‌ستونه در دسکتاپ */
+  @media (min-width: 700px) {
+   .project-form-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+   }
+  }
+  
+  /* تبلت */
+  @media (max-width: 699px) {
+   .login-card:has(.project-form-grid) {
+    width: min(100%, 540px);
+   }
+  
+   .project-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+   }
+  }
+  
+  /* اصلاح ارتفاع دکمه‌ها در موبایل */
+  @media (max-width: 480px) {
+   .project-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+   }
+  
+   .project-actions .project-submit,
+   .project-actions .project-back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    min-height: 48px;
+    flex: 0 0 48px;
+    padding: 0 14px;
+    line-height: 1.5;
+    white-space: nowrap;
+    box-sizing: border-box;
+   }
+  
+   .login-card:has(.project-form-grid) {
+    padding: 22px 19px 18px;
+   }
+  
+   .project-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px 9px;
+   }
+  
+   .project-field input,
+   .project-field select {
+    height: 40px;
+    font-size: 11px;
+   }
+  
+   .project-submit,
+   .project-back {
+    width: 100%;
+   }
+  }
+  
+  .page:has(.project-form-grid) {
+   overflow-y: auto;
+   overflow-x: hidden;
+   display: grid;
+   place-items: start center;
+   width: 100%;
+   height: auto;
+   min-height: 100svh;
+   padding: 25px 14px;
+   overflow: visible;
+  }
+  
+  .page:has(.project-form-grid) .login-card {
+   height: auto;
+   max-height: none;
+   overflow: visible;
+   flex-shrink: 0;
+  }
+  
+  html,
+  body {
+   width: 100%;
+   min-height: 100%;
+   height: auto;
+   overflow-x: hidden;
+   overflow-y: auto;
+  }
+  
+  /* ==================================
+     تم تاریک فرم پروژه
+  ================================== */
+  
+  /* پس‌زمینه صفحه */
+  body.dark-theme:has(.project-form-grid) {
+   background: #171e2a;
+   color: #e8edf5;
+  }
+  
+  /* کارت فرم */
+  body.dark-theme .login-card:has(.project-form-grid) {
+   background: #202b3b;
+   border-color: #354256;
+   color: #e8edf5;
+  }
+  
+  /* عنوان و توضیحات */
+  body.dark-theme .login-card:has(.project-form-grid) h1 {
+   color: #f1f5f9;
+  }
+  
+  body.dark-theme .login-card:has(.project-form-grid) .description {
+   color: #aab6c8;
+  }
+  
+  /* نام برند */
+  body.dark-theme .login-card:has(.project-form-grid) .mini-brand strong {
+   color: #f1f5f9;
+  }
+  
+  body.dark-theme .login-card:has(.project-form-grid) .brand-sub {
+   color: #aab6c8;
+  }
+  
+  /* برچسب فیلدها */
+  body.dark-theme .project-field label {
+   color: #e2e8f0;
+  }
+  
+  /* ورودی‌ها، انتخابگر و توضیحات */
+  body.dark-theme .project-field input,
+  body.dark-theme .project-field select,
+  body.dark-theme .project-field textarea {
+   background: #172333;
+   color: #f1f5f9;
+   border-color: #40516a;
+  }
+  
+  /* متن راهنمای داخل ورودی */
+  body.dark-theme .project-field input::placeholder,
+  body.dark-theme .project-field textarea::placeholder {
+   color: #8493a8;
+  }
+  
+  /* حالت انتخاب فیلد */
+  body.dark-theme .project-field input:focus,
+  body.dark-theme .project-field select:focus,
+  body.dark-theme .project-field textarea:focus {
+   border-color: #60a5fa;
+   box-shadow: 0 0 0 3px rgba(96, 165, 250, .13);
+  }
+  
+  /* گزینه‌های انتخاب گروه مشتری */
+  body.dark-theme .project-field select option {
+   background: #172333;
+   color: #f1f5f9;
+  }
+  
+  /* دکمه تأیید */
+  body.dark-theme .project-submit {
+   background: #3b82f6;
+   color: #fff;
+  }
+  
+  body.dark-theme .project-submit:hover {
+   background: #2563eb;
+  }
+  
+  /* دکمه بازگشت */
+  body.dark-theme .project-back {
+   background: #354256;
+   color: #e8edf5;
+  }
+  
+  body.dark-theme .project-back:hover {
+   background: #43536b;
+  }
+  
+  /* پیام موفقیت و خطا */
+  body.dark-theme .project-message.success {
+   color: #4ade80;
+  }
+  
+  body.dark-theme .project-message.error {
+   color: #fb7185;
+  }
+  
+  /* آیکون‌های پس‌زمینه */
+  body.dark-theme:has(.project-form-grid) .window-mark {
+   filter: brightness(0) saturate(100%) invert(65%) sepia(45%)
+    saturate(1200%) hue-rotate(185deg) brightness(90%);
+   opacity: .16;
+  }
+  
+  /* LOGIN SYSTEM MESSAGES */
+  #loginForm .message {
+    display: none;
+    align-items: center;
+    gap: 11px;
+    width: 100%;
+    min-height: 54px;
+    margin-top: 14px;
+    padding: 11px 13px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.9;
+    text-align: right;
+    direction: rtl;
+    animation: login-message-in .28s ease both;
+  }
+  #loginForm .message.show { display: flex; }
+  #loginForm .message::before {
+    content: "";
+    display: grid;
+    place-items: center;
+    flex: 0 0 29px;
+    width: 29px;
+    height: 29px;
+    border-radius: 50%;
+    font-family: Arial, sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  #loginForm .message.error {
+    color: #b83242;
+    background: linear-gradient(135deg, #fff7f7, #fff0f1);
+    border-color: #ffd5da;
+    box-shadow: 0 5px 14px rgba(190, 45, 65, .06);
+  }
+  #loginForm .message.error::before {
+    content: "!";
+    color: #fff;
+    background: #e05262;
+    box-shadow: 0 3px 7px rgba(224, 82, 98, .22);
+  }
+  #loginForm .message.success {
+    color: #16764d;
+    background: linear-gradient(135deg, #f3fff8, #e9fbf1);
+    border-color: #c5efd6;
+    box-shadow: 0 5px 14px rgba(25, 145, 87, .07);
+  }
+  #loginForm .message.success::before {
+    content: "✓";
+    color: #fff;
+    background: #20a66a;
+    box-shadow: 0 3px 7px rgba(32, 166, 106, .22);
+  }
+  #identity.input-error {
+    border-color: #e05262;
+    background: #fffafb;
+    box-shadow: 0 0 0 3px rgba(224, 82, 98, .08);
+  }
+  #identity.input-error:focus { border-color: #e05262; }
+  #loginForm .submit:disabled { opacity: .78; cursor: wait; }
+  @keyframes login-message-in {
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #loginForm .message { animation: none; }
+  }

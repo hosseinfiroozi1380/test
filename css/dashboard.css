@@ -1,0 +1,1313 @@
+/* ==========================================
+   AYEQ FIROOZ - MODERN DASHBOARD
+========================================== */
+html:has(body.dashboard-body) {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+ }
+ body.dashboard-body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  height: auto;
+  margin: 0;
+  padding: 30px clamp(14px, 3vw, 45px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff !important;
+  color: #202b40;
+  font-family: "IRANSansWeb", Tahoma, Arial, sans-serif;
+  direction: rtl;
+ }
+ .dashboard-body * {
+  box-sizing: border-box;
+ }
+ .dashboard-container {
+  width: 100%;
+  max-width: 1380px;
+  margin: auto;
+ }
+ /* HEADER */
+ .dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 105px;
+  padding: 20px 25px;
+  background: #fff;
+  border: 1px solid #edf0f5;
+  border-radius: 20px;
+ }
+ .dashboard-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+ }
+ .dashboard-brand img {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+ }
+ .dashboard-brand div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+ }
+ .dashboard-brand strong {
+  color: #17233b;
+  font-size: 20px;
+  font-weight: 800;
+ }
+ .dashboard-brand small {
+  color: #929bad;
+  font-size: 11px;
+ }
+ .dashboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+ }
+ .dashboard-header-actions button {
+  min-height: 36px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #65718a;
+  background: #f5f7fb;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: .2s ease;
+ }
+ .dashboard-header-actions button:hover {
+  color: #fff;
+  background: #3979ed;
+ }
+ 
+ /* دکمه خروج */
+ .dashboard-header-actions .logout-button {
+  color: #c74343;
+  background: #fff1f1;
+ }
+ 
+ .dashboard-header-actions .logout-button:hover {
+  color: #fff;
+  background: #d94b4b;
+ }
+ /* CUSTOMER AREA */
+ .dashboard-customer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 78px;
+  margin-top: 14px;
+  padding: 13px 18px;
+  background: #f7f9fd;
+  border: none;
+  border-radius: 18px;
+ }
+ .customer-details {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+ }
+ .customer-details strong {
+  color: #202d43;
+  font-size: 13px;
+  font-weight: 800;
+ }
+ .customer-details span {
+  color: #8994a8;
+  font-size: 10px;
+ }
+ .dashboard-new-project {
+  min-height: 38px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: #fff;
+  background: #3478ee;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: background .2s ease;
+ }
+ .dashboard-new-project:hover {
+  background: #195bcf;
+ }
+ /* TITLE */
+ .dashboard-title {
+  margin: 30px 0 16px;
+ }
+ .dashboard-title h1 {
+  margin: 0 0 8px;
+  color: #1b2940;
+  font-size: 20px;
+  font-weight: 800;
+ }
+ .dashboard-title p {
+  margin: 0;
+  color: #929bad;
+  font-size: 12px;
+ }
+ /* TOOL CARDS */
+ .dashboard-tools {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+ }
+ .dashboard-tool {
+  min-width: 0;
+  min-height: 88px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 11px;
+  color: #344158;
+  background: #f7f9fc;
+  border: none;
+  border-radius: 18px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: right;
+  line-height: 2;
+  cursor: pointer;
+  box-shadow: none;
+  transform: none;
+  transition:
+   background-color .22s ease,
+   color .22s ease;
+ }
+ .dashboard-tool-icon {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 20px;
+  transition:
+   background-color .22s ease,
+   color .22s ease;
+ }
+ /* COLORS - DEFAULT */
+ .dashboard-tool:nth-child(1) .dashboard-tool-icon {
+  color: #3478ed;
+  background: #e5efff;
+ }
+ .dashboard-tool:nth-child(2) .dashboard-tool-icon {
+  color: #139b79;
+  background: #e1f7ef;
+ }
+ .dashboard-tool:nth-child(3) .dashboard-tool-icon {
+  color: #d28b22;
+  background: #fff2dc;
+ }
+ .dashboard-tool:nth-child(4) .dashboard-tool-icon {
+  color: #8861d8;
+  background: #f0e9ff;
+ }
+ .dashboard-tool:nth-child(5) .dashboard-tool-icon {
+  color: #1594a8;
+  background: #e1f6f9;
+ }
+ .dashboard-tool:nth-child(6) .dashboard-tool-icon {
+  color: #e16b52;
+  background: #ffebe6;
+ }
+ .dashboard-tool:nth-child(7) .dashboard-tool-icon {
+  color: #619b40;
+  background: #edf7e5;
+ }
+ .dashboard-tool:nth-child(8) .dashboard-tool-icon {
+  color: #6576c5;
+  background: #e9edff;
+ }
+ /* HOVER COLORS */
+ .dashboard-tool:nth-child(1):hover {
+  color: #fff;
+  background: #3478ed;
+ }
+ .dashboard-tool:nth-child(2):hover {
+  color: #fff;
+  background: #139b79;
+ }
+ .dashboard-tool:nth-child(3):hover {
+  color: #fff;
+  background: #d28b22;
+ }
+ .dashboard-tool:nth-child(4):hover {
+  color: #fff;
+  background: #8861d8;
+ }
+ .dashboard-tool:nth-child(5):hover {
+  color: #fff;
+  background: #1594a8;
+ }
+ .dashboard-tool:nth-child(6):hover {
+  color: #fff;
+  background: #e16b52;
+ }
+ .dashboard-tool:nth-child(7):hover {
+  color: #fff;
+  background: #619b40;
+ }
+ .dashboard-tool:nth-child(8):hover {
+  color: #fff;
+  background: #6576c5;
+ }
+ /* یکسان‌سازی پس‌زمینه شیشه‌ای آیکون‌ها هنگام هاور */
+ .dashboard-tool:hover .dashboard-tool-icon {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.20) !important;
+ }
+ /* اصلاح اختصاصی آیکون دکمه تنظیمات */
+ .dashboard-tool:nth-child(8):hover .dashboard-tool-icon {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.20) !important;
+ }
+ /* جلوگیری از حرکت و سایه */
+ .dashboard-tool:hover,
+ .dashboard-tool:active,
+ .dashboard-tool:focus {
+  transform: none;
+  box-shadow: none;
+  outline: none;
+ }
+ /* فقط دکمه هشتم: پس‌زمینه سفید و حاشیه خاکستری */
+ .dashboard-tool:nth-child(8) {
+  background: #fff;
+  border: 1px solid #e5e9f0;
+ }
+ /* حفظ رنگ مستقل آیکون دکمه هشتم در حالت عادی */
+ .dashboard-tool:nth-child(8) .dashboard-tool-icon {
+  color: #6576c5;
+  background: #e9edff;
+ }
+ .dashboard-tool:focus-visible,
+ .dashboard-new-project:focus-visible,
+ .dashboard-header-actions button:focus-visible {
+  outline: 3px solid #b9d1ff;
+  outline-offset: 3px;
+ }
+ /* SYSTEM MESSAGES */
+ .message {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 15px;
+  margin-top: 14px;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 2;
+ }
+ .message.show {
+  display: flex;
+ }
+ .message.error {
+  color: #bd3542;
+  background: #fff1f2;
+  border: 1px solid #ffd6da;
+ }
+ .message.success {
+  color: #21845a;
+  background: #edfaf3;
+  border: 1px solid #cceedd;
+ }
+ .message-icon {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+ }
+ .message.error .message-icon {
+  background: #ffe0e3;
+ }
+ .message.success .message-icon {
+  background: #d5f4e3;
+ }
+ /* TABLET */
+ @media (max-width: 1000px) {
+  .dashboard-tools {
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 10px;
+  }
+  .dashboard-tool {
+   min-height: 80px;
+   padding: 10px;
+   gap: 8px;
+  }
+ }
+ /* MOBILE */
+ @media (max-width: 620px) {
+  body.dashboard-body {
+   padding: 10px;
+  }
+  .dashboard-header {
+   flex-direction: column;
+   align-items: flex-start;
+   gap: 10px;
+   padding: 12px;
+  }
+  .dashboard-brand img {
+   width: 44px;
+   height: 44px;
+  }
+  .dashboard-brand strong {
+   font-size: 16px;
+  }
+  .dashboard-header-actions {
+   width: 100%;
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 6px;
+  }
+  .dashboard-header-actions button {
+   min-width: 0;
+   min-height: 34px;
+   padding: 0 4px;
+   gap: 4px;
+   font-size: 9px;
+  }
+  .dashboard-header-actions svg {
+   width: 14px;
+   height: 14px;
+  }
+  .dashboard-customer {
+   min-height: 68px;
+   padding: 10px;
+   gap: 8px;
+  }
+  .customer-details strong {
+   font-size: 12px;
+  }
+  .customer-details span {
+   font-size: 9px;
+  }
+  .dashboard-new-project {
+   min-height: 34px;
+   padding: 0 15px;
+   font-size: 9px;
+  }
+  .dashboard-title {
+   margin: 22px 0 12px;
+  }
+  .dashboard-title h1 {
+   font-size: 17px;
+  }
+  .dashboard-title p {
+   font-size: 10px;
+  }
+  .dashboard-tools {
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 8px;
+  }
+  .dashboard-tool {
+   min-width: 0;
+   min-height: 70px;
+   padding: 8px 6px;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   gap: 5px;
+   text-align: center;
+   font-size: 10px;
+   line-height: 1.5;
+   border-radius: 11px;
+  }
+  .dashboard-tool-icon {
+   width: 34px;
+   height: 34px;
+   min-width: 34px;
+   border-radius: 9px;
+  }
+  .dashboard-tool-icon svg {
+   width: 18px;
+   height: 18px;
+  }
+ }
+ /* MOBILE VERY SMALL */
+ @media (max-width: 360px) {
+  .dashboard-tools {
+   gap: 6px;
+  }
+  .dashboard-tool {
+   min-height: 65px;
+   font-size: 9px;
+  }
+ }
+ @media (prefers-reduced-motion: reduce) {
+  .dashboard-tool,
+  .dashboard-tool-icon,
+  .dashboard-new-project,
+  .dashboard-header-actions button {
+   transition: none;
+  }
+ }
+ /* SVG ICONS */
+ .dashboard-tool-icon svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: block;
+ }
+ .dashboard-header-actions svg,
+ .dashboard-new-project svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  display: block;
+ }
+ .dashboard-tool:hover .dashboard-tool-icon svg {
+  stroke: #fff !important;
+ }
+ /* اصلاح نهایی: پس‌زمینه عادی همه دکمه‌ها سفید؛ رنگ هاور هر دکمه حفظ شود */
+ .dashboard-tool {
+  background: #fff !important;
+  border: 1px solid #e5e9f0 !important;
+ }
+ .dashboard-tool:nth-child(1):hover {
+  background: #3478ed !important;
+  border-color: #3478ed !important;
+ }
+ .dashboard-tool:nth-child(2):hover {
+  background: #139b79 !important;
+  border-color: #139b79 !important;
+ }
+ .dashboard-tool:nth-child(3):hover {
+  background: #d28b22 !important;
+  border-color: #d28b22 !important;
+ }
+ .dashboard-tool:nth-child(4):hover {
+  background: #8861d8 !important;
+  border-color: #8861d8 !important;
+ }
+ .dashboard-tool:nth-child(5):hover {
+  background: #1594a8 !important;
+  border-color: #1594a8 !important;
+ }
+ .dashboard-tool:nth-child(6):hover {
+  background: #e16b52 !important;
+  border-color: #e16b52 !important;
+ }
+ .dashboard-tool:nth-child(7):hover {
+  background: #619b40 !important;
+  border-color: #619b40 !important;
+ }
+ .dashboard-tool:nth-child(8):hover {
+  background: #6576c5 !important;
+  border-color: #6576c5 !important;
+ }
+ /* ==========================================
+    MOBILE LAYOUT FIX - فقط اصلاح چیدمان موبایل
+ ========================================== */
+ @media (max-width: 620px) {
+  html:has(body.dashboard-body),
+  body.dashboard-body {
+   width: 100%;
+   overflow-x: hidden;
+  }
+  body.dashboard-body {
+   min-width: 320px;
+   padding: 10px;
+  }
+  .dashboard-container {
+   width: 100%;
+   max-width: 100%;
+   margin: 0 auto;
+  }
+  /* هدر */
+  .dashboard-header {
+   width: 100%;
+   min-width: 0;
+   flex-direction: column;
+   align-items: stretch;
+   gap: 12px;
+   padding: 13px;
+   border-radius: 15px;
+  }
+  .dashboard-brand {
+   width: 100%;
+   min-width: 0;
+   gap: 10px;
+  }
+  .dashboard-brand img {
+   width: 42px;
+   height: 42px;
+   flex-shrink: 0;
+  }
+  .dashboard-brand div {
+   min-width: 0;
+  }
+  .dashboard-brand strong {
+   font-size: 15px;
+   line-height: 1.8;
+  }
+  .dashboard-brand small {
+   font-size: 10px;
+  }
+  /* دکمه‌های بالای صفحه */
+  .dashboard-header-actions {
+   width: 100%;
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 7px;
+  }
+  .dashboard-header-actions button {
+   width: 100%;
+   min-width: 0;
+   min-height: 36px;
+   padding: 5px 3px;
+   gap: 4px;
+   font-size: 9px;
+   white-space: normal;
+   line-height: 1.5;
+   border-radius: 9px;
+  }
+  .dashboard-header-actions button svg {
+   width: 14px;
+   height: 14px;
+   flex-shrink: 0;
+  }
+  /* بخش اطلاعات مشتری */
+  .dashboard-customer {
+   width: 100%;
+   min-width: 0;
+   min-height: 70px;
+   margin-top: 10px;
+   padding: 11px;
+   gap: 10px;
+   border-radius: 13px;
+  }
+  .customer-details {
+   min-width: 0;
+   flex: 1;
+   gap: 5px;
+  }
+  .customer-details strong {
+   font-size: 11px;
+   line-height: 1.8;
+  }
+  .customer-details span {
+   font-size: 9px;
+   line-height: 1.8;
+   overflow-wrap: anywhere;
+  }
+  .dashboard-new-project {
+   flex-shrink: 0;
+   min-height: 34px;
+   padding: 0 15px;
+   gap: 4px;
+   font-size: 9px;
+   white-space: nowrap;
+   border-radius: 9px;
+  }
+  .dashboard-new-project svg {
+   width: 14px;
+   height: 14px;
+  }
+  /* عنوان داشبورد */
+  .dashboard-title {
+   margin: 20px 2px 12px;
+  }
+  .dashboard-title h1 {
+   font-size: 16px;
+   line-height: 1.8;
+   margin-bottom: 4px;
+  }
+  .dashboard-title p {
+   font-size: 10px;
+   line-height: 1.9;
+  }
+  /* شبکه دکمه‌ها */
+  .dashboard-tools {
+   width: 100%;
+   display: grid;
+   grid-template-columns: repeat(2, minmax(0, 1fr));
+   gap: 9px;
+   align-items: stretch;
+  }
+  .dashboard-tool {
+   width: 100%;
+   min-width: 0;
+   min-height: 88px;
+   height: 100%;
+   padding: 10px 6px;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: center;
+   gap: 7px;
+   text-align: center;
+   font-size: 10px;
+   line-height: 1.8;
+   border-radius: 12px;
+   overflow-wrap: anywhere;
+   word-break: normal;
+  }
+  .dashboard-tool-icon {
+   width: 36px;
+   height: 36px;
+   min-width: 36px;
+   flex-shrink: 0;
+   border-radius: 10px;
+  }
+  .dashboard-tool-icon svg {
+   width: 20px;
+   height: 20px;
+  }
+  /* پیام‌های سیستم */
+  .message {
+   width: 100%;
+   min-width: 0;
+   padding: 10px;
+   gap: 8px;
+   font-size: 10px;
+  }
+  .message-icon {
+   flex-shrink: 0;
+  }
+ }
+ /* موبایل‌های کوچک */
+ @media (max-width: 380px) {
+  body.dashboard-body {
+   padding: 8px;
+  }
+  .dashboard-header {
+   padding: 10px;
+  }
+  .dashboard-header-actions {
+   gap: 5px;
+  }
+  .dashboard-header-actions button {
+   font-size: 8px;
+   padding: 4px 2px;
+  }
+  .dashboard-customer {
+   padding: 9px;
+   gap: 6px;
+  }
+  .dashboard-new-project {
+   padding: 0 15px;
+   font-size: 8px;
+  }
+  .dashboard-tools {
+   gap: 7px;
+  }
+  .dashboard-tool {
+   min-height: 82px;
+   padding: 8px 4px;
+   font-size: 9px;
+   gap: 6px;
+  }
+  .dashboard-tool-icon {
+   width: 33px;
+   height: 33px;
+   min-width: 33px;
+  }
+  .dashboard-tool-icon svg {
+   width: 18px;
+   height: 18px;
+  }
+ }
+ /* جلوگیری از بیرون‌زدگی محتوا */
+ @media (max-width: 620px) {
+  .dashboard-body *,
+  .dashboard-body *::before,
+  .dashboard-body *::after {
+   max-width: 100%;
+  }
+  .dashboard-tool,
+  .dashboard-header-actions button {
+   overflow: hidden;
+  }
+ }
+ /* CUSTOMER NAME + SYSTEM TYPE */
+ .customer-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+ }
+ .customer-info strong {
+  color: #202d43;
+  font-size: 13px;
+  font-weight: 500;
+ }
+ .customer-system {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 11px;
+  color: #3478ed;
+  background: #e5efff;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.8;
+ }
+ /* FIX CUSTOMER SYSTEM LABEL */
+ .dashboard-customer .customer-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+ }
+ .dashboard-customer .customer-info .customer-system {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 3px 11px;
+  color: #3478ed !important;
+  background-color: #e5efff !important;
+  border: 1px solid #d5e5ff;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.8;
+ }
+ /* CUSTOMER CONTACT DETAILS */
+ .customer-contact {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #8994a8;
+  font-size: 10px;
+  line-height: 2;
+ }
+ .customer-contact i {
+  color: #c5ccd8;
+  font-style: normal;
+ }
+ @media (max-width: 620px) {
+  .customer-contact {
+   gap: 4px 6px;
+   font-size: 9px;
+   line-height: 2;
+  }
+ }
+ .customer-contact {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  direction: rtl;
+  gap: 8px;
+  color: #8994a8;
+  font-size: 10px;
+  line-height: 2;
+ }
+ .customer-contact i {
+  color: #c5ccd8;
+  font-style: normal;
+ }
+ .customer-contact .mobile-break {
+  display: none;
+ }
+ /* Mobile */
+ @media (max-width: 620px) {
+  .customer-contact {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 2px 6px;
+   font-size: 9px;
+   line-height: 2;
+  }
+  .customer-contact .mobile-break {
+   display: block;
+   flex-basis: 100%;
+   height: 0;
+  }
+ }
+ /* =================================
+    3D LIGHT / DARK THEME BUTTON
+ ================================= */
+ .dashboard-header {
+  position: relative;
+ }
+ .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  color: #344158;
+  background: linear-gradient(145deg, #ffffff, #e9edf5);
+  border: 1px solid #dce2ec;
+  border-radius: 12px;
+  box-shadow:
+   0 4px 0 #cbd3e0,
+   0 6px 12px rgba(25, 40, 65, .10);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: .2s ease;
+ }
+ .theme-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow:
+   0 6px 0 #cbd3e0,
+   0 9px 15px rgba(25, 40, 65, .13);
+ }
+ .theme-toggle:active {
+  transform: translateY(3px);
+  box-shadow:
+   0 1px 0 #cbd3e0,
+   0 2px 5px rgba(25, 40, 65, .10);
+ }
+ .theme-toggle-icon {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+ }
+ .theme-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+ }
+ .moon-icon {
+  display: none;
+ }
+ /* =================================
+ DARK THEME
+ ================================= */
+ body.dashboard-body.dark-theme {
+  background: #111827 !important;
+  color: #e5eaf3;
+ }
+ .dark-theme .dashboard-header {
+  background: #1c2738;
+  border-color: #303c50;
+ }
+ .dark-theme .dashboard-brand strong,
+ .dark-theme .dashboard-title h1,
+ .dark-theme .customer-details strong,
+ .dark-theme .customer-info strong {
+  color: #edf2fb;
+ }
+ .dark-theme .dashboard-brand small,
+ .dark-theme .dashboard-customer .customer-details span,
+ .dark-theme .customer-contact {
+  color: #a3afc3;
+ }
+ .dark-theme .dashboard-customer {
+  background: #202d40;
+ }
+ .dark-theme .dashboard-tool {
+  color: #e1e8f3 !important;
+  background: #202d40 !important;
+  border-color: #35435a !important;
+ }
+ /* Dark hover colors */
+ .dark-theme .dashboard-tool:nth-child(1):hover {
+  background: #3478ed !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(2):hover {
+  background: #139b79 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(3):hover {
+  background: #b77b22 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(4):hover {
+  background: #7952c4 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(5):hover {
+  background: #117e91 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(6):hover {
+  background: #c45b46 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(7):hover {
+  background: #507f35 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(8):hover {
+  background: #5363ae !important;
+ }
+ .dark-theme .dashboard-tool:hover {
+  color: #fff !important;
+  border-color: transparent !important;
+ }
+ .dark-theme .dashboard-tool:hover .dashboard-tool-icon {
+  color: #fff !important;
+  background: rgba(255, 255, 255, .20) !important;
+ }
+ /* Header buttons */
+ .dark-theme .dashboard-header-actions button {
+  color: #dce5f3;
+  background: #303d52;
+ }
+ .dark-theme .dashboard-header-actions button:hover {
+  color: #fff;
+  background: #3979ed;
+ }
+ /* Theme toggle in dark mode */
+ .dark-theme .theme-toggle {
+  color: #f8d477;
+  background: linear-gradient(145deg, #34445d, #202b3d);
+  border-color: #465772;
+  box-shadow:
+   0 4px 0 #172234,
+   0 6px 12px rgba(0, 0, 0, .25);
+ }
+ .dark-theme .theme-toggle:hover {
+  box-shadow:
+   0 6px 0 #172234,
+   0 9px 15px rgba(0, 0, 0, .3);
+ }
+ .dark-theme .theme-toggle:active {
+  box-shadow: 0 1px 0 #172234;
+ }
+ /* Change sun to moon */
+ .dark-theme .sun-icon {
+  display: none;
+ }
+ .dark-theme .moon-icon {
+  display: block;
+ }
+ /* System messages */
+ .dark-theme .message.error {
+  background: #40252d;
+  border-color: #713b49;
+  color: #ffb8c1;
+ }
+ .dark-theme .message.success {
+  background: #193b32;
+  border-color: #28634e;
+  color: #9be5c0;
+ }
+ /* Customer system label */
+ .dark-theme .dashboard-customer .customer-info .customer-system {
+  color: #a9c8ff !important;
+  background: #263e60 !important;
+  border-color: #395779;
+ }
+ /* Mobile */
+ @media (max-width: 620px) {
+  .dashboard-header {
+   position: relative;
+  }
+  .theme-toggle {
+   min-height: 35px;
+   padding: 0 10px;
+   font-size: 9px;
+  }
+  .theme-toggle svg {
+   width: 16px;
+   height: 16px;
+  }
+ }
+ 
+ 
+ /* =================================
+    HEADER CONTROLS - DESKTOP & MOBILE
+ ================================= */
+ 
+ .dashboard-header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
+ }
+ 
+ /* ترتیب دکمه‌ها در دسکتاپ */
+ .dashboard-header-controls .theme-toggle {
+  order: 1;
+ }
+ 
+ .dashboard-header-controls .dashboard-header-actions {
+  order: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+ }
+ 
+ /* MOBILE */
+ @media (max-width: 620px) {
+  .dashboard-header-controls {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+  }
+ 
+  .dashboard-header-controls .theme-toggle {
+    flex: 1;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0 5px;
+    justify-content: center;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+ 
+  .dashboard-header-controls .dashboard-header-actions {
+    flex: 2;
+    width: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+ 
+  .dashboard-header-controls .dashboard-header-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    padding: 5px 3px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+ }
+ 
+ /* اصلاح نهایی دکمه تغییر تم */
+ .dashboard-header-controls .theme-toggle {
+  min-height: 36px;
+  height: 36px;
+  padding: 0 11px;
+  font-size: 11px;
+  border-radius: 12px;
+ 
+  /* حذف سایه و حرکت */
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+ }
+ 
+ /* جلوگیری از حرکت هنگام هاور و کلیک */
+ .dashboard-header-controls .theme-toggle:hover,
+ .dashboard-header-controls .theme-toggle:active,
+ .dashboard-header-controls .theme-toggle:focus {
+  transform: none !important;
+  box-shadow: none !important;
+ }
+ 
+ /* حالت تاریک */
+ .dark-theme .dashboard-header-controls .theme-toggle {
+  box-shadow: none !important;
+ }
+ 
+ .dark-theme .dashboard-header-controls .theme-toggle:hover,
+ .dark-theme .dashboard-header-controls .theme-toggle:active {
+  box-shadow: none !important;
+  transform: none !important;
+ }
+ 
+ /* موبایل */
+ @media (max-width: 620px) {
+  .dashboard-header-controls .theme-toggle {
+    min-height: 36px;
+    height: 36px;
+    padding: 0 4px;
+    font-size: 9px;
+  }
+ }
+ 
+ 
+ /* =================================
+    LOGOUT BUTTON - SEPARATE CONTROL
+    دکمه خروج مستقل از راهنما و پیام‌ها
+ ================================= */
+ .dashboard-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+ }
+ 
+ .dashboard-header-controls > .logout-button {
+  order: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 13px;
+  margin-inline-start: auto;
+  color: #c74343;
+  background: #fff1f1;
+  border: 1px solid #f3cccc;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+ }
+ 
+ .dashboard-header-controls > .logout-button:hover {
+  color: #fff;
+  background: #d94b4b;
+  border-color: #d94b4b;
+ }
+ 
+ .dashboard-header-controls > .logout-button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+ }
+ 
+ /* رنگ مستقل دکمه خروج در حالت تاریک */
+ .dark-theme .dashboard-header-controls > .logout-button {
+  color: #ffb4b4;
+  background: #482b35;
+  border-color: #70404b;
+ }
+ 
+ .dark-theme .dashboard-header-controls > .logout-button:hover {
+  color: #fff;
+  background: #b83f4b;
+  border-color: #d94b5b;
+ }
+ 
+ @media (max-width: 620px) {
+  .dashboard-header-controls {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   justify-content: space-between;
+   row-gap: 9px;
+  }
+  .dashboard-header-controls .theme-toggle {
+   flex: 1 1 28%;
+  }
+  .dashboard-header-controls .dashboard-header-actions {
+   flex: 2 1 58%;
+  }
+  .dashboard-header-controls > .logout-button {
+   order: 3;
+   flex: 0 0 auto;
+   min-height: 35px;
+   margin-inline-start: auto;
+   padding: 0 13px;
+   font-size: 10px;
+  }
+ }
+ 
+ /* ==========================================
+    DARK THEME - TOOL ICON BACKGROUNDS
+    پس‌زمینه آیکون‌ها در حالت تاریک سفید نباشد
+ ========================================== */
+ .dark-theme .dashboard-tool:nth-child(1) .dashboard-tool-icon {
+   color: #8db8ff !important;
+   background: #263f63 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(2) .dashboard-tool-icon {
+   color: #75dfbd !important;
+   background: #204b43 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(3) .dashboard-tool-icon {
+   color: #ffd18a !important;
+   background: #55432b !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(4) .dashboard-tool-icon {
+   color: #c5aaff !important;
+   background: #40345f !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(5) .dashboard-tool-icon {
+   color: #80dce8 !important;
+   background: #204852 !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(6) .dashboard-tool-icon {
+   color: #ffad99 !important;
+   background: #59382f !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(7) .dashboard-tool-icon {
+   color: #b8e895 !important;
+   background: #354b2e !important;
+ }
+ .dark-theme .dashboard-tool:nth-child(8) .dashboard-tool-icon {
+   color: #aebaff !important;
+   background: #333e68 !important;
+ }
+ /* در حالت هاور، آیکون‌ها شیشه‌ای و هماهنگ با دکمه شوند */
+ .dark-theme .dashboard-tool:hover .dashboard-tool-icon {
+   color: #fff !important;
+   background: rgba(255, 255, 255, .20) !important;
+ }
+
+/* ==========================================
+   MOBILE LOGOUT POSITION
+   دکمه خروج در ردیف اول هدر، گوشه بالا-چپ
+========================================== */
+@media (max-width: 620px) {
+  .dashboard-header {
+    position: relative;
+  }
+
+  /* فضای خالی سمت چپ لوگو برای جلوگیری از تداخل با خروج */
+  .dashboard-header > .dashboard-brand {
+    padding-left: 72px;
+  }
+
+  /* خروج از جریان فلکس؛ دیگر زیر دکمه‌های کنترل قرار نمی‌گیرد */
+  .dashboard-header-controls > .logout-button {
+    position: absolute;
+    top: 13px;
+    left: 13px;
+    right: auto;
+    z-index: 5;
+    order: 0;
+    flex: none;
+    width: auto;
+    min-height: 35px;
+    margin: 0;
+    padding: 0 11px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-header > .dashboard-brand {
+    padding-left: 66px;
+  }
+
+  .dashboard-header-controls > .logout-button {
+    top: 10px;
+    left: 10px;
+    padding: 0 9px;
+    font-size: 9px;
+  }
+}

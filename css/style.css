@@ -100,7 +100,7 @@ button:disabled {
 
 .shape-buttons {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   grid-column: 2;
   grid-row: 1;
   align-items: center;
@@ -108,9 +108,24 @@ button:disabled {
 }
 
 .shape-buttons .primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  gap: 5px;
   flex: 1;
-  max-width: 140px;
-  text-align: center;
+  min-width: 150px;
+  max-width: 180px;
+  white-space: nowrap;
+  padding: 10px 18px;
+}
+
+.shape-buttons .primary img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
 }
 
 button.primary {
@@ -118,11 +133,12 @@ button.primary {
   border: 1px solid var(--blue);
   color: #fff;
   border-radius: 8px;
-  padding: 6px 15px
+  font-size: 14px;
+  cursor: pointer;
 }
 
 button.primary:hover {
-  background: var(--blue-dark)
+  background: var(--blue-dark);
 }
 
 .toolbar {
@@ -1932,7 +1948,7 @@ dialog.tool-dialog::backdrop {
   width: 100%;
   max-width: none;
   min-width: 0;
-  padding: 9px 4px;
+  padding: 6px 4px;
   font-size: 12px;
   white-space: normal;
 }
@@ -4024,4 +4040,212 @@ dialog.tool-dialog::backdrop {
     grid-column: 7 !important;
     grid-row: 2 !important;
   }
+}
+
+@media (max-width: 520px) {
+  .mobile-category-tools {
+    z-index: 8 !important;
+  }
+
+  .right-panel,
+  .left-panel {
+    z-index: 1000 !important;
+  }
+
+  .mobile-menu-backdrop.mobile-visible {
+    z-index: 999 !important;
+  }
+}
+
+/* لیست آیتم‌ها: هماهنگ با دکمه‌های منو و نوار ابزار */
+#layerlist.wd-items-stack,
+.wd-items-stack#layerlist {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  direction: rtl !important;
+}
+
+#layerlist .wd-item-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+  padding: 8px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+  text-align: right !important;
+}
+
+#layerlist .wd-item-card:hover {
+  border-color: var(--line) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+#layerlist .wd-item-card.is-active {
+  border-color: var(--blue) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+#layerlist .wd-item-symbol {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 48px !important;
+  width: 48px !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  box-shadow: none !important;
+}
+
+#layerlist .wd-item-symbol img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+#layerlist .wd-item-details {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+}
+
+#layerlist .wd-item-title {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: var(--ink) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.7 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+#layerlist .wd-item-card.is-active .wd-item-title {
+  color: var(--blue) !important;
+}
+
+#layerlist .wd-item-size {
+  color: var(--muted) !important;
+  font-size: 10px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+}
+
+#layerlist .wd-item-quantity {
+  color: var(--muted) !important;
+  font-size: 10px !important;
+}
+
+#layerlist .wd-item-bottom {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  width: 100% !important;
+  margin-top: 2px !important;
+}
+
+#layerlist button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 32px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+  color: var(--ink) !important;
+  font: inherit !important;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: none !important;
+  cursor: pointer !important;
+}
+
+#layerlist button:hover {
+  border-color: var(--blue) !important;
+  background: #fff !important;
+  color: var(--blue) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+#layerlist .wd-item-select-btn {
+  min-width: 64px !important;
+  margin-inline-end: auto !important;
+}
+
+#layerlist .wd-item-edit,
+#layerlist .wd-item-delete {
+  flex: 0 0 32px !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  padding: 0 !important;
+  font-size: 15px !important;
+}
+
+#layerlist button:focus-visible {
+  outline: 2px solid #80b5ff !important;
+  outline-offset: 2px !important;
+}
+
+@media (max-width: 520px) {
+  #layerlist .wd-item-card { gap: 7px !important; padding: 7px !important; }
+  #layerlist .wd-item-symbol {
+    flex-basis: 42px !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+  }
+  #layerlist button { height: 28px !important; padding-inline: 8px !important; }
+  #layerlist .wd-item-edit,
+  #layerlist .wd-item-delete {
+    flex-basis: 30px !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 28px !important;
+  }
+}
+
+/* تنظیمات: حذف زیرخط و هماهنگی رنگ هاور متن و آیکون با سایر دکمه‌ها */
+#settingsBtn,
+#settingsBtn:visited {
+  text-decoration: none !important;
+}
+
+#settingsBtn:hover,
+#settingsBtn:hover *,
+#settingsBtn:focus-visible,
+#settingsBtn:focus-visible * {
+  color: #fff !important;
 }

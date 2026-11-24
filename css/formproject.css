@@ -1,0 +1,635 @@
+@font-face {
+  font-family: "IRANSansWeb";
+  src: url("../fonts/IRANSansWeb-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+body {
+  font-family: "IRANSansWeb", Tahoma, Arial, sans-serif;
+  background: var(--wd-soft-bg);
+  color: var(--wd-text-strong);
+}
+
+html {
+  direction: rtl;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  direction: rtl;
+  font-family: IRANSans, IRANSansWeb, Tahoma, Arial, sans-serif;
+  background: #ffffff;
+  color: #333;
+  box-sizing: border-box;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* محدوده اصلی فرم */
+.project-info-wrapper {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 40px;
+}
+
+/* خود فرم */
+.project-info-box {
+  width: 100%;
+  max-width: 700px;
+  background: #ffffff;
+}
+
+/* عنوان */
+.project-info-header {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+/* عنوان عایق فیروز */
+.project-info-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  direction: rtl;
+}
+
+.project-info-logo {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.project-info-title-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.project-info-title-text h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #3b82f6;
+}
+
+.project-info-title-text p {
+  margin: -5px 0 0;
+  font-size: 14px;
+  color: #333;
+}
+
+/* شبکه ورودی‌ها */
+.project-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 10px;
+  row-gap: 15px;
+}
+
+/* هر فیلد */
+.project-info-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* فیلدهای تمام عرض */
+.project-info-field.project-info-full {
+  grid-column: 1 / -1;
+}
+
+/* عنوان هر ورودی */
+.project-info-field label {
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* ورودی‌ها و تکست‌اریا */
+.project-info-field input,
+.project-info-field textarea {
+  width: 100%;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 11px 13px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #333;
+  background: #fff;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* ورودی معمولی */
+.project-info-field input {
+  height: 40px;
+}
+
+/* تکست‌اریا */
+.project-info-field textarea {
+  resize: vertical;
+}
+
+/* حالت فوکوس */
+.project-info-field input:focus,
+.project-info-field textarea:focus,
+.project-info-field select:focus {
+  border-color: #3b82f6;
+}
+
+.project-info-field select {
+  color: #333;
+  width: 100%;
+  height: 45px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  padding: 0 13px;
+  padding-left: 35px;
+  font-family: inherit;
+  font-size: 14px;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 10px center;
+  background-size: 14px;
+}
+
+/* دکمه‌ها */
+.project-info-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.project-info-buttons button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 30px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.project-info-buttons button:active {
+  transform: translateY(1px);
+}
+
+.project-save-btn {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.project-save-btn:hover {
+  background: #2563eb;
+}
+
+.project-clear-btn {
+  background: #fff;
+  color: #333;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 10px;
+  padding: 10px 30px;
+}
+
+.project-clear-btn:hover {
+  background: #e2e6ea;
+}
+
+/* پیام خطا */
+.project-error {
+  display: none;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #dc3545;
+}
+
+.required-star {
+  color: #dc3545;
+  margin-right: 3px;
+}
+
+/* تبلت */
+@media (max-width: 900px) {
+  .project-info-wrapper {
+    padding: 20px;
+  }
+
+  .project-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* موبایل */
+@media (max-width: 700px) {
+  .project-info-field label {
+    font-size: 12px;
+  }
+
+  .project-info-field select {
+    height: 40px;
+  }
+
+  .project-info-wrapper {
+    padding: 15px;
+    align-items: flex-start;
+    padding-top: 35px;
+  }
+
+  .project-info-box {
+    padding: 20px;
+  }
+
+  .project-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .project-info-field.project-info-full {
+    grid-column: 1 / -1;
+  }
+
+  .project-info-buttons {
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .project-info-buttons button {
+    width: 50%;
+    padding: 10px 10px;
+    font-size: 12px;
+  }
+
+  .project-error {
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 701px) {
+  .project-info-wrapper {
+    padding: 20px 40px;
+  }
+
+  .project-info-header {
+    margin-bottom: 30px;
+  }
+
+  .project-info-logo {
+    width: 42px;
+    height: 42px;
+  }
+
+  .project-info-title-text h2 {
+    font-size: 18px;
+  }
+
+  .project-info-title-text p {
+    font-size: 12px;
+  }
+
+  .project-info-grid {
+    row-gap: 12px;
+  }
+
+  .project-info-field label {
+    margin-bottom: 5px;
+    font-size: 13px;
+  }
+
+  .project-info-field input,
+  .project-info-field select {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .project-info-field input,
+  .project-info-field textarea {
+    padding: 8px 11px;
+  }
+
+  .project-info-buttons {
+    margin-top: 18px;
+  }
+
+  .project-info-buttons button {
+    padding: 8px 25px;
+    font-size: 13px;
+  }
+}
+
+/* پیام سیستم */
+.wd-system-message {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  z-index: 999999;
+  opacity: 0;
+  visibility: hidden;
+  direction: rtl;
+  transition:
+    opacity 0.2s ease,
+    transform 0.25s cubic-bezier(.34, 1.56, .64, 1),
+    visibility 0.2s ease;
+}
+
+.wd-system-message.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.wd-system-message-box {
+  /* min-width: 320px; */
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.12);
+  font-family: "IRANSansWeb", sans-serif;
+}
+
+.wd-system-message-text {
+  color: #374151;
+  font-size: 14px;
+  line-height: 1.8;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* آیکون */
+.wd-system-message-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 19px;
+  font-weight: bold;
+  position: relative;
+  animation:
+    messageIconShow 0.4s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.wd-system-message-icon span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  direction: ltr;
+  unicode-bidi: bidi-override;
+  animation: messageIconRotate 0.35s ease-out;
+}
+
+.wd-system-message-icon span i {
+  display: block;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.wd-info-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  font-family: Arial, sans-serif;
+}
+
+/* موفقیت */
+.wd-system-message-icon.success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* خطا */
+.wd-system-message-icon.error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* هشدار */
+.wd-system-message-icon.warning {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+/* اطلاعات */
+.wd-system-message-icon.info {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+/* انیمیشن ورود آیکون */
+@keyframes messageIconShow {
+  0% {
+    opacity: 0;
+    transform:
+      scale(0.3) rotate(-20deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform:
+      scale(1.12) rotate(5deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform:
+      scale(1) rotate(0);
+  }
+}
+
+/* حرکت خود علامت */
+@keyframes messageIconRotate {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* موبایل */
+@media (max-width: 600px) {
+  .wd-system-message-box {
+    min-width: 280px;
+    max-width: calc(100vw - 30px);
+    padding: 13px 15px;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .wd-system-message-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+  }
+
+  .wd-system-message-text {
+    font-size: 13px;
+    text-align: center;
+  }
+}
+
+@media (min-width: 701px) {
+  .project-info-wrapper {
+    align-items: flex-start;
+    padding-top: 70px;
+  }
+}
+
+/* تبلت */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .project-info-wrapper {
+    min-height: 100vh;
+    padding: 20px 24px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .project-info-box {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  .project-info-header {
+    margin-bottom: 22px;
+  }
+
+  .project-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 12px;
+  }
+
+  .project-info-field label {
+    font-size: 13px;
+    margin-bottom: 5px;
+  }
+
+  .project-info-field input,
+  .project-info-field select {
+    height: 40px;
+    font-size: 13px;
+  }
+
+  .project-info-buttons {
+    margin-top: 20px;
+  }
+}
+
+/* تلویزیون‌های بزرگ، از جمله 65 و 70 اینچ */
+@media (min-width: 1800px) {
+  .project-info-wrapper {
+    min-height: 100vh;
+    padding: 15px 30px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .project-info-box {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  .project-info-header {
+    margin-bottom: 18px;
+  }
+
+  .project-info-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .project-info-title-text h2 {
+    font-size: 18px;
+  }
+
+  .project-info-title-text p {
+    font-size: 12px;
+    margin-top: -3px;
+  }
+
+  .project-info-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 10px;
+  }
+
+  .project-info-field label {
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .project-info-field input,
+  .project-info-field select {
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .project-info-field textarea {
+    font-size: 13px;
+  }
+
+  .project-info-buttons {
+    margin-top: 16px;
+  }
+
+  .project-info-buttons button {
+    padding: 8px 24px;
+    font-size: 13px;
+  }
+}
